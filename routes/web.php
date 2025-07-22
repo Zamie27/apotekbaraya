@@ -11,3 +11,6 @@ Route::get('/dashboard', function () {
 Route::get('/login', function () {
     return view('livewire.pelanggan.auth.login');
 });
+Route::get('/register', function () {
+    return view('livewire.pelanggan.auth.register');
+});
