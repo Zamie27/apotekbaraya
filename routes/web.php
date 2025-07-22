@@ -8,3 +8,6 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     return view('livewire.pelanggan.dashboard');
 });
+Route::get('/login', function () {
+    return view('livewire.pelanggan.auth.login');
+});
