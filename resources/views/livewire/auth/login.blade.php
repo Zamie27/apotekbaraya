@@ -17,9 +17,5 @@
         <p class="text-sm font-light text-gray-500 dark:text-gray-400">
             Tidak Memiliki Akun? <a href="#" class="font-medium text-primary-600 hover:underline dark:text-primary-500">Registrasi disini</a>
         </p>
-        <fieldset class="fieldset">
-            <legend class="fieldset-legend">What is your name?</legend>
-            <input type="text" class="input" placeholder="Type here" />
-        </fieldset>
     </fieldset>
 </div>
