@@ -3,19 +3,49 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>{{ $title ?? 'Pelanggan' }}</title>
+    <title>{{ $title ?? 'User' }}</title>
     @vite('resources/css/app.css')
     @livewireStyles
 </head>
 
-<body class="bg-gray-100">
-    <nav class="p-4 text-white bg-blue-500">
-        Dashboard Pelanggan Navbar
+<body class="min-h-screen bg-base-200">
+    <nav class="sticky top-0 z-50 bg-gray-100 shadow-sm dark:bg-gray-800">
+        <div class="container mx-auto navbar">
+            <div class="flex-1">
+                <a class="text-xl font-bold text-green-500" href="/pelanggan/dashboard">Apotek Baraya</a>
+            </div>
+            <div class="flex gap-5">
+                <input type="text" placeholder="Pencarian" class="w-24 input input-success input-bordered md:w-auto" />
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+                        <div class="w-10 rounded-full ring-success ring-offset-base-100 ring-2 ring-offset-2">
+                            <img
+                                alt="Tailwind CSS Navbar component"
+                                src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
+                        </div>
+                    </div>
+                    <ul
+                        tabindex="0"
+                        class="p-2 mt-3 shadow menu menu-sm dropdown-content bg-base-100 rounded-box z-1 w-52">
+                        <li>
+                            <a class="justify-between">
+                                Profile
+                                <span class="badge">New</span>
+                            </a>
+                        </li>
+                        <li><a>Settings</a></li>
+                        <li><a>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </nav>
 
-    <main class="p-6">
+
+    <div class="container mx-auto my-4">
         {{ $slot }}
-    </main>
+    </div>
+
 
     @livewireScripts
     <script src="//unpkg.com/alpinejs" defer></script>
