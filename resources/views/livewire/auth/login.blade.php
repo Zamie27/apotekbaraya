@@ -8,7 +8,7 @@
         <label class="label">Password</label>
         <input type="password" class="input" placeholder="Password" />
 
-        <button class="mt-4 btn btn-neutral">Login</button>
+        <button class="mt-4 btn btn-success">Login</button>
 
         <label class="label">
             <input type="checkbox" checked="checked" class="checkbox" />
