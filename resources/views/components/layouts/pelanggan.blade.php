@@ -29,12 +29,12 @@
                         class="p-2 mt-3 shadow menu menu-sm dropdown-content bg-base-100 rounded-box z-1 w-52">
                         <li>
                             <a class="justify-between">
-                                Profile
-                                <span class="badge">New</span>
+                                Profil
+                                <span class="badge">Baru</span>
                             </a>
                         </li>
-                        <li><a>Settings</a></li>
-                        <li><a>Logout</a></li>
+                        <li><a>Pengaturan</a></li>
+                        <li><a>Keluar</a></li>
                     </ul>
                 </div>
             </div>
