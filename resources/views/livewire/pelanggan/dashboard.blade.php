@@ -1,6 +1,5 @@
 <div>
-    
-    <div class="relative flex justify-center w-full">
+    <div class="relative flex justify-center w-full px-2 py-4">
         <button
             id="scrollLeftBtn"
             onclick="scrollKategori(-200)"
@@ -14,11 +13,11 @@
             id="scrollKategori"
             class="flex max-w-full gap-4 px-4 py-2 overflow-x-auto snap-x scroll-smooth no-scrollbar">
             @for ($i = 1; $i <= 2; $i++)
-                <button class="snap-start rounded-2xl scroll-ml-6 btn btn-success whitespace-nowrap">Kategori 1</button>
-                <button class="snap-start rounded-2xl scroll-ml-6 btn btn-success whitespace-nowrap">Kategori 2</button>
-                <button class="snap-start rounded-2xl scroll-ml-6 btn btn-success whitespace-nowrap">Kategori 3</button>
-                <button class="snap-start rounded-2xl scroll-ml-6 btn btn-success whitespace-nowrap">Kategori 4</button>
-                <button class="snap-start rounded-2xl scroll-ml-6 btn btn-success whitespace-nowrap">Kategori 5</button>
+                <button class="rounded-lg btn btn-success btn-md">Kategori 1</button>
+                <button class="rounded-lg btn btn-success btn-md">Kategori 2</button>
+                <button class="rounded-lg btn btn-success btn-md">Kategori 3</button>
+                <button class="rounded-lg btn btn-success btn-md">Kategori 4</button>
+                <button class="rounded-lg btn btn-success btn-md">Kategori 5</button>
                 @endfor
         </div>
 
@@ -32,41 +31,24 @@
         </button>
     </div>
 
-    <div class="flex flex-wrap justify-center gap-6 my-6">
-        @for ($i = 1; $i <= 6; $i++)
+    <!-- card -->
+    <div class="flex flex-wrap gap-4">
+        @for ($i = 1; $i <= 20; $i++)
             <div class="shadow-sm card bg-base-100 w-96">
-            <figure class="px-10 pt-10">
+            <figure>
                 <img
                     src="https://img.daisyui.com/images/stock/photo-1606107557195-0e29a4b5b4aa.webp"
-                    alt="Shoes"
-                    class="rounded-xl" />
+                    alt="Shoes" />
             </figure>
-            <div class="items-center text-center card-body">
+            <div class="card-body">
                 <h2 class="card-title">Card Title</h2>
                 <p>A card component has a figure, a body part, and inside body there are title and actions parts</p>
-                <div class="card-actions">
-                    <button class="btn btn-success">Buy Now</button>
+                <div class="justify-end card-actions">
+                    <button class="btn btn-primary">Buy Now</button>
                 </div>
             </div>
     </div>
     @endfor
-
-    @for ($i = 1; $i <= 6; $i++)
-        <div class="shadow-sm card bg-base-100 w-96">
-        <figure>
-            <img
-                src="https://img.daisyui.com/images/stock/photo-1606107557195-0e29a4b5b4aa.webp"
-                alt="Shoes" />
-        </figure>
-        <div class="items-center text-center card-body">
-            <h2 class="card-title">Card Title</h2>
-            <p>A card component has a figure, a body part, and inside body there are title and actions parts</p>
-            <div class="card-actions">
-                <button class="btn btn-success">Buy Now</button>
-            </div>
-        </div>
-</div>
-@endfor
 </div>
 
 <script>
@@ -100,18 +82,5 @@
     scrollContainer.addEventListener('scroll', updateButtonVisibility);
 </script>
 
-<div class="flex justify-center mt-10 relative -top-4 gap-2">
-  <input type="radio" name="options" id="opt1" class="hidden peer/opt1" checked>
-  <label for="opt1" class="join-item btn btn-square peer-checked/opt1:bg-green-500 peer-checked/opt1:text-white">1</label>
-
-  <input type="radio" name="options" id="opt2" class="hidden peer/opt2">
-  <label for="opt2" class="join-item btn btn-square peer-checked/opt2:bg-green-500 peer-checked/opt2:text-white">2</label>
-
-  <input type="radio" name="options" id="opt3" class="hidden peer/opt3">
-  <label for="opt3" class="join-item btn btn-square peer-checked/opt3:bg-green-500 peer-checked/opt3:text-white">3</label>
-
-  <input type="radio" name="options" id="opt4" class="hidden peer/opt4">
-  <label for="opt4" class="join-item btn btn-square peer-checked/opt4:bg-green-500 peer-checked/opt4:text-white">4</label>
-</div>
 
 </div>

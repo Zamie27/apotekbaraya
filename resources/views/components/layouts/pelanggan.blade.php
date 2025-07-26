@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
@@ -9,7 +9,7 @@
 </head>
 
 <body class="min-h-screen bg-base-200">
-    <nav class="sticky top-0 z-50 bg-gray-100 shadow-sm dark:bg-gray-800">
+    <nav class="sticky top-0 z-50 bg-gray-100 shadow-sm ">
         <div class="container mx-auto navbar">
             <div class="flex-1">
                 <a class="text-xl font-bold text-green-500" href="/pelanggan/dashboard">Apotek Baraya</a>
@@ -42,7 +42,7 @@
     </nav>
 
 
-    <div class="container mx-auto my-4">
+    <div class="container mx-auto ">
         {{ $slot }}
     </div>
 
