@@ -5,7 +5,7 @@ namespace App\Livewire\Pelanggan;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 
-#[Layout('components.layouts.pelanggan')]
+#[Layout('components.layouts.user')]
 class Dashboard extends Component
 {
     public function render()
