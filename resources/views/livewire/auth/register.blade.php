@@ -1,4 +1,4 @@
-<div>
+<div class="flex justify-center items-center w-full pt-10">
     <fieldset class="p-4 border fieldset bg-base-200 border-base-300 rounded-box w-xs">
         <legend class="fieldset-legend">Registrasi</legend>
 

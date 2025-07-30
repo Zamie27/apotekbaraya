@@ -8,18 +8,32 @@ namespace App\Models {
      * @property \Illuminate\Support\Carbon|null $updated_at
      * @property \Illuminate\Support\Carbon|null $created_at
      * @property string|null $remember_token
+     * @property string|null $avatar
+     * @property mixed $gender
+     * @property string|null $date_of_birth
+     * @property mixed $status
+     * @property mixed $role_id
      * @property string $password
      * @property \Illuminate\Support\Carbon|null $email_verified_at
+     * @property string|null $phone
      * @property string $email
+     * @property string $username
      * @property string $name
-     * @property int $id
+     * @property mixed $user_id
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
      * @property-read int|null $notifications_count
-     * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereId($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereUserId($value)
      * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereName($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereUsername($value)
      * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereEmail($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<User>|User wherePhone($value)
      * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereEmailVerifiedAt($value)
      * @method static \Illuminate\Database\Eloquent\Builder<User>|User wherePassword($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereRoleId($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereStatus($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereDateOfBirth($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereGender($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereAvatar($value)
      * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereRememberToken($value)
      * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereCreatedAt($value)
      * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereUpdatedAt($value)
