@@ -6,6 +6,7 @@ use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Apoteker\Dashboard as ApotekerDashboard;
 use App\Livewire\Kurir\Dashboard as KurirDashboard;
 use App\Livewire\Pelanggan\Dashboard as PelangganDashboard;
+use App\Livewire\Pelanggan\Deskripsi as PelangganProduk;
 use App\Livewire\Auth\Login;
 use App\Livewire\Auth\Register;
 use Illuminate\Support\Facades\Route;
@@ -82,6 +83,7 @@ Route::middleware('auth')->group(function () {
     // Pelanggan routes - only pelanggan can access
     Route::middleware('role:pelanggan')->group(function () {
         Route::get('/pelanggan/dashboard', PelangganDashboard::class);
+        Route::get('/pelanggan/produk', PelangganProduk::class);
         // Add more pelanggan routes here
         // Route::get('/pelanggan/profile', PelangganProfile::class);
         // Route::get('/pelanggan/orders', PelangganOrders::class);
