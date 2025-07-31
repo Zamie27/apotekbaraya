@@ -47,12 +47,7 @@
                         class="p-2 mt-3 shadow menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] w-52">
                         <li><a href="/pelanggan/profile">Profil</a></li>
                         <li><a href="/pelanggan/settings">Pengaturan</a></li>
-                        <li>
-                            <form method="POST" action="/logout">
-                                @csrf
-                                <button type="submit" class="text-left text-red-600 hover:bg-base-200">Keluar</button>
-                            </form>
-                        </li>
+                        <li><a href="/logout" class="text-left text-red-600 hover:bg-base-200">Keluar</a></li>
                     </ul>
                 </div>
             </div>

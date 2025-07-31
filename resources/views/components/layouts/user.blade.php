@@ -58,12 +58,7 @@
                         <li><a href="/pelanggan/profile">Profil</a></li>
                         <li><a href="/pelanggan/settings">Pengaturan</a></li>
                         <li><a href="/pelanggan/orders">Pesanan Saya</a></li>
-                        <li>
-                            <form method="POST" action="/logout">
-                                @csrf
-                                <button type="submit" class="text-left text-red-600 hover:bg-base-200">Keluar</button>
-                            </form>
-                        </li>
+                        <li><a href="/logout" class="text-left text-red-600 hover:bg-base-200">Keluar</a></li>
                     </ul>
                 </div>
                 @else

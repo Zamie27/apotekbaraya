@@ -28,9 +28,12 @@ Route::get('/', function () {
         }
     }
 
-    // If guest, show public homepage
-    return app(Dashboard::class);
-});
+    // If guest, redirect to public homepage
+    return redirect('/dashboard');
+})->name('root');
+
+// Public homepage for guests
+Route::get('/dashboard', Dashboard::class)->name('home');
 
 // Public routes that everyone can access
 Route::get('/about', function () {
@@ -49,8 +52,8 @@ Route::middleware('guest')->group(function () {
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {
-    // Logout
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    // Logout - ubah dari POST ke GET untuk kemudahan
+    Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // Admin routes - only admin can access
     Route::middleware('role:admin')->group(function () {
