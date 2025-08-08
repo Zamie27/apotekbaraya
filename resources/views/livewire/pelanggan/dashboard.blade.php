@@ -36,25 +36,29 @@
     </div>
 
     <div class="container flex flex-wrap justify-center gap-8 mx-auto my-5">
+
         @for ($i = 1; $i <= 20; $i++)
-            <div class="transition-all duration-200 shadow-lg cursor-pointer card card-sm bg-base-100 w-55 hover:shadow-xl">
-            <a href="produk/" class="block">
-                <figure>
-                    <img
-                        src="https://img.daisyui.com/images/stock/photo-1606107557195-0e29a4b5b4aa.webp"
-                        alt="Shoes" />
-                </figure>
-                <div class="card-body">
-                    <h2 class="mb-3 font-semibold truncate card-title">
-                        Lorem ipsum dolor sit amet consectetur adipisicing.
-                    </h2>
-                    <p class="text-lg font-bold text-gray-600">Rp. 250.000</p>
+
+            <div class="card w-64 bg-base-100 shadow-xl group hover:shadow-2xl transition overflow-hidden">
+            <figure class="relative">
+                <a href="/pelanggan/produk">
+                    <img src="https://img.daisyui.com/images/profile/demo/spiderperson@192.webp" alt="#" class="object-cover w-full h-64" />
+                </a>
+
+                <!-- Tombol -->
+                <div class="absolute left-0 right-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
+                    <button class="btn btn-success w-full font-bold rounded-none">
+                        TAMBAH KE KERANJANG
+                    </button>
                 </div>
-            </a>
-            <div class="px-4 pb-4">
-                <button class="w-full btn btn-outline btn-success">Buy Now</button>
+            </figure>
+            <div class="card-body p-4">
+                <a href="/pelanggan/produk" class="card-title text-base font-bold truncate hover:text-success">Nama Barang</a>
+                <p class="text-base font-semibold text-gray-600">Rp 100.000</p>
             </div>
     </div>
+
+
     @endfor
 </div>
 

@@ -5,7 +5,10 @@
     <meta charset="UTF-8">
     <link rel="icon" href="/src/img/logo.png">
     <title>{{ $title ?? 'Apotek Baraya' }}</title>
-    @vite('resources/css/app.css')
+    <!-- vite -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- vite end -->
+
     @livewireStyles
 </head>
 
