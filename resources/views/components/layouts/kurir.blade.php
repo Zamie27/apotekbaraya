@@ -24,12 +24,12 @@
                 @auth
                 <!-- Notification Bell (only for logged in users) -->
                 <button class="p-2 btn btn-circle hover:bg-gray-200">
-                    <i data-feather="bell" class="text-gray-700"></i>
+                    <x-icons.bell class="text-gray-700" />
                 </button>
 
                 <!-- Mail Icon (only for logged in users) -->
                 <button class="p-2 btn btn-circle hover:bg-gray-200">
-                    <i data-feather="mail" class="text-gray-700"></i>
+                    <x-icons.mail class="text-gray-700" />
                 </button>
                 @endauth
 
@@ -39,14 +39,14 @@
                         <div class="w-10 rounded-full ring-success ring-offset-base-100 ring-2 ring-offset-2">
                             <img
                                 alt="Profile Picture"
-                                src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
+                                src="{{ auth()->user()->getAvatarUrl() }}" />
                         </div>
                     </div>
                     <ul
                         tabindex="0"
                         class="p-2 mt-3 shadow menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] w-52">
-                        <li><a href="/pelanggan/profile">Profil</a></li>
-                        <li><a href="/pelanggan/settings">Pengaturan</a></li>
+                        <li><a href="/kurir/profile">Profil</a></li>
+                        <li><a href="/kurir/settings">Pengaturan</a></li>
                         <li><a href="/logout" class="text-left text-red-600 hover:bg-base-200">Keluar</a></li>
                     </ul>
                 </div>
@@ -166,11 +166,7 @@
     @livewireScripts
     <script src="//unpkg.com/alpinejs" defer></script>
 
-    <!-- Feather Icons -->
-    <script src="https://unpkg.com/feather-icons"></script>
-    <script>
-        feather.replace()
-    </script>
+
 </body>
 
 </html>

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\UserAddress;
 
 class User extends Authenticatable
 {
@@ -45,6 +46,42 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class, 'role_id', 'role_id');
     }
 
+    /**
+     * Get user avatar URL with fallback to role-based default
+     * 
+     * @return string
+     */
+    public function getAvatarUrl()
+    {
+        // Check if user has custom avatar
+        if ($this->avatar && file_exists(storage_path('app/public/' . $this->avatar))) {
+            return asset('storage/' . $this->avatar);
+        }
+        
+        // Return role-based default avatar
+        return $this->getDefaultAvatarByRole();
+    }
+
+    /**
+     * Get default avatar based on user role
+     * 
+     * @return string
+     */
+    private function getDefaultAvatarByRole()
+    {
+        $roleAvatars = [
+            'admin' => asset('src/img/avatars/default-admin.svg'),
+            'apoteker' => asset('src/img/avatars/default-apoteker.svg'),
+            'kurir' => asset('src/img/avatars/default-kurir.svg'),
+            'pelanggan' => asset('src/img/avatars/default-pelanggan.svg'),
+        ];
+
+        // Get user's primary role name
+        $userRole = $this->role ? $this->role->name : 'pelanggan';
+        
+        return $roleAvatars[$userRole] ?? $roleAvatars['pelanggan'];
+    }
+
     // Helper methods untuk check role
     public function isAdmin()
     {
@@ -67,10 +104,10 @@ class User extends Authenticatable
     }
 
     // Relasi lainnya
-    // public function addresses()
-    // {
-    //     return $this->hasMany(UserAddress::class, 'user_id', 'user_id');
-    // }
+    public function addresses()
+    {
+        return $this->hasMany(UserAddress::class, 'user_id', 'user_id');
+    }
 
     // public function notifications()
     // {
@@ -82,8 +119,25 @@ class User extends Authenticatable
     //     return $this->hasMany(Order::class, 'user_id', 'user_id');
     // }
 
-    // public function cart()
-    // {
-    //     return $this->hasMany(Cart::class, 'user_id', 'user_id');
-    // }
+    public function cart()
+    {
+        return $this->hasOne(Cart::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Get or create user's cart
+     */
+    public function getOrCreateCart()
+    {
+        return Cart::getOrCreateForUser($this->user_id);
+    }
+
+    /**
+     * Get cart items count
+     */
+    public function getCartItemsCountAttribute()
+    {
+        $cart = $this->cart;
+        return $cart ? $cart->total_items : 0;
+    }
 }

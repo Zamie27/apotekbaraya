@@ -18,15 +18,6 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamp('updated_at');
         });
-
-        Schema::create('carts', function (Blueprint $table) {
-            $table->id('cart_id');
-            $table->foreignId('user_id')->constrained('users', 'user_id');
-            $table->foreignId('product_id')->constrained('products', 'product_id');
-            $table->integer('quantity');
-            $table->timestamps();
-            $table->unique(['user_id', 'product_id']);
-        });
     }
 
     /**
@@ -35,6 +26,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('shipping_statuses');
-        Schema::dropIfExists('carts');
     }
 };

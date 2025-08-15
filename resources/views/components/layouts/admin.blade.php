@@ -30,15 +30,15 @@
                         <div class="w-10 rounded-full ring-success ring-offset-base-100 ring-2 ring-offset-2">
                             <img
                                 alt="Profile Picture"
-                                src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
+                                src="{{ auth()->user()->getAvatarUrl() }}" />
                         </div>
                     </div>
                     <ul
                         tabindex="0"
                         class="p-2 mt-3 shadow menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] w-52">
-                        <li><a href="/pelanggan/profile">Profil</a></li>
-                        <li><a href="/pelanggan/settings">Pengaturan</a></li>
-                        <li><a href="/pelanggan/orders">Pesanan Saya</a></li>
+                        <li><a href="/admin/profile">Profil</a></li>
+                        <li><a href="/admin/settings">Pengaturan</a></li>
+                        <li><a href="/admin/orders">Pesanan</a></li>
                         <li><a href="/logout" class="text-left text-red-600 hover:bg-base-200">Keluar</a></li>
                     </ul>
                 </div>
@@ -51,26 +51,26 @@
             <ul class="space-y-2 font-medium">
                 <li>
                     <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group">
-                        <i data-feather="pie-chart" class="w-5 h-5 text-gray-500 transition duration-75 shrink-0 group-hover:text-gray-900" aria-hidden="true"></i>
+                        <x-icons.pie-chart class="w-5 h-5 text-gray-500 transition duration-75 shrink-0 group-hover:text-gray-900" />
                         <span class="ms-3">Dashboard</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group">
-                        <i data-feather="inbox" class="w-5 h-5 text-gray-500 transition duration-75 shrink-0 group-hover:text-gray-900" aria-hidden="true"></i>
+                        <x-icons.inbox class="w-5 h-5 text-gray-500 transition duration-75 shrink-0 group-hover:text-gray-900" />
                         <span class="flex-1 ms-3 whitespace-nowrap">Inbox</span>
                         <span class="inline-flex items-center justify-center w-3 h-3 p-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full ms-3 ">3</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group">
-                        <i data-feather="users" class="w-5 h-5 text-gray-500 transition duration-75 shrink-0 group-hover:text-gray-900" aria-hidden="true"></i>
+                        <x-icons.users class="w-5 h-5 text-gray-500 transition duration-75 shrink-0 group-hover:text-gray-900" />
                         <span class="flex-1 ms-3 whitespace-nowrap">Users</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group">
-                        <i data-feather="shopping-bag" class="w-5 h-5 text-gray-500 transition duration-75 shrink-0 group-hover:text-gray-900" aria-hidden="true"></i>
+                        <x-icons.shopping-bag class="w-5 h-5 text-gray-500 transition duration-75 shrink-0 group-hover:text-gray-900" />
                         <span class="flex-1 ms-3 whitespace-nowrap">Products</span>
                     </a>
                 </li>
@@ -85,11 +85,7 @@
     @livewireScripts
     <script src="//unpkg.com/alpinejs" defer></script>
 
-    <!-- Feather Icons -->
-    <script src="https://unpkg.com/feather-icons"></script>
-    <script>
-        feather.replace()
-    </script>
+
 </body>
 
 </html>

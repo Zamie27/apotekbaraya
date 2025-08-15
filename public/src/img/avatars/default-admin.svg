@@ -1,0 +1,22 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="50" fill="#10B981"/>
+  
+  <!-- Admin icon -->
+  <g transform="translate(50,50)">
+    <!-- Head -->
+    <circle cx="0" cy="-10" r="12" fill="white"/>
+    
+    <!-- Body -->
+    <path d="M -15 5 Q -15 0 -10 0 L 10 0 Q 15 0 15 5 L 15 25 Q 15 30 10 30 L -10 30 Q -15 30 -15 25 Z" fill="white"/>
+    
+    <!-- Crown/Admin symbol -->
+    <path d="M -8 -22 L -4 -18 L 0 -22 L 4 -18 L 8 -22 L 6 -16 L -6 -16 Z" fill="#FCD34D"/>
+    
+    <!-- Tie -->
+    <path d="M -2 5 L 2 5 L 3 15 L -3 15 Z" fill="#10B981"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="50" y="85" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="8" font-weight="bold">ADMIN</text>
+</svg>

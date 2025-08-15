@@ -1,0 +1,133 @@
+<?php
+
+namespace App\Livewire;
+
+use App\Models\Product;
+use App\Services\CartService;
+use Livewire\Component;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Validate;
+
+#[Layout('components.layouts.user')]
+class Deskripsi extends Component
+{
+    public $productId;
+    public $product;
+    
+    #[Validate('required|integer|min:1|max:999')]
+    public $quantity = 1;
+    
+    protected $cartService;
+    
+    public function boot(CartService $cartService)
+    {
+        $this->cartService = $cartService;
+    }
+    
+    /**
+     * Sanitize quantity input - only numbers, max 999
+     */
+    public function updatedQuantity($value)
+    {
+        $this->quantity = (int) preg_replace('/[^0-9]/', '', $value);
+        $this->quantity = max(1, min(999, $this->quantity));
+    }
+    
+    /**
+     * Mount component with product ID parameter
+     */
+    public function mount($id = null)
+    {
+        // Debug: Log the received ID
+        \Log::info('Deskripsi mount called with ID: ' . ($id ?? 'null'));
+        
+        // Check if product ID is provided
+        if (!$id) {
+            abort(404, 'ID produk tidak ditemukan');
+        }
+        
+        $this->productId = $id;
+        
+        // Load product with relationships
+        $this->product = Product::with(['category', 'images'])
+            ->find($this->productId);
+            
+        // Redirect to 404 if product not found
+        if (!$this->product) {
+            abort(404, 'Produk tidak ditemukan');
+        }
+    }
+    
+    /**
+     * Increase quantity
+     */
+    public function increaseQuantity()
+    {
+        if ($this->quantity < $this->product->stock) {
+            $this->quantity++;
+        }
+    }
+    
+    /**
+     * Decrease quantity
+     */
+    public function decreaseQuantity()
+    {
+        if ($this->quantity > 1) {
+            $this->quantity--;
+        }
+    }
+    
+    /**
+     * Handle add to cart action
+     * Redirect to login if user is not authenticated
+     */
+    public function addToCart()
+    {
+        if (!auth()->check()) {
+            $this->dispatch('show-toast', 'error', 'Silakan login terlebih dahulu untuk menambahkan produk ke keranjang.', 5000);
+            return redirect()->route('login');
+        }
+        
+        // Check if product is available
+        if (!$this->product->is_available) {
+            $this->dispatch('show-toast', 'error', 'Produk sedang tidak tersedia.', 5000);
+            return;
+        }
+        
+        // Check if quantity is valid
+        if ($this->quantity > $this->product->stock) {
+            $this->dispatch('show-toast', 'error', 'Jumlah melebihi stok yang tersedia.', 5000);
+            return;
+        }
+        
+        try {
+            // Add to cart using CartService
+            $result = $this->cartService->addToCart($this->product->product_id, $this->quantity);
+
+            if ($result['success']) {
+                // Dispatch event to update cart counter
+                $this->dispatch('cart-updated');
+                
+                // Show success toast notification
+                $this->dispatch('show-toast', 'success', $result['message'], 4000);
+                
+                // Reset quantity to 1
+                $this->quantity = 1;
+            } else {
+                // Show error toast notification
+                $this->dispatch('show-toast', 'error', $result['message'], 5000);
+            }
+        } catch (\Exception $e) {
+            // Show error toast notification for exceptions
+            $this->dispatch('show-toast', 'error', 'Terjadi kesalahan saat menambahkan produk ke keranjang.', 5000);
+        }
+    }
+    
+    public function render()
+    {
+        return view('livewire.deskripsi', [
+            'product' => $this->product
+        ]);
+    }
+}

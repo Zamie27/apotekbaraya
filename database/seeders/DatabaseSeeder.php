@@ -57,5 +57,11 @@ class DatabaseSeeder extends Seeder
             'role_id' => $pelangganRole->role_id,
             'email_verified_at' => now(),
         ]);
+
+        // Seed categories and products
+        $this->call([
+            CategorySeeder::class,
+            ProductSeeder::class,
+        ]);
     }
 }

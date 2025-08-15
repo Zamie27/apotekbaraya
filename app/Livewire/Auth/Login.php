@@ -10,13 +10,22 @@ use Livewire\Component;
 #[Layout('components.layouts.user')]
 class Login extends Component
 {
-    #[Validate('required|email')]
+    #[Validate('required|email|max:255')]
     public $email = '';
 
-    #[Validate('required|min:6')]
+    #[Validate('required|min:8|max:255')]
     public $password = '';
 
     public $remember = false;
+
+    /**
+     * Sanitize password input - allow letters, numbers, and specific symbols
+     */
+    public function updatedPassword($value)
+    {
+        $this->password = preg_replace('/[^a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?]/', '', $value);
+        $this->password = substr($this->password, 0, 255);
+    }
 
     public function login()
     {
@@ -37,7 +46,7 @@ class Login extends Component
                     return redirect('/kurir/dashboard');
                 case 'pelanggan':
                 default:
-                    return redirect('/pelanggan/dashboard');
+                    return redirect('/');
             }
         }
 

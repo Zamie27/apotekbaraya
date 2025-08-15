@@ -27,22 +27,20 @@
                 @auth
                 <!-- Notification Bell (only for logged in users) -->
                 <button class="p-2 btn btn-circle hover:bg-gray-200">
-                    <i data-feather="bell" class="text-gray-700"></i>
+                    <x-icons.bell class="text-gray-700" />
                 </button>
 
-                <!-- Mail Icon (only for logged in users) -->
-                <button class="p-2 btn btn-circle hover:bg-gray-200">
-                    <i data-feather="shopping-cart" class="text-gray-700"></i>
-                </button>
+                <!-- Cart Icon with Counter (only for logged in users) -->
+                <a href="{{ route('cart') }}" class="relative p-2 btn btn-circle hover:bg-gray-200">
+                    <x-icons.shopping-cart class="text-gray-700" />
+                    <span id="cart-counter" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 items-center justify-center hidden">
+                        0
+                    </span>
+                </a>
                 @endauth
 
                 <!-- Search Bar -->
-                <div class="flex join">
-                    <input type="text" placeholder="Pencarian" class="rounded-r-none input input-success input-bordered" />
-                    <button class="rounded-l-none btn btn-success">
-                        <i data-feather="search"></i>
-                    </button>
-                </div>
+                @livewire('navbar-search')
 
                 <!-- Auth Section -->
                 @auth
@@ -52,15 +50,15 @@
                         <div class="w-10 rounded-full ring-success ring-offset-base-100 ring-2 ring-offset-2">
                             <img
                                 alt="Profile Picture"
-                                src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
+                                src="{{ auth()->user()->getAvatarUrl() }}" />
                         </div>
                     </div>
                     <ul
                         tabindex="0"
                         class="p-2 mt-3 shadow menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] w-52">
-                        <li><a href="/pelanggan/profile">Profil</a></li>
-                        <li><a href="/pelanggan/settings">Pengaturan</a></li>
-                        <li><a href="/pelanggan/orders">Pesanan Saya</a></li>
+                        <li><a href="/profile">Profil</a></li>
+                        <li><a href="/settings">Pengaturan</a></li>
+                        <li><a href="/orders">Pesanan Saya</a></li>
                         <li><a href="/logout" class="text-left text-red-600 hover:bg-base-200">Keluar</a></li>
                     </ul>
                 </div>
@@ -185,13 +183,46 @@
     </footer>
 
     @livewireScripts
-    <script src="//unpkg.com/alpinejs" defer></script>
 
-    <!-- Feather Icons -->
-    <script src="https://unpkg.com/feather-icons"></script>
+    <!-- Alpine.js for interactive components -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     <script>
-        feather.replace()
+
+        // Update cart counter
+        function updateCartCounter() {
+            @auth
+            fetch('/api/cart/count')
+                .then(response => response.json())
+                .then(data => {
+                    const counter = document.getElementById('cart-counter');
+                    if (data.count > 0) {
+                        counter.textContent = data.count;
+                        counter.classList.remove('hidden');
+                    } else {
+                        counter.classList.add('hidden');
+                    }
+                })
+                .catch(error => console.error('Error updating cart counter:', error));
+            @endauth
+        }
+
+        // Update counter on page load
+        document.addEventListener('DOMContentLoaded', updateCartCounter);
+
+        // Listen for Livewire events
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('cart-updated', () => {
+                updateCartCounter();
+            });
+        });
     </script>
+
+    <!-- Confirmation Modal -->
+    @livewire('confirmation-modal')
+
+    <!-- Toast Notifications -->
+    @livewire('toast-notification')
 </body>
 
 </html>

@@ -2,11 +2,14 @@
 
 use App\Http\Controllers\AuthController;
 use App\Livewire\Dashboard;
+use App\Livewire\Kategori;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Apoteker\Dashboard as ApotekerDashboard;
 use App\Livewire\Kurir\Dashboard as KurirDashboard;
-use App\Livewire\Pelanggan\Dashboard as PelangganDashboard;
-use App\Livewire\Pelanggan\Deskripsi as PelangganProduk;
+use App\Livewire\Admin\Profile as AdminProfile;
+use App\Livewire\Apoteker\Profile as ApotekerProfile;
+use App\Livewire\Kurir\Profile as KurirProfile;
+use App\Livewire\Profile;
 use App\Livewire\Auth\Login;
 use App\Livewire\Auth\Register;
 use Illuminate\Support\Facades\Route;
@@ -23,9 +26,9 @@ Route::get('/', function () {
             case 'kurir':
                 return redirect('/kurir/dashboard');
             case 'pelanggan':
-                return redirect('/pelanggan/dashboard');
+                return redirect('/dashboard'); // Redirect pelanggan ke dashboard utama
             default:
-                return redirect('/pelanggan/dashboard');
+                return redirect('/dashboard'); // Default juga ke dashboard utama
         }
     }
 
@@ -36,13 +39,18 @@ Route::get('/', function () {
 // Public homepage for guests
 Route::get('/dashboard', Dashboard::class)->name('home');
 
-// Public routes that everyone can access
-Route::get('/about', function () {
-    return view('pages.about');  // You can create this later
-});
+// Public product description page (accessible by guests)
+Route::get('/produk/{id?}', \App\Livewire\Deskripsi::class)->name('produk.deskripsi');
 
-Route::get('/contact', function () {
-    return view('pages.contact');  // You can create this later
+// Public search page (accessible by guests)
+Route::get('/search', \App\Livewire\Search::class)->name('search');
+
+// Public category page (accessible by guests)
+Route::get('/kategori/{slug?}', Kategori::class)->name('kategori');
+
+// Cart page (requires authentication)
+Route::middleware('auth')->group(function () {
+    Route::get('/cart', \App\Livewire\Cart::class)->name('cart');
 });
 
 // Guest only routes (redirect to dashboard if authenticated)
@@ -59,6 +67,7 @@ Route::middleware('auth')->group(function () {
     // Admin routes - only admin can access
     Route::middleware('role:admin')->group(function () {
         Route::get('/admin/dashboard', AdminDashboard::class);
+        Route::get('/admin/profile', AdminProfile::class);
         // Add more admin routes here
         // Route::get('/admin/users', AdminUsers::class);
         // Route::get('/admin/products', AdminProducts::class);
@@ -67,6 +76,7 @@ Route::middleware('auth')->group(function () {
     // Apoteker routes - only apoteker can access
     Route::middleware('role:apoteker')->group(function () {
         Route::get('/apoteker/dashboard', ApotekerDashboard::class);
+        Route::get('/apoteker/profile', ApotekerProfile::class);
         // Add more apoteker routes here
         // Route::get('/apoteker/prescriptions', ApotekerPrescriptions::class);
         // Route::get('/apoteker/inventory', ApotekerInventory::class);
@@ -75,6 +85,7 @@ Route::middleware('auth')->group(function () {
     // Kurir routes - only kurir can access
     Route::middleware('role:kurir')->group(function () {
         Route::get('/kurir/dashboard', KurirDashboard::class);
+        Route::get('/kurir/profile', KurirProfile::class);
         // Add more kurir routes here
         // Route::get('/kurir/deliveries', KurirDeliveries::class);
         // Route::get('/kurir/routes', KurirRoutes::class);
@@ -82,11 +93,10 @@ Route::middleware('auth')->group(function () {
 
     // Pelanggan routes - only pelanggan can access
     Route::middleware('role:pelanggan')->group(function () {
-        Route::get('/pelanggan/dashboard', PelangganDashboard::class);
-        Route::get('/pelanggan/produk', PelangganProduk::class);
+        // Dashboard pelanggan sekarang menggunakan dashboard utama di /dashboard
+        Route::get('/profile', Profile::class);
         // Add more pelanggan routes here
-        // Route::get('/pelanggan/profile', PelangganProfile::class);
-        // Route::get('/pelanggan/orders', PelangganOrders::class);
-        // Route::get('/pelanggan/cart', PelangganCart::class);
+        // Route::get('/orders', PelangganOrders::class);
+        // Route::get('/cart', PelangganCart::class);
     });
 });

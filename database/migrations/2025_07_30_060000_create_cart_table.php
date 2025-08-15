@@ -1,0 +1,45 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('carts', function (Blueprint $table) {
+            $table->id('cart_id');
+            $table->foreignId('user_id')->constrained('users', 'user_id')->onDelete('cascade');
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
+
+            $table->index('user_id');
+        });
+
+        Schema::create('cart_items', function (Blueprint $table) {
+            $table->id('cart_item_id');
+            $table->foreignId('cart_id')->constrained('carts', 'cart_id')->onDelete('cascade');
+            $table->foreignId('product_id')->constrained('products', 'product_id')->onDelete('cascade');
+            $table->integer('quantity')->default(1);
+            $table->decimal('price', 12, 2); // Store price at time of adding to cart
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
+
+            $table->index(['cart_id', 'product_id']);
+            $table->unique(['cart_id', 'product_id']); // Prevent duplicate products in same cart
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('cart_items');
+        Schema::dropIfExists('carts');
+    }
+};
