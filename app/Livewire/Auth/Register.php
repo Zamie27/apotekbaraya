@@ -25,7 +25,7 @@ class Register extends Component
     #[Validate('required|min:10|max:15|regex:/^[0-9]+$/')]
     public $phone = '';
 
-    #[Validate('required|min:8|max:255|regex:/^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?])[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?]+$/')]
+    #[Validate('required|min:8|max:255')]
     public $password = '';
 
     #[Validate('required|same:password')]
@@ -33,41 +33,8 @@ class Register extends Component
 
     public $terms = false;
 
-    /**
-     * Sanitize name input - only letters and spaces
-     */
-    public function updatedName($value)
-    {
-        $this->name = preg_replace('/[^a-zA-Z\s]/', '', $value);
-        $this->name = trim(substr($this->name, 0, 100));
-    }
-
-    /**
-     * Sanitize username input - only letters, numbers, and underscore
-     */
-    public function updatedUsername($value)
-    {
-        $this->username = preg_replace('/[^a-zA-Z0-9_]/', '', $value);
-        $this->username = trim(substr($this->username, 0, 50));
-    }
-
-    /**
-     * Sanitize phone input - only numbers
-     */
-    public function updatedPhone($value)
-    {
-        $this->phone = preg_replace('/[^0-9]/', '', $value);
-        $this->phone = substr($this->phone, 0, 15);
-    }
-
-    /**
-     * Sanitize password input - allow letters, numbers, and specific symbols
-     */
-    public function updatedPassword($value)
-    {
-        $this->password = preg_replace('/[^a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?]/', '', $value);
-        $this->password = substr($this->password, 0, 255);
-    }
+    // Laravel validation will handle input security
+    // Removed preg_replace sanitization to rely on Laravel's built-in security
 
     public function register()
     {
@@ -91,11 +58,10 @@ class Register extends Component
             'role_id' => $pelangganRole->role_id,
         ]);
 
-        Auth::login($user);
-
-        session()->regenerate();
-
-        return redirect('/pelanggan/dashboard');
+        // Redirect to login page with success message instead of auto-login
+        session()->flash('success', 'Akun berhasil dibuat! Silakan masuk dengan email dan password yang telah Anda buat.');
+        
+        return redirect('/login');
     }
 
     public function render()

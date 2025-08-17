@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users', 'user_id')->onDelete('cascade');
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
-
+            
             $table->index('user_id');
         });
 
@@ -28,7 +28,7 @@ return new class extends Migration
             $table->decimal('price', 12, 2); // Store price at time of adding to cart
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
-
+            
             $table->index(['cart_id', 'product_id']);
             $table->unique(['cart_id', 'product_id']); // Prevent duplicate products in same cart
         });

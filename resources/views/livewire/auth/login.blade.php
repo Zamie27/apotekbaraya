@@ -2,6 +2,16 @@
     <fieldset class="p-6 border fieldset bg-base-200 border-base-300 rounded-box w-96">
         <legend class="text-lg font-semibold fieldset-legend">Masuk</legend>
 
+        {{-- Flash Message for Registration Success --}}
+        @if (session('success'))
+            <div class="alert alert-success mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ session('success') }}</span>
+            </div>
+        @endif
+
         <form wire:submit="login">
             <div class="mb-4">
                 <label class="label">

@@ -106,8 +106,13 @@
                         +
                     </button>
                 </div>
-                <button wire:click="addToCart" class="btn btn-success uppercase">
-                    Tambah ke Keranjang
+                <button
+                    wire:click="addToCart"
+                    class="btn btn-success uppercase"
+                    wire:loading.attr="disabled"
+                    wire:loading.class="loading">
+                    <span wire:loading.remove>Tambah ke Keranjang</span>
+                    <span wire:loading>Menambahkan...</span>
                 </button>
             </div>
             @else

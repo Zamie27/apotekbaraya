@@ -18,14 +18,8 @@ class Login extends Component
 
     public $remember = false;
 
-    /**
-     * Sanitize password input - allow letters, numbers, and specific symbols
-     */
-    public function updatedPassword($value)
-    {
-        $this->password = preg_replace('/[^a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?]/', '', $value);
-        $this->password = substr($this->password, 0, 255);
-    }
+    // Laravel validation will handle input security
+    // Removed preg_replace sanitization to rely on Laravel's built-in security
 
     public function login()
     {

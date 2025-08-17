@@ -16,12 +16,18 @@ class UserAddress extends Model
         'label',
         'recipient_name',
         'phone',
-        'address',
-        'district',
-        'city',
+        'village',           // Desa
+        'sub_district',      // Kecamatan (new detailed field)
+        'district',          // Keep for backward compatibility
+        'regency',           // Kabupaten
+        'city',              // Keep for backward compatibility
+        'province',          // Provinsi
         'postal_code',
+        'detailed_address',  // Alamat lengkap spesifik untuk kurir
         'notes',
         'is_default',
+        'latitude',
+        'longitude',
     ];
 
     protected $casts = [

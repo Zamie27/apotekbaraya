@@ -20,7 +20,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 // Cart API Routes
-Route::middleware('web')->group(function () {
+Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/cart/count', [CartController::class, 'getCartCount'])->name('api.cart.count');
     Route::get('/cart/summary', [CartController::class, 'getCartSummary'])->name('api.cart.summary');
 });

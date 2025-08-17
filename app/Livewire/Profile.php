@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use App\Models\UserAddress;
+use App\Services\CheckoutService;
 
 class Profile extends Component
 {
@@ -41,10 +42,10 @@ class Profile extends Component
     public $current_avatar;
 
     // Password fields
-    #[Validate('nullable|string|min:8|max:255|regex:/^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?])[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?]+$/')]
+    #[Validate('nullable|string|min:8|max:255')]
     public $current_password;
 
-    #[Validate('nullable|string|min:8|max:255|confirmed|regex:/^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?])[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?]+$/')]
+    #[Validate('nullable|string|min:8|max:255|confirmed')]
     public $new_password;
 
     #[Validate('nullable|string|min:8|max:255')]
@@ -70,13 +71,28 @@ class Profile extends Component
     public $address;
     
     #[Validate('required|string|max:100')]
-    public $district;
+    public $village; // Desa
     
     #[Validate('required|string|max:100')]
-    public $city;
+    public $sub_district; // Kecamatan
+    
+    #[Validate('required|string|max:100')]
+    public $district; // Keep for backward compatibility
+    
+    #[Validate('required|string|max:100')]
+    public $regency; // Kabupaten
+    
+    #[Validate('required|string|max:100')]
+    public $city; // Keep for backward compatibility
+    
+    #[Validate('required|string|max:100')]
+    public $province; // Provinsi
     
     #[Validate('required|string|max:10|regex:/^[0-9]+$/')]
     public $postal_code;
+    
+    #[Validate('nullable|string|max:1000')]
+    public $detailed_address; // Alamat lengkap spesifik untuk kurir
     
     #[Validate('nullable|string|max:255')]
     public $notes;
@@ -84,77 +100,8 @@ class Profile extends Component
     #[Validate('boolean')]
     public $is_default = false;
 
-    /**
-     * Sanitize name input - only letters and spaces
-     */
-    public function updatedName($value)
-    {
-        $this->name = preg_replace('/[^a-zA-Z\s]/', '', $value);
-        $this->name = trim(substr($this->name, 0, 100));
-    }
-
-    /**
-     * Sanitize username input - only letters, numbers, and underscore
-     */
-    public function updatedUsername($value)
-    {
-        $this->username = preg_replace('/[^a-zA-Z0-9_]/', '', $value);
-        $this->username = trim(substr($this->username, 0, 50));
-    }
-
-    /**
-     * Sanitize phone input - only numbers
-     */
-    public function updatedPhone($value)
-    {
-        $this->phone = preg_replace('/[^0-9]/', '', $value);
-        $this->phone = substr($this->phone, 0, 15);
-    }
-
-    /**
-     * Sanitize current password input
-     */
-    public function updatedCurrentPassword($value)
-    {
-        $this->current_password = preg_replace('/[^a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?]/', '', $value);
-        $this->current_password = substr($this->current_password, 0, 255);
-    }
-
-    /**
-     * Sanitize new password input
-     */
-    public function updatedNewPassword($value)
-    {
-        $this->new_password = preg_replace('/[^a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?]/', '', $value);
-        $this->new_password = substr($this->new_password, 0, 255);
-    }
-
-    /**
-     * Sanitize recipient name input - only letters and spaces
-     */
-    public function updatedRecipientName($value)
-    {
-        $this->recipient_name = preg_replace('/[^a-zA-Z\s]/', '', $value);
-        $this->recipient_name = trim(substr($this->recipient_name, 0, 100));
-    }
-
-    /**
-     * Sanitize address phone input - only numbers
-     */
-    public function updatedAddressPhone($value)
-    {
-        $this->address_phone = preg_replace('/[^0-9]/', '', $value);
-        $this->address_phone = substr($this->address_phone, 0, 15);
-    }
-
-    /**
-     * Sanitize postal code input - only numbers
-     */
-    public function updatedPostalCode($value)
-    {
-        $this->postal_code = preg_replace('/[^0-9]/', '', $value);
-        $this->postal_code = substr($this->postal_code, 0, 10);
-    }
+    // Laravel validation will handle input security
+    // Removed preg_replace sanitization to rely on Laravel's built-in security
 
     public function mount()
     {
@@ -227,7 +174,7 @@ class Profile extends Component
     {
         $this->validate([
             'current_password' => 'required|string',
-            'new_password' => 'required|string|min:8|max:255|confirmed|regex:/^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?])[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?]+$/',
+            'new_password' => 'required|string|min:8|max:255|confirmed',
             'new_password_confirmation' => 'required|string',
         ]);
 
@@ -302,10 +249,14 @@ class Profile extends Component
         $this->address_label = 'rumah';
         $this->recipient_name = '';
         $this->address_phone = '';
-        $this->address = '';
+        $this->village = '';
+        $this->sub_district = '';
         $this->district = '';
+        $this->regency = '';
         $this->city = '';
+        $this->province = '';
         $this->postal_code = '';
+        $this->detailed_address = '';
         $this->notes = '';
         $this->is_default = false;
     }
@@ -324,10 +275,14 @@ class Profile extends Component
             $this->address_label = $address->label;
             $this->recipient_name = $address->recipient_name;
             $this->address_phone = $address->phone;
-            $this->address = $address->address;
+            $this->village = $address->village ?? '';
+            $this->sub_district = $address->sub_district ?? $address->district; // Fallback to old district
             $this->district = $address->district;
+            $this->regency = $address->regency ?? $address->city; // Fallback to old city
             $this->city = $address->city;
+            $this->province = $address->province ?? '';
             $this->postal_code = $address->postal_code;
+            $this->detailed_address = $address->detailed_address ?? '';
             $this->notes = $address->notes;
             $this->is_default = $address->is_default;
             $this->showAddressForm = true;
@@ -348,15 +303,68 @@ class Profile extends Component
      */
     public function saveAddress()
     {
-        $this->validate([
-            'address_label' => 'required|in:rumah,kantor,kost,lainnya',
-            'recipient_name' => 'required|string|max:100|regex:/^[a-zA-Z\s]+$/',
-            'address_phone' => 'required|string|min:10|max:15|regex:/^[0-9]+$/',
-            'address' => 'required|string|max:500',
-            'district' => 'required|string|max:100',
-            'city' => 'required|string|max:100',
-            'postal_code' => 'required|string|max:10|regex:/^[0-9]+$/',
-            'notes' => 'nullable|string|max:255',
+        // Debug logging
+        \Log::info('saveAddress function called', [
+            'user_id' => Auth::id(),
+            'address_label' => $this->address_label,
+            'recipient_name' => $this->recipient_name,
+            'editing_address_id' => $this->editingAddressId
+        ]);
+        
+        // Auto-fill district and city for backward compatibility
+        $this->district = $this->sub_district;
+        $this->city = $this->regency;
+        
+        try {
+            $this->validate([
+                'address_label' => 'required|in:rumah,kantor,kost,lainnya',
+                'recipient_name' => 'required|string|max:100|regex:/^[a-zA-Z\s]+$/',
+                'address_phone' => 'required|string|min:10|max:15|regex:/^[0-9]+$/',
+                'village' => 'required|string|max:100',
+                'sub_district' => 'required|string|max:100',
+                'district' => 'required|string|max:100',
+                'regency' => 'required|string|max:100',
+                'city' => 'required|string|max:100',
+                'province' => 'required|string|max:100',
+                'postal_code' => 'required|string|max:10|regex:/^[0-9]+$/',
+                'detailed_address' => 'required|string|max:1000',
+                'notes' => 'nullable|string|max:255',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Address validation failed', [
+                'errors' => $e->errors(),
+                'input_data' => [
+                    'address_label' => $this->address_label,
+                    'recipient_name' => $this->recipient_name,
+                    'address_phone' => $this->address_phone,
+                    'village' => $this->village,
+                    'sub_district' => $this->sub_district,
+                    'regency' => $this->regency,
+                    'province' => $this->province,
+                    'postal_code' => $this->postal_code,
+                    'detailed_address' => $this->detailed_address,
+                ]
+            ]);
+            throw $e;
+        }
+        
+        // Debug: Validation passed
+        \Log::info('Address validation passed', [
+            'all_data' => [
+                'address_label' => $this->address_label,
+                'recipient_name' => $this->recipient_name,
+                'address_phone' => $this->address_phone,
+                'village' => $this->village,
+                'sub_district' => $this->sub_district,
+                'district' => $this->district,
+                'regency' => $this->regency,
+                'city' => $this->city,
+                'province' => $this->province,
+                'postal_code' => $this->postal_code,
+                'detailed_address' => $this->detailed_address,
+                'notes' => $this->notes,
+                'is_default' => $this->is_default
+            ]
         ]);
 
         $addressData = [
@@ -364,40 +372,77 @@ class Profile extends Component
             'label' => $this->address_label,
             'recipient_name' => $this->recipient_name,
             'phone' => $this->address_phone,
-            'address' => $this->address,
-            'district' => $this->district,
-            'city' => $this->city,
+            'village' => $this->village,
+            'sub_district' => $this->sub_district,
+            'district' => $this->district, // Keep for backward compatibility
+            'regency' => $this->regency,
+            'city' => $this->city, // Keep for backward compatibility
+            'province' => $this->province,
             'postal_code' => $this->postal_code,
+            'detailed_address' => $this->detailed_address,
             'notes' => $this->notes,
             'is_default' => $this->is_default,
         ];
 
-        if ($this->editingAddressId) {
-            // Update existing address
-            $address = UserAddress::where('address_id', $this->editingAddressId)
-                ->where('user_id', Auth::id())
-                ->first();
+        try {
+            if ($this->editingAddressId) {
+                // Update existing address
+                $address = UserAddress::where('address_id', $this->editingAddressId)
+                    ->where('user_id', Auth::id())
+                    ->first();
 
-            if ($address) {
-                $address->update($addressData);
+                if ($address) {
+                    $address->update($addressData);
+                    \Log::info('Address updated successfully', ['address_id' => $address->address_id]);
+                    
+                    // Auto-geocoding: Get coordinates for updated address
+                    $checkoutService = app(CheckoutService::class);
+                    $geocodingSuccess = $checkoutService->updateAddressCoordinates($address);
+                    
+                    // Set as default if requested
+                    if ($this->is_default) {
+                        $address->setAsDefault();
+                    }
+                    
+                    if ($geocodingSuccess) {
+                        session()->flash('success', 'Alamat berhasil diperbarui dan koordinat lokasi telah diperoleh!');
+                    } else {
+                        session()->flash('success', 'Alamat berhasil diperbarui! (Koordinat lokasi akan diperbarui secara otomatis)');
+                    }
+                } else {
+                    \Log::error('Address not found for update', ['address_id' => $this->editingAddressId]);
+                    session()->flash('error', 'Alamat tidak ditemukan!');
+                    return;
+                }
+            } else {
+                // Create new address
+                $address = UserAddress::create($addressData);
+                \Log::info('New address created successfully', ['address_id' => $address->address_id]);
+                
+                // Auto-geocoding: Get coordinates for new address
+                $checkoutService = app(CheckoutService::class);
+                $geocodingSuccess = $checkoutService->updateAddressCoordinates($address);
                 
                 // Set as default if requested
                 if ($this->is_default) {
                     $address->setAsDefault();
                 }
                 
-                session()->flash('success', 'Alamat berhasil diperbarui!');
+                if ($geocodingSuccess) {
+                    session()->flash('success', 'Alamat berhasil ditambahkan dan koordinat lokasi telah diperoleh!');
+                } else {
+                    session()->flash('success', 'Alamat berhasil ditambahkan! (Koordinat lokasi akan diperbarui secara otomatis)');
+                }
             }
-        } else {
-            // Create new address
-            $address = UserAddress::create($addressData);
+        } catch (\Exception $e) {
+            \Log::error('Failed to save address', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'address_data' => $addressData
+            ]);
             
-            // Set as default if requested
-            if ($this->is_default) {
-                $address->setAsDefault();
-            }
-            
-            session()->flash('success', 'Alamat berhasil ditambahkan!');
+            session()->flash('error', 'Gagal menyimpan alamat. Silakan coba lagi.');
+            return;
         }
 
         $this->loadAddresses();

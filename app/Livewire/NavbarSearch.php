@@ -10,17 +10,8 @@ class NavbarSearch extends Component
     #[Rule('required|string|max:100|regex:/^[a-zA-Z0-9\s]+$/')]
     public $query = '';
 
-    /**
-     * Sanitize and validate search query
-     */
-    public function updatedQuery($value)
-    {
-        // Remove any non-alphanumeric characters except spaces
-        $this->query = preg_replace('/[^a-zA-Z0-9\s]/', '', $value);
-        
-        // Trim whitespace and limit length
-        $this->query = trim(substr($this->query, 0, 100));
-    }
+    // Laravel validation will handle input security
+    // Removed preg_replace sanitization to rely on Laravel's built-in security
 
     /**
      * Perform search and redirect to search page
@@ -32,7 +23,7 @@ class NavbarSearch extends Component
         
         if (!empty($this->query)) {
             // Additional sanitization before redirect
-            $sanitizedQuery = preg_replace('/[^a-zA-Z0-9\s]/', '', $this->query);
+            $sanitizedQuery = $this->query;
             $sanitizedQuery = trim($sanitizedQuery);
             
             if (!empty($sanitizedQuery)) {

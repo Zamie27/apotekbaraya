@@ -76,13 +76,16 @@
 
                         <div class="absolute left-0 right-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
                             @if(auth()->check())
-                            <button wire:click="addToCart({{ $product->product_id }})" class="btn btn-success w-full font-bold rounded-none">
-                                TAMBAH KE KERANJANG
-                            </button>
+                                <livewire:add-to-cart-button 
+                                    :product-id="$product->product_id" 
+                                    button-text="TAMBAH KE KERANJANG" 
+                                    button-class="btn btn-success w-full font-bold rounded-none"
+                                    :key="'search-popular-cart-'.$product->product_id" 
+                                />
                             @else
-                            <a href="/login" class="btn btn-success w-full font-bold rounded-none">
-                                TAMBAH KE KERANJANG
-                            </a>
+                                <a href="/login" class="btn btn-success w-full font-bold rounded-none">
+                                    TAMBAH KE KERANJANG
+                                </a>
                             @endif
                         </div>
 
@@ -185,13 +188,16 @@
 
                         <div class="absolute left-0 right-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
                             @if(auth()->check())
-                            <button wire:click="addToCart({{ $product->product_id }})" class="btn btn-success w-full font-bold rounded-none">
-                                TAMBAH KE KERANJANG
-                            </button>
+                                <livewire:add-to-cart-button 
+                                    :product-id="$product->product_id" 
+                                    button-text="TAMBAH KE KERANJANG" 
+                                    button-class="btn btn-success w-full font-bold rounded-none"
+                                    :key="'search-cart-'.$product->product_id" 
+                                />
                             @else
-                            <a href="/login" class="btn btn-success w-full font-bold rounded-none">
-                                TAMBAH KE KERANJANG
-                            </a>
+                                <a href="/login" class="btn btn-success w-full font-bold rounded-none">
+                                    TAMBAH KE KERANJANG
+                                </a>
                             @endif
                         </div>
 

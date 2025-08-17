@@ -36,16 +36,11 @@ class Search extends Component
     }
 
     /**
-     * Sanitize search query input - only letters, numbers, and spaces
+     * Handle search query updates
      */
     public function updatedQuery($value)
     {
-        // Remove any non-alphanumeric characters except spaces
-        $this->query = preg_replace('/[^a-zA-Z0-9\s]/', '', $value);
-        
-        // Trim whitespace and limit length
-        $this->query = trim(substr($this->query, 0, 100));
-        
+        // Laravel validation will handle input security
         $this->isSearching = true;
         
         if (strlen($this->query) >= 2) {
@@ -111,26 +106,7 @@ class Search extends Component
         return redirect()->route('produk.deskripsi', ['id' => $productId]);
     }
 
-    /**
-     * Add product to cart
-     * Redirect to login if user is not authenticated
-     */
-    public function addToCart($productId)
-    {
-        if (!auth()->check()) {
-            return redirect()->route('login');
-        }
-        
-        $product = Product::find($productId);
-        
-        if (!$product || !$product->is_available) {
-            session()->flash('error', 'Produk sedang tidak tersedia.');
-            return;
-        }
-        
-        // TODO: Implement add to cart logic for authenticated users
-        session()->flash('message', "Produk {$product->name} berhasil ditambahkan ke keranjang!");
-    }
+
 
     /**
      * Render the search component

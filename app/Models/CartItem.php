@@ -43,11 +43,12 @@ class CartItem extends Model
     }
 
     /**
-     * Calculate subtotal for this item
+     * Calculate subtotal for this item (using current product price with discount)
      */
     public function getSubtotalAttribute(): float
     {
-        return $this->quantity * $this->price;
+        // Use product's final price (with discount if available)
+        return $this->quantity * $this->product->final_price;
     }
 
     /**
@@ -56,6 +57,49 @@ class CartItem extends Model
     public function getFormattedSubtotalAttribute(): string
     {
         return 'Rp ' . number_format($this->subtotal, 0, ',', '.');
+    }
+
+    /**
+     * Calculate original subtotal (without discount)
+     */
+    public function getOriginalSubtotalAttribute(): float
+    {
+        return $this->quantity * $this->product->price;
+    }
+
+    /**
+     * Get formatted original subtotal
+     */
+    public function getFormattedOriginalSubtotalAttribute(): string
+    {
+        return 'Rp ' . number_format($this->original_subtotal, 0, ',', '.');
+    }
+
+    /**
+     * Get quantity as 'qty' for backward compatibility
+     */
+    public function getQtyAttribute(): int
+    {
+        return $this->quantity;
+    }
+
+    /**
+     * Calculate discount amount for this item
+     */
+    public function getDiscountAmountAttribute(): float
+    {
+        if (!$this->product->is_on_sale) {
+            return 0;
+        }
+        return $this->original_subtotal - $this->subtotal;
+    }
+
+    /**
+     * Get formatted discount amount
+     */
+    public function getFormattedDiscountAmountAttribute(): string
+    {
+        return 'Rp ' . number_format($this->discount_amount, 0, ',', '.');
     }
 
     /**

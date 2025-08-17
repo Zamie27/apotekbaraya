@@ -18,10 +18,33 @@
                         </div>
                     </div>
 
+                    <!-- Select All Checkbox -->
+                    @if($cart->cartItems->count() > 0)
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" 
+                                           wire:model.live="selectAll" 
+                                           id="selectAllCheckbox"
+                                           class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                            <span class="text-sm font-medium text-gray-700">Pilih Semua Item ({{ $cart->cartItems->count() }} item)</span>
+                        </label>
+                    </div>
+                    @endif
+
                     <div class="divide-y divide-gray-200">
                         @foreach($cart->cartItems as $item)
                         <div class="p-6" wire:key="cart-item-{{ $item->cart_item_id }}">
                             <div class="flex items-start space-x-4">
+                                <!-- Checkbox Selection -->
+                                <div class="flex-shrink-0 pt-1">
+                                    <input type="checkbox" 
+                                           wire:model.live="selectedItems" 
+                                           value="{{ $item->cart_item_id }}"
+                                           id="item-{{ $item->cart_item_id }}"
+                                           wire:key="checkbox-{{ $item->cart_item_id }}"
+                                           class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                                </div>
+
                                 <!-- Product Image -->
                                 <div class="flex-shrink-0">
                                     @if($item->product->images->isNotEmpty())
@@ -105,11 +128,11 @@
                                         @if($item->product->is_on_sale)
                                             {{-- Show original subtotal (crossed out) and discounted subtotal --}}
                                             <div class="flex items-center gap-2">
-                                                <span class="text-xs text-gray-400 line-through">Rp {{ number_format($item->quantity * $item->product->price, 0, ',', '.') }}</span>
+                                                <span class="text-xs text-gray-400 line-through">{{ $item->formatted_original_subtotal }}</span>
                                                 <span class="text-sm font-medium text-green-600">{{ $item->formatted_subtotal }}</span>
                                             </div>
                                             <div class="text-xs text-green-600 mt-1">
-                                                Hemat: Rp {{ number_format(($item->product->price - $item->product->discount_price) * $item->quantity, 0, ',', '.') }}
+                                                Hemat: {{ $item->formatted_discount_amount }}
                                             </div>
                                         @else
                                             <span class="text-sm font-medium text-gray-900">Subtotal: {{ $item->formatted_subtotal }}</span>
@@ -131,32 +154,55 @@
                     </div>
 
                     <div class="px-6 py-4 space-y-4">
+                        @php
+                            // Jika ada item yang dipilih, gunakan summary item terpilih
+                            // Jika tidak ada yang dipilih, tampilkan summary kosong (0)
+                            $summary = $this->getSelectedItemsSummary();
+                            
+                            // Jika tidak ada item yang dipilih, set semua ke 0
+                            if (empty($selectedItems)) {
+                                $summary = [
+                                    'count' => 0,
+                                    'subtotal' => 0,
+                                    'formatted_subtotal' => 'Rp 0',
+                                    'total_discount' => 0,
+                                    'formatted_total_discount' => 'Rp 0'
+                                ];
+                            }
+                        @endphp
+
+                        @if(!empty($selectedItems))
+                        <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                            <p class="text-sm text-blue-700 font-medium">{{ count($selectedItems) }} item dipilih untuk checkout</p>
+                        </div>
+                        @endif
+
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Total Item</span>
-                            <span class="font-medium">{{ $cartSummary['items_count'] }} item</span>
+                            <span class="font-medium">{{ $summary['count'] }} item</span>
                         </div>
 
-                        @if($cartSummary['total_discount'] > 0)
+                        @if($summary['total_discount'] > 0)
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Harga Asli</span>
-                            <span class="font-medium line-through text-gray-400">{{ $cartSummary['formatted_original_total'] }}</span>
+                            <span class="font-medium line-through text-gray-400">Rp {{ number_format($summary['subtotal'] + $summary['total_discount'], 0, ',', '.') }}</span>
                         </div>
                         
                         <div class="flex justify-between text-sm">
                             <span class="text-green-600">Diskon</span>
-                            <span class="font-medium text-green-600">-{{ $cartSummary['formatted_total_discount'] }}</span>
+                            <span class="font-medium text-green-600">-{{ $summary['formatted_total_discount'] }}</span>
                         </div>
                         @endif
 
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Subtotal</span>
-                            <span class="font-medium">{{ $cartSummary['formatted_subtotal'] }}</span>
+                            <span class="font-medium">{{ $summary['formatted_subtotal'] }}</span>
                         </div>
 
-                        @if($cartSummary['total_discount'] > 0)
+                        @if($summary['total_discount'] > 0)
                         <div class="bg-green-50 p-2 rounded text-center">
                             <span class="text-sm text-green-600 font-medium">
-                                🎉 Anda hemat {{ $cartSummary['formatted_total_discount'] }}!
+                                🎉 Anda hemat {{ $summary['formatted_total_discount'] }}!
                             </span>
                         </div>
                         @endif
@@ -164,17 +210,24 @@
                         <div class="border-t border-gray-200 pt-4">
                             <div class="flex justify-between text-base font-medium">
                                 <span class="text-gray-900">Total</span>
-                                <span class="text-gray-900">{{ $cartSummary['formatted_subtotal'] }}</span>
+                                <span class="text-gray-900">{{ $summary['formatted_subtotal'] }}</span>
                             </div>
                             <p class="text-xs text-gray-500 mt-1">Belum termasuk ongkos kirim</p>
                         </div>
                     </div>
 
                     <div class="px-6 py-4 border-t border-gray-200">
-                        <button wire:click="proceedToCheckout"
-                            class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                            Lanjut ke Checkout
-                        </button>
+                        @if(!empty($selectedItems))
+                            <button wire:click="checkoutSelectedItems"
+                                class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                                Lanjut ke Checkout
+                            </button>
+                        @else
+                            <button disabled
+                                class="w-full bg-gray-300 text-gray-500 py-3 px-4 rounded-lg font-medium cursor-not-allowed">
+                                Pilih Item untuk Checkout
+                            </button>
+                        @endif
 
                         <button wire:click="continueShopping"
                             class="w-full mt-3 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
@@ -200,3 +253,68 @@
         @endif
     </div>
 </div>
+
+@script
+<script>
+    // Update cart counter di navbar
+    function updateCartCounter() {
+        fetch('/api/cart/count')
+            .then(response => response.json())
+            .then(data => {
+                const cartCounters = document.querySelectorAll('.cart-counter');
+                cartCounters.forEach(counter => {
+                    counter.textContent = data.count;
+                    counter.style.display = data.count > 0 ? 'inline' : 'none';
+                });
+            })
+            .catch(error => console.error('Error updating cart counter:', error));
+    }
+
+    // Function untuk setup event listeners
+    function setupCheckboxListeners() {
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const itemCheckboxes = document.querySelectorAll('input[wire\\:model\\.live="selectedItems"]');
+        
+        // Event listener untuk checkbox "Pilih Semua Item"
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                setTimeout(() => {
+                    itemCheckboxes.forEach(checkbox => {
+                        checkbox.checked = this.checked;
+                    });
+                }, 200);
+            });
+        }
+        
+        // Event listener untuk checkbox item individual
+        itemCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                setTimeout(() => {
+                    if (selectAllCheckbox) {
+                        const totalItems = itemCheckboxes.length;
+                        const checkedItems = document.querySelectorAll('input[wire\\:model\\.live="selectedItems"]:checked').length;
+                        
+                        // Update selectAll checkbox berdasarkan status item individual
+                        selectAllCheckbox.checked = totalItems > 0 && checkedItems === totalItems;
+                    }
+                }, 100);
+            });
+        });
+    }
+
+    // Initialize saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCartCounter();
+        setupCheckboxListeners();
+    });
+
+    // Re-initialize setelah Livewire update
+    document.addEventListener('livewire:navigated', function() {
+        updateCartCounter();
+        setupCheckboxListeners();
+    });
+    
+    // Listen untuk custom events dari Livewire components
+    window.addEventListener('cart-updated', updateCartCounter);
+</script>
+@endscript

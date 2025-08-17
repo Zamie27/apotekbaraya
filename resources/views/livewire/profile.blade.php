@@ -331,13 +331,14 @@
                             <!-- Recipient Name -->
                             <div class="form-control">
                                 <label class="label">
-                                    <span class="label-text font-medium">Nama Penerima</span>
+                                    <span class="label-text font-medium">Nama Penerima <span class="text-red-500">*</span></span>
                                 </label>
                                 <input
                                     type="text"
                                     wire:model="recipient_name"
                                     class="input input-bordered w-full @error('recipient_name') input-error @enderror"
-                                    placeholder="Nama penerima">
+                                    placeholder="Nama penerima"
+                                    required>
                                 @error('recipient_name')
                                 <label class="label">
                                     <span class="label-text-alt text-error">{{ $message }}</span>
@@ -349,13 +350,14 @@
                         <!-- Phone -->
                         <div class="form-control">
                             <label class="label">
-                                <span class="label-text font-medium">Nomor Telepon</span>
+                                <span class="label-text font-medium">Nomor Telepon <span class="text-red-500">*</span></span>
                             </label>
                             <input
                                 type="text"
                                 wire:model="address_phone"
                                 class="input input-bordered w-full @error('address_phone') input-error @enderror"
-                                placeholder="Nomor telepon penerima">
+                                placeholder="Nomor telepon penerima"
+                                required>
                             @error('address_phone')
                             <label class="label">
                                 <span class="label-text-alt text-error">{{ $message }}</span>
@@ -363,52 +365,76 @@
                             @enderror
                         </div>
 
-                        <!-- Address -->
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">Alamat Lengkap</span>
-                            </label>
-                            <textarea
-                                wire:model="address"
-                                class="textarea textarea-bordered w-full @error('address') textarea-error @enderror"
-                                placeholder="Jalan, nomor rumah, RT/RW, dll"
-                                rows="3"></textarea>
-                            @error('address')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                            @enderror
-                        </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <!-- District -->
+
+                        <!-- Detailed Location Fields -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Village -->
                             <div class="form-control">
                                 <label class="label">
-                                    <span class="label-text font-medium">Kecamatan</span>
+                                    <span class="label-text font-medium">Desa/Kelurahan <span class="text-red-500">*</span></span>
                                 </label>
                                 <input
                                     type="text"
-                                    wire:model="district"
-                                    class="input input-bordered w-full @error('district') input-error @enderror"
-                                    placeholder="Kecamatan">
-                                @error('district')
+                                    wire:model="village"
+                                    class="input input-bordered w-full @error('village') input-error @enderror"
+                                    placeholder="Nama desa/kelurahan"
+                                    required>
+                                @error('village')
                                 <label class="label">
                                     <span class="label-text-alt text-error">{{ $message }}</span>
                                 </label>
                                 @enderror
                             </div>
 
-                            <!-- City -->
+                            <!-- Sub District -->
                             <div class="form-control">
                                 <label class="label">
-                                    <span class="label-text font-medium">Kota</span>
+                                    <span class="label-text font-medium">Kecamatan <span class="text-red-500">*</span></span>
                                 </label>
                                 <input
                                     type="text"
-                                    wire:model="city"
-                                    class="input input-bordered w-full @error('city') input-error @enderror"
-                                    placeholder="Kota">
-                                @error('city')
+                                    wire:model="sub_district"
+                                    class="input input-bordered w-full @error('sub_district') input-error @enderror"
+                                    placeholder="Nama kecamatan"
+                                    required>
+                                @error('sub_district')
+                                <label class="label">
+                                    <span class="label-text-alt text-error">{{ $message }}</span>
+                                </label>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Regency -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text font-medium">Kabupaten/Kota <span class="text-red-500">*</span></span>
+                                </label>
+                                <input
+                                    type="text"
+                                    wire:model="regency"
+                                    class="input input-bordered w-full @error('regency') input-error @enderror"
+                                    placeholder="Kabupaten/Kota">
+                                @error('regency')
+                                <label class="label">
+                                    <span class="label-text-alt text-error">{{ $message }}</span>
+                                </label>
+                                @enderror
+                            </div>
+
+                            <!-- Province -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text font-medium">Provinsi <span class="text-red-500">*</span></span>
+                                </label>
+                                <input
+                                    type="text"
+                                    wire:model="province"
+                                    class="input input-bordered w-full @error('province') input-error @enderror"
+                                    placeholder="Nama provinsi">
+                                @error('province')
                                 <label class="label">
                                     <span class="label-text-alt text-error">{{ $message }}</span>
                                 </label>
@@ -418,7 +444,7 @@
                             <!-- Postal Code -->
                             <div class="form-control">
                                 <label class="label">
-                                    <span class="label-text font-medium">Kode Pos</span>
+                                    <span class="label-text font-medium">Kode Pos <span class="text-red-500">*</span></span>
                                 </label>
                                 <input
                                     type="text"
@@ -432,6 +458,28 @@
                                 @enderror
                             </div>
                         </div>
+
+                        <!-- Detailed Address for Courier -->
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-medium">Alamat Lengkap untuk Kurir <span class="text-red-500">*</span></span>
+                            </label>
+                            <textarea
+                                wire:model="detailed_address"
+                                class="textarea textarea-bordered w-full @error('detailed_address') textarea-error @enderror"
+                                placeholder="Deskripsi detail lokasi, patokan, warna rumah, dll. untuk memudahkan kurir menemukan alamat"
+                                rows="3"
+                                required></textarea>
+                            @error('detailed_address')
+                            <label class="label">
+                                <span class="label-text-alt text-error">{{ $message }}</span>
+                            </label>
+                            @enderror
+                        </div>
+
+                        <!-- Hidden fields for backward compatibility -->
+                        <input type="hidden" wire:model="district">
+                        <input type="hidden" wire:model="city">
 
                         <!-- Notes -->
                         <div class="form-control">
@@ -492,7 +540,7 @@
                                 </div>
                                 <h4 class="font-semibold text-lg">{{ $address['recipient_name'] }}</h4>
                                 <p class="text-sm text-gray-600 mb-1">{{ $address['phone'] }}</p>
-                                <p class="text-sm mb-2">{{ $address['address'] }}</p>
+                                <p class="text-sm mb-2">{{ $address['detailed_address'] }}</p>
                                 <p class="text-sm text-gray-600">
                                     {{ $address['district'] }}, {{ $address['city'] }} {{ $address['postal_code'] }}
                                 </p>

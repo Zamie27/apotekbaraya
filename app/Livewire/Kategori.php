@@ -46,11 +46,7 @@ class Kategori extends Component
 
     public function updatedSearch()
     {
-        // Sanitasi input search secara real-time
-        $this->search = preg_replace('/[^a-zA-Z0-9\s]/', '', $this->search);
-        $this->search = trim($this->search);
-        $this->search = substr($this->search, 0, 100);
-        
+        // Laravel validation will handle input security
         $this->resetPage();
     }
 

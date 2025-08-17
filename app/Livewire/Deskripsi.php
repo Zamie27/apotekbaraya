@@ -29,8 +29,9 @@ class Deskripsi extends Component
      */
     public function updatedQuantity($value)
     {
-        $this->quantity = (int) preg_replace('/[^0-9]/', '', $value);
-        $this->quantity = max(1, min(999, $this->quantity));
+        // Laravel validation will handle input security
+        $this->quantity = (int) $value;
+        $this->quantity = max(1, min($this->quantity, $this->product->stock));
     }
     
     /**
@@ -79,28 +80,19 @@ class Deskripsi extends Component
     }
     
     /**
-     * Handle add to cart action
-     * Redirect to login if user is not authenticated
+     * Add product to cart with selected quantity
      */
     public function addToCart()
     {
+        // Check if user is authenticated
         if (!auth()->check()) {
             $this->dispatch('show-toast', 'error', 'Silakan login terlebih dahulu untuk menambahkan produk ke keranjang.', 5000);
             return redirect()->route('login');
         }
-        
-        // Check if product is available
-        if (!$this->product->is_available) {
-            $this->dispatch('show-toast', 'error', 'Produk sedang tidak tersedia.', 5000);
-            return;
-        }
-        
-        // Check if quantity is valid
-        if ($this->quantity > $this->product->stock) {
-            $this->dispatch('show-toast', 'error', 'Jumlah melebihi stok yang tersedia.', 5000);
-            return;
-        }
-        
+
+        // Validate quantity
+        $this->validate();
+
         try {
             // Add to cart using CartService
             $result = $this->cartService->addToCart($this->product->product_id, $this->quantity);
@@ -108,11 +100,11 @@ class Deskripsi extends Component
             if ($result['success']) {
                 // Dispatch event to update cart counter
                 $this->dispatch('cart-updated');
-                
+
                 // Show success toast notification
                 $this->dispatch('show-toast', 'success', $result['message'], 4000);
-                
-                // Reset quantity to 1
+
+                // Reset quantity to 1 after successful add
                 $this->quantity = 1;
             } else {
                 // Show error toast notification
@@ -123,7 +115,7 @@ class Deskripsi extends Component
             $this->dispatch('show-toast', 'error', 'Terjadi kesalahan saat menambahkan produk ke keranjang.', 5000);
         }
     }
-    
+
     public function render()
     {
         return view('livewire.deskripsi', [

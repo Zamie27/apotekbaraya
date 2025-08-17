@@ -38,10 +38,10 @@ class Profile extends Component
     public $avatar;
 
     // Password change fields
-    #[Validate('nullable|string|min:8|max:255|regex:/^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?])[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?]+$/')]
+    #[Validate('nullable|string|min:8|max:255')]
     public $current_password;
 
-    #[Validate('nullable|string|min:8|max:255|confirmed|regex:/^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?])[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?]+$/')]
+    #[Validate('nullable|string|min:8|max:255|confirmed')]
     public $new_password;
 
     #[Validate('nullable|string|min:8|max:255')]
@@ -50,50 +50,8 @@ class Profile extends Component
     public $current_avatar;
     public $showPasswordForm = false;
 
-    /**
-     * Sanitize name input - only letters and spaces
-     */
-    public function updatedName($value)
-    {
-        $this->name = preg_replace('/[^a-zA-Z\s]/', '', $value);
-        $this->name = trim(substr($this->name, 0, 100));
-    }
-
-    /**
-     * Sanitize username input - only letters, numbers, and underscore
-     */
-    public function updatedUsername($value)
-    {
-        $this->username = preg_replace('/[^a-zA-Z0-9_]/', '', $value);
-        $this->username = trim(substr($this->username, 0, 50));
-    }
-
-    /**
-     * Sanitize phone input - only numbers
-     */
-    public function updatedPhone($value)
-    {
-        $this->phone = preg_replace('/[^0-9]/', '', $value);
-        $this->phone = substr($this->phone, 0, 15);
-    }
-
-    /**
-     * Sanitize current password input
-     */
-    public function updatedCurrentPassword($value)
-    {
-        $this->current_password = preg_replace('/[^a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?]/', '', $value);
-        $this->current_password = substr($this->current_password, 0, 255);
-    }
-
-    /**
-     * Sanitize new password input
-     */
-    public function updatedNewPassword($value)
-    {
-        $this->new_password = preg_replace('/[^a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\|,.<>\?]/', '', $value);
-        $this->new_password = substr($this->new_password, 0, 255);
-    }
+    // Laravel validation will handle input security
+    // Removed preg_replace sanitization to rely on Laravel's built-in security
 
     /**
      * Initialize component with current user data

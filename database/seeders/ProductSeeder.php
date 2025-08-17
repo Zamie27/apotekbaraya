@@ -362,6 +362,12 @@ class ProductSeeder extends Seeder
             ],
         ];
 
-        DB::table('products')->insert($products);
+        // Insert products with duplicate check
+        foreach ($products as $product) {
+            DB::table('products')->updateOrInsert(
+                ['sku' => $product['sku']], // Check by SKU
+                $product // Insert/update with this data
+            );
+        }
     }
 }

@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Livewire\Dashboard;
 use App\Livewire\Kategori;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
+use App\Livewire\Admin\StoreSettings;
 use App\Livewire\Apoteker\Dashboard as ApotekerDashboard;
 use App\Livewire\Kurir\Dashboard as KurirDashboard;
 use App\Livewire\Admin\Profile as AdminProfile;
@@ -12,7 +13,9 @@ use App\Livewire\Kurir\Profile as KurirProfile;
 use App\Livewire\Profile;
 use App\Livewire\Auth\Login;
 use App\Livewire\Auth\Register;
+use App\Livewire\Checkout;
 use Illuminate\Support\Facades\Route;
+use App\Models\StoreSetting;
 
 // Root route - redirect based on auth status and role
 Route::get('/', function () {
@@ -48,9 +51,10 @@ Route::get('/search', \App\Livewire\Search::class)->name('search');
 // Public category page (accessible by guests)
 Route::get('/kategori/{slug?}', Kategori::class)->name('kategori');
 
-// Cart page (requires authentication)
+// Cart and Checkout pages (requires authentication)
 Route::middleware('auth')->group(function () {
     Route::get('/cart', \App\Livewire\Cart::class)->name('cart');
+    Route::get('/checkout', Checkout::class)->name('checkout')->middleware('store.config');
 });
 
 // Guest only routes (redirect to dashboard if authenticated)
@@ -68,6 +72,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::get('/admin/dashboard', AdminDashboard::class);
         Route::get('/admin/profile', AdminProfile::class);
+        Route::get('/admin/settings', StoreSettings::class)->name('admin.settings');
         // Add more admin routes here
         // Route::get('/admin/users', AdminUsers::class);
         // Route::get('/admin/products', AdminProducts::class);
@@ -95,8 +100,10 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:pelanggan')->group(function () {
         // Dashboard pelanggan sekarang menggunakan dashboard utama di /dashboard
         Route::get('/profile', Profile::class);
+        // Customer orders and cart routes
+        Route::get('/orders', \App\Livewire\Pelanggan\Orders::class)->name('pelanggan.orders');
+        Route::get('/orders/{orderId}', \App\Livewire\Pelanggan\OrderDetail::class)->name('pelanggan.orders.show');
+        // Route::get('/cart', \App\Livewire\Pelanggan\Cart::class)->name('cart');
         // Add more pelanggan routes here
-        // Route::get('/orders', PelangganOrders::class);
-        // Route::get('/cart', PelangganCart::class);
     });
 });

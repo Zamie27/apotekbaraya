@@ -127,6 +127,12 @@ class CategorySeeder extends Seeder
             ],
         ];
 
-        DB::table('categories')->insert($categories);
+        // Insert categories with duplicate check
+        foreach ($categories as $category) {
+            DB::table('categories')->updateOrInsert(
+                ['slug' => $category['slug']], // Check by slug
+                $category // Insert/update with this data
+            );
+        }
     }
 }

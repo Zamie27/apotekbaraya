@@ -58,7 +58,7 @@
                         class="p-2 mt-3 shadow menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] w-52">
                         <li><a href="/profile">Profil</a></li>
                         <li><a href="/settings">Pengaturan</a></li>
-                        <li><a href="/orders">Pesanan Saya</a></li>
+                        <li><a href="{{ route('pelanggan.orders') }}">Pesanan Saya</a></li>
                         <li><a href="/logout" class="text-left text-red-600 hover:bg-base-200">Keluar</a></li>
                     </ul>
                 </div>
@@ -75,25 +75,6 @@
 
     <!-- Main Content -->
     <div class="container mx-auto">
-        <!-- Flash Messages -->
-        @if(session('success'))
-        <div class="mx-4 mb-4 alert alert-success">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 stroke-current shrink-0" fill="none" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>{{ session('success') }}</span>
-        </div>
-        @endif
-
-        @if(session('error'))
-        <div class="mx-4 mb-4 alert alert-error">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 stroke-current shrink-0" fill="none" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>{{ session('error') }}</span>
-        </div>
-        @endif
-
         {{ $slot }}
     </div>
 

@@ -55,13 +55,47 @@ class Cart extends Model
     }
 
     /**
-     * Calculate subtotal of cart
+     * Calculate subtotal of cart (using final prices with discounts)
      */
     public function getSubtotalAttribute(): float
     {
         return $this->cartItems()->get()->sum(function ($item) {
-            return $item->quantity * $item->price;
+            return $item->quantity * $item->product->final_price;
         });
+    }
+
+    /**
+     * Calculate original total (without discounts)
+     */
+    public function getOriginalTotalAttribute(): float
+    {
+        return $this->cartItems()->get()->sum(function ($item) {
+            return $item->quantity * $item->product->price;
+        });
+    }
+
+    /**
+     * Calculate total discount amount
+     */
+    public function getTotalDiscountAttribute(): float
+    {
+        return $this->original_total - $this->subtotal;
+    }
+
+    /**
+     * Get formatted original total
+     */
+    public function getFormattedOriginalTotalAttribute(): string
+    {
+        return 'Rp ' . number_format($this->original_total, 0, ',', '.');
+    }
+
+    /**
+     * Get formatted total discount
+     */
+    public function getFormattedTotalDiscountAttribute(): string
+    {
+        return 'Rp ' . number_format($this->total_discount, 0, ',', '.');
     }
 
     /**

@@ -78,7 +78,7 @@
         </div>
     </aside>
 
-    <main class="p-6">
+    <main class="p-6 pt-20 sm:ml-64">
         {{ $slot }}
     </main>
 

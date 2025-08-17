@@ -62,14 +62,14 @@ class CartService
 
                 $existingCartItem->update([
                     'quantity' => $newQuantity,
-                    'price' => $product->price // Update price in case it changed
+                    'price' => $product->final_price // Update price in case it changed
                 ]);
             } else {
                 CartItem::create([
                     'cart_id' => $cart->cart_id,
                     'product_id' => $productId,
                     'quantity' => $quantity,
-                    'price' => $product->price
+                    'price' => $product->final_price
                 ]);
             }
 

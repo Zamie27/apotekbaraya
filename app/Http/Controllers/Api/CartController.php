@@ -29,7 +29,7 @@ class CartController extends Controller
                 return response()->json(['count' => 0]);
             }
 
-            $count = $this->cartService->getCartItemsCount(auth()->user());
+            $count = $this->cartService->getCartItemsCount(auth()->id());
             
             return response()->json([
                 'count' => $count,
