@@ -46,6 +46,7 @@
                         tabindex="0"
                         class="p-2 mt-3 shadow menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] w-52">
                         <li><a href="/apoteker/profile">Profil</a></li>
+                        <li><a href="/apoteker/orders">Manajemen Pesanan</a></li>
                         <li><a href="/apoteker/settings">Pengaturan</a></li>
                         <li><a href="/logout" class="text-left text-red-600 hover:bg-base-200">Keluar</a></li>
                     </ul>

@@ -296,6 +296,31 @@
                     </button>
                 </div>
 
+                <!-- Shipping Area Information -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg alert alert-info mb-6">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-blue-800 mb-2">Layanan pengiriman tersedia untuk alamat dengan jarak maksimal:</h3>
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                                    <span class="text-lg font-bold text-blue-700">{{ \App\Models\StoreSetting::get('max_delivery_distance', 15) }} km</span>
+                                    <span class="text-sm text-blue-600">dari toko</span>
+                                </div>
+                            </div>
+                            <p class="text-xs text-blue-600 mt-3">
+                                💡 <strong>Tips:</strong> Pastikan alamat Anda berada dalam radius jarak pengiriman untuk dapat menggunakan layanan pengiriman.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+
                 <!-- Address Form -->
                 @if($showAddressForm)
                 <div class="bg-base-200 p-6 rounded-lg mb-6">
@@ -308,220 +333,18 @@
                         </button>
                     </div>
 
-                    <form wire:submit="saveAddress" class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Label -->
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text font-medium">Label Alamat</span>
-                                </label>
-                                <select wire:model="address_label" class="select select-bordered w-full @error('address_label') select-error @enderror">
-                                    <option value="rumah">Rumah</option>
-                                    <option value="kantor">Kantor</option>
-                                    <option value="kost">Kost</option>
-                                    <option value="lainnya">Lainnya</option>
-                                </select>
-                                @error('address_label')
-                                <label class="label">
-                                    <span class="label-text-alt text-error">{{ $message }}</span>
-                                </label>
-                                @enderror
-                            </div>
-
-                            <!-- Recipient Name -->
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text font-medium">Nama Penerima <span class="text-red-500">*</span></span>
-                                </label>
-                                <input
-                                    type="text"
-                                    wire:model="recipient_name"
-                                    class="input input-bordered w-full @error('recipient_name') input-error @enderror"
-                                    placeholder="Nama penerima"
-                                    required>
-                                @error('recipient_name')
-                                <label class="label">
-                                    <span class="label-text-alt text-error">{{ $message }}</span>
-                                </label>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <!-- Phone -->
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">Nomor Telepon <span class="text-red-500">*</span></span>
-                            </label>
-                            <input
-                                type="text"
-                                wire:model="address_phone"
-                                class="input input-bordered w-full @error('address_phone') input-error @enderror"
-                                placeholder="Nomor telepon penerima"
-                                required>
-                            @error('address_phone')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                            @enderror
-                        </div>
-
-
-
-                        <!-- Detailed Location Fields -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Village -->
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text font-medium">Desa/Kelurahan <span class="text-red-500">*</span></span>
-                                </label>
-                                <input
-                                    type="text"
-                                    wire:model="village"
-                                    class="input input-bordered w-full @error('village') input-error @enderror"
-                                    placeholder="Nama desa/kelurahan"
-                                    required>
-                                @error('village')
-                                <label class="label">
-                                    <span class="label-text-alt text-error">{{ $message }}</span>
-                                </label>
-                                @enderror
-                            </div>
-
-                            <!-- Sub District -->
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text font-medium">Kecamatan <span class="text-red-500">*</span></span>
-                                </label>
-                                <input
-                                    type="text"
-                                    wire:model="sub_district"
-                                    class="input input-bordered w-full @error('sub_district') input-error @enderror"
-                                    placeholder="Nama kecamatan"
-                                    required>
-                                @error('sub_district')
-                                <label class="label">
-                                    <span class="label-text-alt text-error">{{ $message }}</span>
-                                </label>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <!-- Regency -->
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text font-medium">Kabupaten/Kota <span class="text-red-500">*</span></span>
-                                </label>
-                                <input
-                                    type="text"
-                                    wire:model="regency"
-                                    class="input input-bordered w-full @error('regency') input-error @enderror"
-                                    placeholder="Kabupaten/Kota">
-                                @error('regency')
-                                <label class="label">
-                                    <span class="label-text-alt text-error">{{ $message }}</span>
-                                </label>
-                                @enderror
-                            </div>
-
-                            <!-- Province -->
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text font-medium">Provinsi <span class="text-red-500">*</span></span>
-                                </label>
-                                <input
-                                    type="text"
-                                    wire:model="province"
-                                    class="input input-bordered w-full @error('province') input-error @enderror"
-                                    placeholder="Nama provinsi">
-                                @error('province')
-                                <label class="label">
-                                    <span class="label-text-alt text-error">{{ $message }}</span>
-                                </label>
-                                @enderror
-                            </div>
-
-                            <!-- Postal Code -->
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text font-medium">Kode Pos <span class="text-red-500">*</span></span>
-                                </label>
-                                <input
-                                    type="text"
-                                    wire:model="postal_code"
-                                    class="input input-bordered w-full @error('postal_code') input-error @enderror"
-                                    placeholder="Kode pos">
-                                @error('postal_code')
-                                <label class="label">
-                                    <span class="label-text-alt text-error">{{ $message }}</span>
-                                </label>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <!-- Detailed Address for Courier -->
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">Alamat Lengkap untuk Kurir <span class="text-red-500">*</span></span>
-                            </label>
-                            <textarea
-                                wire:model="detailed_address"
-                                class="textarea textarea-bordered w-full @error('detailed_address') textarea-error @enderror"
-                                placeholder="Deskripsi detail lokasi, patokan, warna rumah, dll. untuk memudahkan kurir menemukan alamat"
-                                rows="3"
-                                required></textarea>
-                            @error('detailed_address')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                            @enderror
-                        </div>
-
-                        <!-- Hidden fields for backward compatibility -->
-                        <input type="hidden" wire:model="district">
-                        <input type="hidden" wire:model="city">
-
-                        <!-- Notes -->
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">Catatan (Opsional)</span>
-                            </label>
-                            <textarea
-                                wire:model="notes"
-                                class="textarea textarea-bordered w-full @error('notes') textarea-error @enderror"
-                                placeholder="Patokan atau catatan tambahan"
-                                rows="2"></textarea>
-                            @error('notes')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                            @enderror
-                        </div>
-
-                        <!-- Default Address Checkbox -->
-                        <div class="form-control">
-                            <label class="label cursor-pointer justify-start">
-                                <input type="checkbox" wire:model="is_default" class="checkbox checkbox-primary mr-3" />
-                                <span class="label-text">Jadikan alamat utama</span>
-                            </label>
-                        </div>
-
-                        <!-- Form Actions -->
-                        <div class="flex gap-2 pt-4">
-                            <button type="submit" class="btn btn-primary">
-                                <span wire:loading.remove>
-                                    <x-icons.save class="w-4 h-4 mr-2" />
-                                    {{ $editingAddressId ? 'Update Alamat' : 'Simpan Alamat' }}
-                                </span>
-                                <span wire:loading>
-                                    <span class="loading loading-spinner loading-sm mr-2"></span>
-                                    Menyimpan...
-                                </span>
-                            </button>
-                            <button type="button" wire:click="hideAddressForm" class="btn btn-ghost">
-                                Batal
-                            </button>
-                        </div>
+                    <!-- Use Address Form Component -->
+                    <form wire:submit="saveAddress">
+                        <x-address-form
+                            :addressForm="$addressForm"
+                            :provinces="$provinces"
+                            :regencies="$regencies"
+                            :subDistricts="$subDistricts"
+                            :villages="$villages"
+                            :postalCodes="$postalCodes"
+                            :addressPreview="$addressPreview"
+                            :editingAddressId="$editingAddressId"
+                            cancelAction="hideAddressForm" />
                     </form>
                 </div>
                 @endif
@@ -576,8 +399,7 @@
                                         </button>
                                     </li>
                                     <li>
-                                        <button wire:click="deleteAddress({{ $address['address_id'] }})"
-                                            wire:confirm="Apakah Anda yakin ingin menghapus alamat ini?"
+                                        <button wire:click="confirmDeleteAddress({{ $address['address_id'] }})"
                                             onclick="this.closest('.dropdown').querySelector('[role=button]').blur()"
                                             class="w-full text-left text-error flex items-center gap-2">
                                             <x-icons.trash class="w-4 h-4" />
@@ -603,5 +425,59 @@
         </div>
     </div>
 
+    <!-- Delete Address Confirmation Modal -->
+    @if($showDeleteModal)
+    <div class="modal modal-open">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg text-error mb-4">
+                <span class="text-error text-xl mr-2">⚠️</span>
+                Konfirmasi Hapus Alamat
+            </h3>
+
+            <div class="py-4">
+                <p class="text-gray-700 mb-4">Apakah Anda yakin ingin menghapus alamat berikut?</p>
+
+                @if($addressToDeleteData)
+                <div class="bg-gray-50 p-4 rounded-lg border">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0">
+                            <span class="badge badge-outline badge-sm">{{ ucfirst($addressToDeleteData['label'] ?? '') }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-gray-900">{{ $addressToDeleteData['recipient_name'] ?? '' }}</p>
+                            <p class="text-sm text-gray-600 mt-1">{{ $addressToDeleteData['detailed_address'] ?? '' }}</p>
+                            <p class="text-sm text-gray-500">{{ $addressToDeleteData['village_name'] ?? '' }}</p>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                <div class="alert alert-warning mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <span class="text-sm">Tindakan ini tidak dapat dibatalkan. Alamat akan dihapus secara permanen.</span>
+                </div>
+            </div>
+
+            <div class="modal-action">
+                <button wire:click="cancelDeleteAddress" class="btn btn-ghost">
+                    <x-icons.x class="w-4 h-4 mr-2" />
+                    Batal
+                </button>
+                <button wire:click="deleteAddress" class="btn btn-error">
+                    <span wire:loading.remove>
+                        <x-icons.trash class="w-4 h-4 mr-2" />
+                        Ya, Hapus Alamat
+                    </span>
+                    <span wire:loading>
+                        <span class="loading loading-spinner loading-sm mr-2"></span>
+                        Menghapus...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+    @endif
 
 </div>

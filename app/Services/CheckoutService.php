@@ -5,16 +5,17 @@ namespace App\Services;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Payment;
 use App\Models\StoreSetting;
 use App\Models\UserAddress;
 use App\Services\DistanceCalculatorService;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CheckoutService
 {
     private DistanceCalculatorService $distanceCalculator;
-
     public function __construct(DistanceCalculatorService $distanceCalculator)
     {
         $this->distanceCalculator = $distanceCalculator;
@@ -43,7 +44,19 @@ class CheckoutService
 
         if ($shippingType === 'delivery') {
             if (!$addressId) {
-                throw new \Exception('Address is required for delivery');
+                // Return summary without shipping calculation when no address is selected
+                $total = $subtotal + $shippingCost;
+                
+                return [
+                    'cart_items' => $cartItems,
+                    'subtotal' => $subtotal,
+                    'shipping_cost' => $shippingCost,
+                    'shipping_distance' => $shippingDistance,
+                    'is_free_shipping' => $isFreeShipping,
+                    'delivery_available' => false, // Set to false when no address selected
+                    'total' => $total,
+                    'address_required' => true // Flag to indicate address is required
+                ];
             }
 
             $address = UserAddress::where('address_id', $addressId)
@@ -54,9 +67,12 @@ class CheckoutService
                 throw new \Exception('Address not found');
             }
 
-            // Calculate shipping if coordinates are available
-            if ($address->latitude && $address->longitude) {
-                try {
+            // Calculate shipping distance using coordinates or direct distance data
+            try {
+                $shippingDistance = null;
+                
+                // First try using coordinates if available
+                if ($address->latitude && $address->longitude) {
                     // Use accurate store coordinates from settings
                     $storeCoordinates = $this->distanceCalculator->getStoreCoordinates();
                     
@@ -66,8 +82,25 @@ class CheckoutService
                         (float) $address->latitude,
                         (float) $address->longitude
                     );
-
+                    
                     $shippingDistance = $distanceData['distance_km'];
+                }
+                
+                // Fallback: Use direct distance from alamatsubang.json if coordinates not available
+                if ($shippingDistance === null && $address->village && $address->sub_district) {
+                    $directDistance = $this->distanceCalculator->getDirectDistance(
+                        $address->village,
+                        $address->sub_district,
+                        $address->postal_code
+                    );
+                    
+                    if ($directDistance !== null) {
+                        $shippingDistance = $directDistance;
+                    }
+                }
+                
+                // Calculate shipping cost if distance is available
+                if ($shippingDistance !== null) {
                     $deliveryAvailable = $this->distanceCalculator->isDeliveryAvailable($shippingDistance);
 
                     if ($deliveryAvailable) {
@@ -75,11 +108,21 @@ class CheckoutService
                         $shippingCost = $shippingData['final_cost'];
                         $isFreeShipping = $shippingData['is_free_shipping'];
                     }
-                } catch (\Exception $e) {
-                    // Log error but don't break checkout process
-                    \Log::warning('Failed to calculate shipping distance: ' . $e->getMessage());
+                } else {
+                    // No distance data available
+                    \Log::warning('No distance data available for address', [
+                        'address_id' => $address->address_id,
+                        'village' => $address->village,
+                        'sub_district' => $address->sub_district,
+                        'has_coordinates' => !empty($address->latitude) && !empty($address->longitude)
+                    ]);
                     $deliveryAvailable = false;
                 }
+                
+            } catch (\Exception $e) {
+                // Log error but don't break checkout process
+                \Log::warning('Failed to calculate shipping distance: ' . $e->getMessage());
+                $deliveryAvailable = false;
             }
         }
 
@@ -99,12 +142,30 @@ class CheckoutService
     }
 
     /**
+     * Validate checkout data
+     */
+    private function validateCheckoutData($data)
+    {
+        if (!isset($data['shipping_type']) || !in_array($data['shipping_type'], ['pickup', 'delivery'])) {
+            throw new \Exception('Tipe pengiriman tidak valid');
+        }
+        
+        if ($data['shipping_type'] === 'delivery' && !isset($data['address_id'])) {
+            throw new \Exception('Alamat pengiriman harus dipilih');
+        }
+        
+
+    }
+
+    /**
      * Process checkout and create order
      */
     public function processCheckout(int $userId, array $checkoutData): Order
     {
         return DB::transaction(function () use ($userId, $checkoutData) {
             // Validate checkout data
+            $this->validateCheckoutData($checkoutData);
+            
             $summary = $this->calculateCheckoutSummary(
                 $userId,
                 $checkoutData['shipping_type'],
@@ -114,6 +175,8 @@ class CheckoutService
             if (!$summary['delivery_available'] && $checkoutData['shipping_type'] === 'delivery') {
                 throw new \Exception('Delivery not available for this address (distance exceeds maximum limit)');
             }
+
+
 
             // Create order
             $orderNumber = $this->generateOrderNumber();
@@ -168,6 +231,15 @@ class CheckoutService
                 ]);
             }
 
+            // Create payment record
+            $payment = Payment::create([
+                'order_id' => $order->order_id,
+                'payment_method_id' => 1, // Default payment method, will be updated by callback
+                'amount' => $summary['total'],
+                'status' => 'pending', // Will be updated by Midtrans callback
+                'paid_at' => null,
+            ]);
+
             // Clear cart
             $cart = Cart::where('user_id', $userId)->first();
             if ($cart) {
@@ -189,6 +261,8 @@ class CheckoutService
 
         return $orderNumber;
     }
+
+
 
     /**
      * Get store coordinates

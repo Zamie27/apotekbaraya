@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use App\Models\UserAddress;
-use App\Services\CheckoutService;
+use App\Services\AddressService;
+// Removed GeocodingService - coordinates no longer needed
 
 class Profile extends Component
 {
@@ -58,6 +59,35 @@ class Profile extends Component
     public $showAddressForm = false;
     public $editingAddressId = null;
     
+    // Delete confirmation modal
+    public $showDeleteModal = false;
+    public $addressToDelete = null;
+    public $addressToDeleteData = [];
+    
+    // Address form data
+    public $addressForm = [
+        'label' => 'rumah',
+        'recipient_name' => '',
+        'phone' => '',
+        'province_key' => '',
+        'regency_key' => '',
+        'sub_district_key' => '',
+        'village_key' => '',
+        'postal_code' => '',
+        'detailed_address' => '',
+        'notes' => '',
+        'is_default' => false
+    ];
+    
+    // Cascading dropdown data
+    public $provinces = [];
+    public $regencies = [];
+    public $subDistricts = [];
+    public $villages = [];
+    public $postalCodes = [];
+    public $addressPreview = '';
+    
+    // Legacy fields for backward compatibility
     #[Validate('required|in:rumah,kantor,kost,lainnya')]
     public $address_label = 'rumah';
     
@@ -114,8 +144,26 @@ class Profile extends Component
         $this->gender = $user->gender;
         $this->current_avatar = $user->avatar;
         
+        // Initialize address dropdown data
+        $this->initializeAddressData();
+        
         // Load user addresses
         $this->loadAddresses();
+    }
+    
+    /**
+     * Initialize address dropdown data
+     */
+    public function initializeAddressData()
+    {
+        $addressService = app(AddressService::class);
+        $this->provinces = $addressService->getProvinces();
+        
+        // Auto-select Jawa Barat as default
+        if (!empty($this->provinces)) {
+            $this->addressForm['province_key'] = array_key_first($this->provinces);
+            $this->updateRegencies();
+        }
     }
     
     /**
@@ -123,7 +171,136 @@ class Profile extends Component
      */
     public function loadAddresses()
     {
-        $this->addresses = Auth::user()->addresses()->orderBy('is_default', 'desc')->orderBy('created_at', 'desc')->get()->toArray();
+        $this->addresses = Auth::user()->addresses()
+            ->select([
+                'address_id',
+                'label',
+                'recipient_name',
+                'phone',
+                'village',
+                'sub_district',
+                'district',
+                'regency',
+                'city',
+                'province',
+                'postal_code',
+                'detailed_address',
+                'notes',
+                'is_default',
+                'province_key',
+                'regency_key',
+                'sub_district_key',
+                'village_key',
+                'address'
+            ])
+            ->orderBy('is_default', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->toArray();
+    }
+    
+    /**
+     * Update regencies based on selected province
+     */
+    public function updateRegencies()
+    {
+        $addressService = app(AddressService::class);
+        $this->regencies = $addressService->getRegencies($this->addressForm['province_key']);
+        
+        // Reset dependent dropdowns
+        $this->addressForm['regency_key'] = '';
+        $this->subDistricts = [];
+        $this->villages = [];
+        $this->postalCodes = [];
+        $this->addressForm['sub_district_key'] = '';
+        $this->addressForm['village_key'] = '';
+        $this->addressForm['postal_code'] = '';
+        
+        // Auto-select Subang if available
+        if (!empty($this->regencies)) {
+            $this->addressForm['regency_key'] = array_key_first($this->regencies);
+            $this->updateSubDistricts();
+        }
+        
+        $this->updateAddressPreview();
+    }
+    
+    /**
+     * Update sub districts based on selected regency
+     */
+    public function updateSubDistricts()
+    {
+        $addressService = app(AddressService::class);
+        $this->subDistricts = $addressService->getSubDistricts($this->addressForm['province_key'], $this->addressForm['regency_key']);
+        
+        // Reset dependent dropdowns
+        $this->villages = [];
+        $this->postalCodes = [];
+        $this->addressForm['sub_district_key'] = '';
+        $this->addressForm['village_key'] = '';
+        $this->addressForm['postal_code'] = '';
+        
+        $this->updateAddressPreview();
+    }
+    
+    /**
+     * Update villages based on selected sub district
+     */
+    public function updateVillages()
+    {
+        $addressService = app(AddressService::class);
+        $this->villages = $addressService->getVillages(
+            $this->addressForm['province_key'], 
+            $this->addressForm['regency_key'], 
+            $this->addressForm['sub_district_key']
+        );
+        
+        // Reset dependent dropdowns
+        $this->postalCodes = [];
+        $this->addressForm['village_key'] = '';
+        $this->addressForm['postal_code'] = '';
+        
+        $this->updateAddressPreview();
+    }
+    
+    /**
+     * Update postal codes based on selected village
+     */
+    public function updatePostalCodes()
+    {
+        $addressService = app(AddressService::class);
+        $this->postalCodes = $addressService->getPostalCodes(
+            $this->addressForm['province_key'], 
+            $this->addressForm['regency_key'], 
+            $this->addressForm['sub_district_key'],
+            $this->addressForm['village_key']
+        );
+        
+        // Auto-select postal code if only one is available
+        if (count($this->postalCodes) === 1) {
+            $this->addressForm['postal_code'] = (string) array_values($this->postalCodes)[0];
+        } else {
+            // Clear postal code if multiple options or no options available
+            $this->addressForm['postal_code'] = '';
+        }
+        
+        $this->updateAddressPreview();
+    }
+    
+    /**
+     * Update address preview
+     */
+    public function updateAddressPreview()
+    {
+        $addressService = app(AddressService::class);
+        $this->addressPreview = $addressService->buildFullAddress(
+            $this->addressForm['province_key'],
+            $this->addressForm['regency_key'],
+            $this->addressForm['sub_district_key'],
+            $this->addressForm['village_key'],
+            $this->addressForm['postal_code'],
+            $this->addressForm['detailed_address']
+        );
     }
 
     public function updateProfile()
@@ -246,6 +423,28 @@ class Profile extends Component
      */
     public function resetAddressForm()
     {
+        $this->addressForm = [
+            'label' => 'rumah',
+            'recipient_name' => '',
+            'phone' => '',
+            'province_key' => '',
+            'regency_key' => '',
+            'sub_district_key' => '',
+            'village_key' => '',
+            'postal_code' => '',
+            'detailed_address' => '',
+            'notes' => '',
+            'is_default' => false
+        ];
+        
+        // Reset dropdown data
+        $this->regencies = [];
+        $this->subDistricts = [];
+        $this->villages = [];
+        $this->postalCodes = [];
+        $this->addressPreview = '';
+        
+        // Reset legacy fields
         $this->address_label = 'rumah';
         $this->recipient_name = '';
         $this->address_phone = '';
@@ -259,6 +458,12 @@ class Profile extends Component
         $this->detailed_address = '';
         $this->notes = '';
         $this->is_default = false;
+        
+        // Re-initialize with default province
+        if (!empty($this->provinces)) {
+            $this->addressForm['province_key'] = array_key_first($this->provinces);
+            $this->updateRegencies();
+        }
     }
 
     /**
@@ -272,19 +477,40 @@ class Profile extends Component
 
         if ($address) {
             $this->editingAddressId = $addressId;
+            
+            // Fill addressForm with existing data
+            $this->addressForm = [
+                'label' => $address->label,
+                'recipient_name' => $address->recipient_name,
+                'phone' => $address->phone,
+                'province_key' => $address->province_key ?? '',
+                'regency_key' => $address->regency_key ?? '',
+                'sub_district_key' => $address->sub_district_key ?? '',
+                'village_key' => $address->village_key ?? '',
+                'postal_code' => $address->postal_code,
+                'detailed_address' => $address->detailed_address ?? '',
+                'notes' => $address->notes ?? '',
+                'is_default' => $address->is_default
+            ];
+            
+            // Load cascading dropdown data based on existing address
+            $this->loadCascadingDataForEdit();
+            
+            // Fill legacy fields for backward compatibility
             $this->address_label = $address->label;
             $this->recipient_name = $address->recipient_name;
             $this->address_phone = $address->phone;
             $this->village = $address->village ?? '';
-            $this->sub_district = $address->sub_district ?? $address->district; // Fallback to old district
+            $this->sub_district = $address->sub_district ?? $address->district;
             $this->district = $address->district;
-            $this->regency = $address->regency ?? $address->city; // Fallback to old city
+            $this->regency = $address->regency ?? $address->city;
             $this->city = $address->city;
             $this->province = $address->province ?? '';
             $this->postal_code = $address->postal_code;
             $this->detailed_address = $address->detailed_address ?? '';
             $this->notes = $address->notes;
             $this->is_default = $address->is_default;
+            
             $this->showAddressForm = true;
             
             // Dispatch browser event for toast notification
@@ -297,94 +523,141 @@ class Profile extends Component
             session()->flash('error', 'Alamat tidak ditemukan.');
         }
     }
+    
+    /**
+     * Load cascading dropdown data for editing
+     */
+    public function loadCascadingDataForEdit()
+    {
+        $addressService = app(AddressService::class);
+        
+        // Load regencies if province is selected
+        if (!empty($this->addressForm['province_key'])) {
+            $this->regencies = $addressService->getRegencies($this->addressForm['province_key']);
+            
+            // Load sub districts if regency is selected
+            if (!empty($this->addressForm['regency_key'])) {
+                $this->subDistricts = $addressService->getSubDistricts(
+                    $this->addressForm['province_key'], 
+                    $this->addressForm['regency_key']
+                );
+                
+                // Load villages if sub district is selected
+                if (!empty($this->addressForm['sub_district_key'])) {
+                    $this->villages = $addressService->getVillages(
+                        $this->addressForm['province_key'], 
+                        $this->addressForm['regency_key'], 
+                        $this->addressForm['sub_district_key']
+                    );
+                    
+                    // Load postal codes if village is selected
+                    if (!empty($this->addressForm['village_key'])) {
+                        $this->postalCodes = $addressService->getPostalCodes(
+                            $this->addressForm['province_key'], 
+                            $this->addressForm['regency_key'], 
+                            $this->addressForm['sub_district_key'],
+                            $this->addressForm['village_key']
+                        );
+                    }
+                }
+            }
+        }
+        
+        $this->updateAddressPreview();
+    }
+
+    // Property to prevent duplicate submissions
+    public $isSubmitting = false;
 
     /**
      * Save address (create or update)
      */
     public function saveAddress()
     {
+        // Prevent duplicate submissions
+        if ($this->isSubmitting) {
+            return;
+        }
+        
+        $this->isSubmitting = true;
+        
         // Debug logging
         \Log::info('saveAddress function called', [
             'user_id' => Auth::id(),
-            'address_label' => $this->address_label,
-            'recipient_name' => $this->recipient_name,
+            'addressForm' => $this->addressForm,
             'editing_address_id' => $this->editingAddressId
         ]);
         
-        // Auto-fill district and city for backward compatibility
-        $this->district = $this->sub_district;
-        $this->city = $this->regency;
-        
         try {
+            // Validate addressForm
             $this->validate([
-                'address_label' => 'required|in:rumah,kantor,kost,lainnya',
-                'recipient_name' => 'required|string|max:100|regex:/^[a-zA-Z\s]+$/',
-                'address_phone' => 'required|string|min:10|max:15|regex:/^[0-9]+$/',
-                'village' => 'required|string|max:100',
-                'sub_district' => 'required|string|max:100',
-                'district' => 'required|string|max:100',
-                'regency' => 'required|string|max:100',
-                'city' => 'required|string|max:100',
-                'province' => 'required|string|max:100',
-                'postal_code' => 'required|string|max:10|regex:/^[0-9]+$/',
-                'detailed_address' => 'required|string|max:1000',
-                'notes' => 'nullable|string|max:255',
+                'addressForm.label' => 'required|in:rumah,kantor,kost,lainnya',
+                'addressForm.recipient_name' => 'required|string|max:100|regex:/^[a-zA-Z\s]+$/',
+                'addressForm.phone' => 'required|string|min:10|max:15|regex:/^[0-9]+$/',
+                'addressForm.province_key' => 'required|string',
+                'addressForm.regency_key' => 'required|string',
+                'addressForm.sub_district_key' => 'required|string',
+                'addressForm.village_key' => 'required|string',
+                'addressForm.postal_code' => 'required|string|max:10|regex:/^[0-9]+$/',
+                'addressForm.detailed_address' => 'required|string|max:1000',
+                'addressForm.notes' => 'nullable|string|max:255',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Address validation failed', [
-                'errors' => $e->errors(),
-                'input_data' => [
-                    'address_label' => $this->address_label,
-                    'recipient_name' => $this->recipient_name,
-                    'address_phone' => $this->address_phone,
-                    'village' => $this->village,
-                    'sub_district' => $this->sub_district,
-                    'regency' => $this->regency,
-                    'province' => $this->province,
-                    'postal_code' => $this->postal_code,
-                    'detailed_address' => $this->detailed_address,
-                ]
-            ]);
-            throw $e;
-        }
-        
-        // Debug: Validation passed
-        \Log::info('Address validation passed', [
-            'all_data' => [
-                'address_label' => $this->address_label,
-                'recipient_name' => $this->recipient_name,
-                'address_phone' => $this->address_phone,
-                'village' => $this->village,
-                'sub_district' => $this->sub_district,
-                'district' => $this->district,
-                'regency' => $this->regency,
-                'city' => $this->city,
-                'province' => $this->province,
-                'postal_code' => $this->postal_code,
-                'detailed_address' => $this->detailed_address,
-                'notes' => $this->notes,
-                'is_default' => $this->is_default
-            ]
-        ]);
+            
+            // Additional validation: Check if postal code is properly selected
+            if (empty($this->addressForm['postal_code'])) {
+                $this->isSubmitting = false;
+                $this->dispatch('show-toast', 'error', 'Silakan pilih kode pos terlebih dahulu. Tunggu hingga dropdown kode pos terisi setelah memilih desa.');
+                session()->flash('error', 'Silakan pilih kode pos terlebih dahulu. Tunggu hingga dropdown kode pos terisi setelah memilih desa.');
+                return;
+            }
+            
+            // Validate address completeness - coordinates no longer needed
+            // Distance calculation now uses manual JSON data
+            
+            // Get address service to convert keys to names
+            $addressService = app(AddressService::class);
+            $addressNames = $addressService->getAddressNames(
+                $this->addressForm['province_key'],
+                $this->addressForm['regency_key'],
+                $this->addressForm['sub_district_key'],
+                $this->addressForm['village_key']
+            );
+            
+            // Prepare address data with both keys and names
+            $addressData = [
+                'user_id' => Auth::id(),
+                'label' => $this->addressForm['label'],
+                'recipient_name' => $this->addressForm['recipient_name'],
+                'phone' => $this->addressForm['phone'],
+                
+                // New cascading dropdown fields
+                'province_key' => $this->addressForm['province_key'],
+                'regency_key' => $this->addressForm['regency_key'],
+                'sub_district_key' => $this->addressForm['sub_district_key'],
+                'village_key' => $this->addressForm['village_key'],
+                
+                // Address names from keys
+                'province' => $addressNames['province'],
+                'regency' => $addressNames['regency'],
+                'sub_district' => $addressNames['sub_district'],
+                'village' => $addressNames['village'],
+                
+                // Legacy fields for backward compatibility
+                'district' => $addressNames['sub_district'],
+                'city' => $addressNames['regency'],
+                
+                'postal_code' => $this->addressForm['postal_code'],
+                'detailed_address' => $this->addressForm['detailed_address'],
+                'address' => $this->addressForm['detailed_address'], // For backward compatibility
+                'notes' => $this->addressForm['notes'],
+                'is_default' => $this->addressForm['is_default'],
+                
+                // Coordinates removed - distance calculation uses JSON data
+            ];
+            
+            // Debug: Address data prepared
+            \Log::info('Address data prepared', ['address_data' => $addressData]);
 
-        $addressData = [
-            'user_id' => Auth::id(),
-            'label' => $this->address_label,
-            'recipient_name' => $this->recipient_name,
-            'phone' => $this->address_phone,
-            'village' => $this->village,
-            'sub_district' => $this->sub_district,
-            'district' => $this->district, // Keep for backward compatibility
-            'regency' => $this->regency,
-            'city' => $this->city, // Keep for backward compatibility
-            'province' => $this->province,
-            'postal_code' => $this->postal_code,
-            'detailed_address' => $this->detailed_address,
-            'notes' => $this->notes,
-            'is_default' => $this->is_default,
-        ];
-
-        try {
             if ($this->editingAddressId) {
                 // Update existing address
                 $address = UserAddress::where('address_id', $this->editingAddressId)
@@ -395,22 +668,18 @@ class Profile extends Component
                     $address->update($addressData);
                     \Log::info('Address updated successfully', ['address_id' => $address->address_id]);
                     
-                    // Auto-geocoding: Get coordinates for updated address
-                    $checkoutService = app(CheckoutService::class);
-                    $geocodingSuccess = $checkoutService->updateAddressCoordinates($address);
-                    
                     // Set as default if requested
-                    if ($this->is_default) {
+                    if ($this->addressForm['is_default']) {
                         $address->setAsDefault();
                     }
                     
-                    if ($geocodingSuccess) {
-                        session()->flash('success', 'Alamat berhasil diperbarui dan koordinat lokasi telah diperoleh!');
-                    } else {
-                        session()->flash('success', 'Alamat berhasil diperbarui! (Koordinat lokasi akan diperbarui secara otomatis)');
-                    }
+                    // Show success message
+                    $this->dispatch('show-toast', 'success', 'Alamat berhasil diperbarui!');
+                    session()->flash('success', 'Alamat berhasil diperbarui!');
                 } else {
+                    $this->isSubmitting = false;
                     \Log::error('Address not found for update', ['address_id' => $this->editingAddressId]);
+                    $this->dispatch('show-toast', 'error', 'Alamat tidak ditemukan!');
                     session()->flash('error', 'Alamat tidak ditemukan!');
                     return;
                 }
@@ -419,42 +688,75 @@ class Profile extends Component
                 $address = UserAddress::create($addressData);
                 \Log::info('New address created successfully', ['address_id' => $address->address_id]);
                 
-                // Auto-geocoding: Get coordinates for new address
-                $checkoutService = app(CheckoutService::class);
-                $geocodingSuccess = $checkoutService->updateAddressCoordinates($address);
-                
                 // Set as default if requested
-                if ($this->is_default) {
+                if ($this->addressForm['is_default']) {
                     $address->setAsDefault();
                 }
                 
-                if ($geocodingSuccess) {
-                    session()->flash('success', 'Alamat berhasil ditambahkan dan koordinat lokasi telah diperoleh!');
-                } else {
-                    session()->flash('success', 'Alamat berhasil ditambahkan! (Koordinat lokasi akan diperbarui secara otomatis)');
-                }
+                // Show success message
+                $this->dispatch('show-toast', 'success', 'Alamat berhasil ditambahkan!');
+                session()->flash('success', 'Alamat berhasil ditambahkan!');
             }
+            
+            $this->loadAddresses();
+            $this->hideAddressForm();
+            
         } catch (\Exception $e) {
             \Log::error('Failed to save address', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'address_data' => $addressData
+                'address_data' => $addressData ?? []
             ]);
             
+            $this->dispatch('show-toast', 'error', 'Gagal menyimpan alamat. Silakan coba lagi.');
             session()->flash('error', 'Gagal menyimpan alamat. Silakan coba lagi.');
-            return;
+        } finally {
+            // Always reset the submission flag
+            $this->isSubmitting = false;
         }
-
-        $this->loadAddresses();
-        $this->hideAddressForm();
     }
 
     /**
-     * Delete address
+     * Show delete confirmation modal
      */
-    public function deleteAddress($addressId)
+    public function confirmDeleteAddress($addressId)
     {
         $address = UserAddress::where('address_id', $addressId)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if ($address) {
+            $this->addressToDelete = $addressId;
+            $this->addressToDeleteData = [
+                'label' => $address->label,
+                'recipient_name' => $address->recipient_name,
+                'detailed_address' => $address->detailed_address,
+                'village_name' => $address->village_name
+            ];
+            $this->showDeleteModal = true;
+        }
+    }
+
+    /**
+     * Cancel delete confirmation
+     */
+    public function cancelDeleteAddress()
+    {
+        $this->showDeleteModal = false;
+        $this->addressToDelete = null;
+        $this->addressToDeleteData = [];
+    }
+
+    /**
+     * Delete address after confirmation
+     */
+    public function deleteAddress()
+    {
+        if (!$this->addressToDelete) {
+            return;
+        }
+
+        $address = UserAddress::where('address_id', $this->addressToDelete)
             ->where('user_id', Auth::id())
             ->first();
 
@@ -471,6 +773,9 @@ class Profile extends Component
             
             session()->flash('error', 'Alamat tidak ditemukan atau tidak dapat dihapus.');
         }
+
+        // Close modal and reset
+        $this->cancelDeleteAddress();
     }
 
     /**

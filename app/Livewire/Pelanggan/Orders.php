@@ -16,10 +16,26 @@ class Orders extends Component
 
     public $statusFilter = 'all';
     public $search = '';
+    public $showCancelModal = false;
+    public $selectedOrderId = null;
+    public $cancelReason = '';
+    public $cancelReasonOther = '';
 
     protected $queryString = [
         'statusFilter' => ['except' => 'all'],
         'search' => ['except' => '']
+    ];
+
+    protected $rules = [
+        'cancelReason' => 'required|string',
+        'cancelReasonOther' => 'required_if:cancelReason,lainnya|string|min:3|max:500'
+    ];
+
+    protected $messages = [
+        'cancelReason.required' => 'Alasan pembatalan wajib dipilih.',
+        'cancelReasonOther.required_if' => 'Alasan lainnya wajib diisi.',
+        'cancelReasonOther.min' => 'Alasan lainnya minimal 3 karakter.',
+        'cancelReasonOther.max' => 'Alasan lainnya maksimal 500 karakter.'
     ];
 
     /**
@@ -69,7 +85,9 @@ class Orders extends Component
     {
         return [
             'all' => 'Semua Status',
-            'pending' => 'Menunggu Konfirmasi',
+            'pending' => 'Pesanan Dibuat',
+            'waiting_payment' => 'Menunggu Pembayaran',
+            'waiting_confirmation' => 'Menunggu Konfirmasi',
             'confirmed' => 'Dikonfirmasi',
             'processing' => 'Diproses',
             'shipped' => 'Dikirim',
@@ -79,9 +97,9 @@ class Orders extends Component
     }
 
     /**
-     * Cancel order (if allowed)
+     * Open cancel order modal
      */
-    public function cancelOrder($orderId)
+    public function openCancelModal($orderId)
     {
         $order = Order::where('order_id', $orderId)
             ->where('user_id', Auth::id())
@@ -97,8 +115,103 @@ class Orders extends Component
             return;
         }
 
-        $order->update(['status' => 'cancelled']);
-        session()->flash('success', 'Pesanan berhasil dibatalkan!');
+        $this->selectedOrderId = $orderId;
+        $this->cancelReason = '';
+        $this->showCancelModal = true;
+    }
+
+    /**
+     * Cancel order with reason
+     */
+    public function cancelOrder()
+    {
+        $this->validate();
+
+        $order = Order::where('order_id', $this->selectedOrderId)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if (!$order) {
+            session()->flash('error', 'Pesanan tidak ditemukan!');
+            $this->closeCancelModal();
+            return;
+        }
+
+        if (!$order->canBeCancelled()) {
+            session()->flash('error', 'Pesanan tidak dapat dibatalkan!');
+            $this->closeCancelModal();
+            return;
+        }
+
+        try {
+            // Cancel transaction in Midtrans first if order has payment
+            if ($order->payment && $order->payment->snap_token) {
+                $midtransService = new \App\Services\MidtransService();
+                $cancelResult = $midtransService->cancelTransaction($order->order_number);
+                
+                if (!$cancelResult['success']) {
+                    \Log::warning('Failed to cancel Midtrans transaction, proceeding with local cancellation', [
+                        'order_id' => $order->order_id,
+                        'order_number' => $order->order_number,
+                        'midtrans_error' => $cancelResult['message'] ?? 'Unknown error'
+                    ]);
+                }
+            }
+
+            // Prepare cancel reason based on selection
+            $finalCancelReason = $this->cancelReason;
+            if ($this->cancelReason === 'lainnya') {
+                $finalCancelReason = $this->cancelReasonOther;
+            } else {
+                // Convert reason code to readable text
+                $reasonLabels = [
+                    'salah_pesan' => 'Salah membuat pesanan',
+                    'ganti_barang' => 'Ingin mengganti barang',
+                    'ganti_alamat' => 'Ingin mengganti alamat pengiriman',
+                    'tidak_jadi' => 'Tidak jadi membeli',
+                    'masalah_pembayaran' => 'Masalah dengan pembayaran'
+                ];
+                $finalCancelReason = $reasonLabels[$this->cancelReason] ?? $this->cancelReason;
+            }
+
+            // Update order status to cancelled
+            $order->update([
+                'status' => 'cancelled',
+                'cancelled_at' => now(),
+                'cancelled_by' => Auth::id(),
+                'cancel_reason' => $finalCancelReason
+            ]);
+
+            // Update payment status if exists
+            if ($order->payment) {
+                $order->payment->update([
+                    'status' => 'cancelled',
+                    'cancelled_at' => now()
+                ]);
+            }
+
+            session()->flash('success', 'Pesanan dan pembayaran berhasil dibatalkan!');
+            $this->closeCancelModal();
+        } catch (\Exception $e) {
+            \Log::error('Error cancelling order', [
+                'order_id' => $order->order_id,
+                'error' => $e->getMessage()
+            ]);
+            session()->flash('error', 'Terjadi kesalahan saat membatalkan pesanan.');
+            $this->closeCancelModal();
+        }
+    }
+
+    /**
+     * Close cancel modal
+     */
+    public function closeCancelModal()
+    {
+        $this->showCancelModal = false;
+        $this->selectedOrderId = null;
+        $this->cancelReason = '';
+        $this->cancelReasonOther = '';
+        $this->resetErrorBag();
     }
 
     /**

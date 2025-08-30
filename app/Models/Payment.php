@@ -10,7 +10,7 @@ class Payment extends Model
 {
     use HasFactory;
 
-    protected $table = 'payments';
+    protected $table = 'order_payments';
     protected $primaryKey = 'payment_id';
     public $timestamps = true;
 
@@ -19,14 +19,15 @@ class Payment extends Model
      */
     protected $fillable = [
         'order_id',
-        'payment_method',
-        'payment_status',
+        'payment_method_id',
         'amount',
+        'status',
         'payment_proof',
-        'payment_date',
-        'verified_by',
-        'verified_at',
-        'payment_notes'
+        'notes',
+        'paid_at',
+        'transaction_id',
+        'payment_type',
+        'snap_token'
     ];
 
     /**
@@ -34,8 +35,7 @@ class Payment extends Model
      */
     protected $casts = [
         'amount' => 'decimal:2',
-        'payment_date' => 'datetime',
-        'verified_at' => 'datetime'
+        'paid_at' => 'datetime'
     ];
 
     /**
@@ -55,6 +55,14 @@ class Payment extends Model
     }
 
     /**
+     * Get the payment method that owns the payment.
+     */
+    public function paymentMethod(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethod::class, 'payment_method', 'code');
+    }
+
+    /**
      * Get formatted payment amount.
      */
     public function getFormattedAmountAttribute(): string
@@ -67,9 +75,17 @@ class Payment extends Model
      */
     public function getPaymentMethodLabelAttribute(): string
     {
+        // Try to get from PaymentMethod model first
+        if ($this->paymentMethod) {
+            return $this->paymentMethod->name;
+        }
+
+        // Fallback to manual mapping
         return match($this->payment_method) {
+            'cod' => 'Cash on Delivery (COD)',
+            'qris' => 'QRIS',
             'bank_transfer' => 'Transfer Bank',
-            'e_wallet' => 'E-Wallet',
+            'e_wallet' => 'Dompet Digital',
             'cash' => 'Tunai',
             'credit_card' => 'Kartu Kredit',
             'debit_card' => 'Kartu Debit',
@@ -82,13 +98,26 @@ class Payment extends Model
      */
     public function getPaymentStatusLabelAttribute(): string
     {
-        return match($this->payment_status) {
+        // Handle null or empty status
+        if (empty($this->status)) {
+            return 'Status Tidak Diketahui';
+        }
+        
+        return match($this->status) {
             'pending' => 'Menunggu Pembayaran',
             'paid' => 'Sudah Dibayar',
             'verified' => 'Terverifikasi',
             'failed' => 'Gagal',
             'refunded' => 'Dikembalikan',
-            default => ucfirst($this->payment_status)
+            'cancelled' => 'Dibatalkan',
+            // Midtrans specific statuses
+            'settlement' => 'Pembayaran Berhasil',
+            'capture' => 'Pembayaran Berhasil',
+            'challenge' => 'Perlu Verifikasi',
+            'deny' => 'Pembayaran Ditolak',
+            'expire' => 'Pembayaran Kedaluwarsa',
+            'cancel' => 'Pembayaran Dibatalkan',
+            default => ucfirst($this->status) ?: 'Status Tidak Diketahui'
         };
     }
 
@@ -97,13 +126,62 @@ class Payment extends Model
      */
     public function getStatusBadgeColorAttribute()
     {
-        return match($this->payment_status) {
+        // Handle null or empty status
+        if (empty($this->status)) {
+            return 'badge-neutral';
+        }
+        
+        return match($this->status) {
             'pending' => 'badge-warning',
+            'verified' => 'badge-success',
             'paid' => 'badge-success',
             'failed' => 'badge-error',
             'cancelled' => 'badge-ghost',
             'refunded' => 'badge-info',
+            // Midtrans specific statuses
+            'settlement' => 'badge-success',
+            'capture' => 'badge-success',
+            'challenge' => 'badge-warning',
+            'deny' => 'badge-error',
+            'expire' => 'badge-error',
+            'cancel' => 'badge-ghost',
             default => 'badge-neutral'
+        };
+    }
+
+    /**
+     * Get payment method icon class.
+     */
+    public function getPaymentMethodIconAttribute(): string
+    {
+        if ($this->paymentMethod) {
+            return $this->paymentMethod->getIconClass();
+        }
+
+        return match($this->payment_method) {
+            'cod' => 'fas fa-money-bill-wave',
+            'qris' => 'fas fa-qrcode',
+            'bank_transfer' => 'fas fa-university',
+            'e_wallet' => 'fas fa-mobile-alt',
+            default => 'fas fa-credit-card'
+        };
+    }
+
+    /**
+     * Get payment method color class.
+     */
+    public function getPaymentMethodColorAttribute(): string
+    {
+        if ($this->paymentMethod) {
+            return $this->paymentMethod->getColorClass();
+        }
+
+        return match($this->payment_method) {
+            'cod' => 'text-green-600',
+            'qris' => 'text-blue-600',
+            'bank_transfer' => 'text-purple-600',
+            'e_wallet' => 'text-orange-600',
+            default => 'text-gray-600'
         };
     }
 
@@ -114,7 +192,7 @@ class Payment extends Model
      */
     public function isVerified(): bool
     {
-        return $this->payment_status === 'verified';
+        return $this->status === 'verified';
     }
 
     /**
@@ -122,7 +200,31 @@ class Payment extends Model
      */
     public function isPending(): bool
     {
-        return $this->payment_status === 'pending';
+        return $this->status === 'pending';
+    }
+
+    /**
+     * Check if payment is paid.
+     */
+    public function isPaid(): bool
+    {
+        return in_array($this->status, ['paid', 'settlement', 'capture']);
+    }
+
+    /**
+     * Check if payment is failed.
+     */
+    public function isFailed(): bool
+    {
+        return in_array($this->status, ['failed', 'deny', 'expire']);
+    }
+
+    /**
+     * Check if payment is cancelled.
+     */
+    public function isCancelled(): bool
+    {
+        return in_array($this->status, ['cancelled', 'cancel']);
     }
 
     /**
@@ -130,7 +232,7 @@ class Payment extends Model
      */
     public function scopeByStatus($query, $status)
     {
-        return $query->where('payment_status', $status);
+        return $query->where('status', $status);
     }
 
     /**
@@ -138,7 +240,7 @@ class Payment extends Model
      */
     public function scopeVerified($query)
     {
-        return $query->where('payment_status', 'verified');
+        return $query->where('status', 'paid');
     }
 
     /**
@@ -146,6 +248,6 @@ class Payment extends Model
      */
     public function scopePending($query)
     {
-        return $query->where('payment_status', 'pending');
+        return $query->where('status', 'pending');
     }
 }

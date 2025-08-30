@@ -38,6 +38,15 @@
             </div>
         @endif
 
+        @if (session()->has('info'))
+            <div class="alert alert-info mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ session('info') }}</span>
+            </div>
+        @endif
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Main Content -->
             <div class="lg:col-span-2 space-y-6">
@@ -51,38 +60,78 @@
                             </div>
                             <div class="text-right">
                                 <span class="badge {{ $order->status_badge_color }} badge-lg">{{ $order->status_label }}</span>
-                                @if ($order->payment)
-                                    <div class="mt-2">
-                                        <span class="badge {{ $order->payment->status_badge_color }}">{{ $order->payment->payment_status_label }}</span>
-                                    </div>
-                                @endif
                             </div>
                         </div>
 
                         <!-- Order Actions -->
                         <div class="flex flex-wrap gap-2">
+                            {{-- Payment Button --}}
+                            @if ($order->payment && $order->payment->status === 'pending' && !$order->isPaymentExpired())
+                                <button 
+                                    wire:click="continuePayment" 
+                                    class="btn btn-primary btn-sm"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 0h10a2 2 0 002-2v-3a2 2 0 00-2-2H9a2 2 0 00-2 2v3a2 2 0 002 2z" />
+                                    </svg>
+                                    Bayar Pesanan
+                                </button>
+                            @endif
+                            
+                            {{-- Check Payment Status Button --}}
+                            @if ($order->payment && $order->payment->status === 'pending')
+                                <button 
+                                    wire:click="checkPaymentStatus" 
+                                    wire:loading.attr="disabled"
+                                    wire:target="checkPaymentStatus"
+                                    class="btn btn-info btn-sm"
+                                >
+                                    <span wire:loading.remove wire:target="checkPaymentStatus">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        Cek Status Pembayaran
+                                    </span>
+                                    <span wire:loading wire:target="checkPaymentStatus" class="loading loading-spinner loading-xs mr-1"></span>
+                                    <span wire:loading wire:target="checkPaymentStatus">Mengecek...</span>
+                                </button>
+                            @endif
+                            
+                            {{-- Note: Konfirmasi pesanan hanya dilakukan oleh apoteker, bukan pelanggan --}}
+                            
+                            {{-- Cancel Order Button --}}
                             @if ($order->canBeCancelled())
                                 <button 
-                                    wire:click="cancelOrder" 
+                                    onclick="cancel_order_modal.showModal()" 
                                     class="btn btn-error btn-sm"
-                                    onclick="return confirm('Yakin ingin membatalkan pesanan ini?')"
                                 >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
                                     Batalkan Pesanan
                                 </button>
                             @endif
                             
+                            {{-- Confirm Delivery Button --}}
                             @if ($order->status === 'shipped')
                                 <button 
                                     wire:click="confirmDelivery" 
                                     class="btn btn-success btn-sm"
                                     onclick="return confirm('Konfirmasi bahwa pesanan sudah diterima?')"
                                 >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
                                     Terima Pesanan
                                 </button>
                             @endif
                             
+                            {{-- Reorder Button --}}
                             @if ($order->isCompleted())
                                 <button class="btn btn-primary btn-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+                                    </svg>
                                     Beli Lagi
                                 </button>
                             @endif
@@ -98,13 +147,22 @@
                             @foreach ($timeline as $step)
                                 <div class="flex items-start gap-4">
                                     <div class="flex-shrink-0">
-                                        @if ($step['completed'])
+                                        @if (isset($step['is_cancelled']) && $step['is_cancelled'])
+                                            {{-- Cancelled status with red X icon --}}
+                                            <div class="w-8 h-8 bg-error rounded-full flex items-center justify-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </div>
+                                        @elseif ($step['completed'])
+                                            {{-- Completed status with green check --}}
                                             <div class="w-8 h-8 bg-success rounded-full flex items-center justify-center">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                                 </svg>
                                             </div>
                                         @else
+                                            {{-- Pending status with gray clock --}}
                                             <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -113,11 +171,37 @@
                                         @endif
                                     </div>
                                     <div class="flex-1">
-                                        <h4 class="font-medium {{ $step['completed'] ? 'text-success' : 'text-gray-600' }}">
+                                        <h4 class="font-medium {{ isset($step['is_cancelled']) && $step['is_cancelled'] ? 'text-error' : ($step['completed'] ? 'text-success' : 'text-gray-600') }}">
                                             {{ $step['label'] }}
                                         </h4>
                                         @if ($step['date'])
                                             <p class="text-sm text-gray-500">{{ $step['date']->format('d M Y, H:i') }}</p>
+                                        @endif
+                                        
+                                        {{-- Show delivery proof link if available --}}
+                        @if (isset($step['show_proof_link']) && $step['show_proof_link'])
+                            <button 
+                                type="button"
+                                wire:click="showDeliveryProof('{{ $step['delivery_proof'] }}')"
+                                class="text-blue-600 hover:text-blue-800 text-sm font-medium mt-1 flex items-center gap-1"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                @if($order->shipping_type === 'pickup')
+                                    Lihat Bukti Pengambilan
+                                @else
+                                    Lihat Bukti Pengiriman
+                                @endif
+                            </button>
+                        @endif
+                                        
+                                        {{-- Show cancel reason if this is a cancelled step --}}
+                                        @if (isset($step['is_cancelled']) && $step['is_cancelled'] && isset($step['cancel_reason']) && $step['cancel_reason'])
+                                            <div class="mt-2 p-3 bg-error/10 border border-error/20 rounded-lg">
+                                                <p class="text-sm font-medium text-error mb-1">Alasan Pembatalan:</p>
+                                                <p class="text-sm text-gray-700">{{ $step['cancel_reason'] }}</p>
+                                            </div>
                                         @endif
                                     </div>
                                 </div>
@@ -229,17 +313,194 @@
                                     <span class="text-sm text-gray-600">Jumlah:</span>
                                     <p class="font-medium">{{ $order->payment->formatted_amount }}</p>
                                 </div>
+                                
+                                {{-- Payment Reference --}}
+                                @if ($order->payment->transaction_id)
+                                    <div>
+                                        <span class="text-sm text-gray-600">ID Transaksi:</span>
+                                        <p class="font-medium font-mono text-sm">{{ $order->payment->transaction_id }}</p>
+                                    </div>
+                                @endif
+                                
+                                {{-- Payment Expiry --}}
+                                @if ($order->payment->status === 'pending' && $order->payment_expired_at)
+                                    <div>
+                                        <span class="text-sm text-gray-600">Batas Waktu:</span>
+                                        @if ($order->isPaymentExpired())
+                                            <p class="font-medium text-red-600">Kedaluwarsa pada {{ $order->payment_expired_at->format('d M Y, H:i') }}</p>
+                                        @else
+                                            <p class="font-medium text-orange-600">{{ $order->payment_expired_at->format('d M Y, H:i') }}</p>
+                                            <p class="text-xs text-gray-500">Sisa waktu: {{ $order->payment_expired_at->diffForHumans() }}</p>
+                                        @endif
+                                    </div>
+                                @endif
+                                
+                                {{-- Payment Date --}}
                                 @if ($order->payment->paid_at)
                                     <div>
                                         <span class="text-sm text-gray-600">Dibayar:</span>
                                         <p class="font-medium">{{ $order->payment->paid_at->format('d M Y, H:i') }}</p>
                                     </div>
                                 @endif
+                                
+                                {{-- Payment Instructions --}}
+                                @if ($order->payment->status === 'pending' && $order->payment_instructions && !$order->isPaymentExpired())
+                                    <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                        <h4 class="text-sm font-semibold text-blue-800 mb-2">Instruksi Pembayaran:</h4>
+                                        <div class="text-sm text-blue-700 space-y-1">
+                                            @foreach ($order->payment_instructions as $instruction)
+                                                <p>• {{ $instruction }}</p>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+                                
+
+                                    
+                                    {{-- Payment Status Info --}}
+                                @if ($order->isPaymentExpired())
+                                    <div class="mt-4">
+                                        <div class="alert alert-warning">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                            </svg>
+                                            <span>Pembayaran telah kedaluwarsa. Silakan buat pesanan baru.</span>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
                 @endif
+
+
             </div>
         </div>
     </div>
+
+    {{-- Cancel Order Modal --}}
+    <dialog id="cancel_order_modal" class="modal" x-data="{ isSubmitting: false, cancelReason: '', cancelReasonOther: '' }">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg mb-4">Batalkan Pesanan</h3>
+            <p class="mb-4">Mengapa Anda ingin membatalkan pesanan ini?</p>
+            
+            <form wire:submit="confirmCancelOrder" class="space-y-4" x-on:submit="isSubmitting = true">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Pilih alasan pembatalan:</span>
+                    </label>
+                    <select class="select select-bordered w-full" x-model="cancelReason" wire:model="cancelReason">
+                        <option value="">Pilih alasan...</option>
+                        <option value="salah_pesan">Salah membuat pesanan</option>
+                        <option value="ganti_barang">Ingin mengganti barang</option>
+                        <option value="ganti_alamat">Ingin mengganti alamat pengiriman</option>
+                        <option value="tidak_jadi">Tidak jadi membeli</option>
+                        <option value="masalah_pembayaran">Masalah dengan pembayaran</option>
+                        <option value="lainnya">Lainnya</option>
+                    </select>
+                </div>
+                
+                <div class="form-control" x-show="cancelReason === 'lainnya'">
+                    <label class="label">
+                        <span class="label-text">Jelaskan alasan lainnya:</span>
+                    </label>
+                    <textarea 
+                        class="textarea textarea-bordered" 
+                        placeholder="Masukkan alasan pembatalan..."
+                        rows="3"
+                        x-model="cancelReasonOther"
+                        wire:model="cancelReasonOther"
+                    ></textarea>
+                </div>
+                
+                <div class="modal-action">
+                    <button 
+                        type="button" 
+                        class="btn btn-ghost" 
+                        onclick="cancel_order_modal.close()"
+                    >
+                        Batal
+                    </button>
+                    <button 
+                         type="submit" 
+                         class="btn btn-error" 
+                         x-bind:disabled="!cancelReason || (cancelReason === 'lainnya' && (!cancelReasonOther || cancelReasonOther.length < 3)) || isSubmitting"
+                         x-bind:class="{ 'loading': isSubmitting }"
+                     >
+                         <span x-show="!isSubmitting">Ya, Batalkan Pesanan</span>
+                         <span x-show="isSubmitting">Membatalkan...</span>
+                     </button>
+                </div>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+
+    {{-- Note: Modal konfirmasi pesanan dihapus karena pelanggan tidak boleh mengkonfirmasi pesanan --}}
+    {{-- Konfirmasi pesanan hanya dilakukan oleh apoteker melalui dashboard apoteker --}}
+
+    {{-- Delivery Proof Modal --}}
+    <dialog id="delivery_proof_modal" class="modal" @if($showDeliveryProofModal) open @endif>
+        <div class="modal-box max-w-2xl">
+            <h3 class="font-bold text-lg mb-4">
+                @if($order->shipping_type === 'pickup')
+                    Bukti Pengambilan
+                @else
+                    Bukti Pengiriman
+                @endif
+            </h3>
+            
+            @if($deliveryProofImage)
+                <div class="flex justify-center">
+                    <img 
+                        src="{{ Storage::url($deliveryProofImage) }}" 
+                        alt="@if($order->shipping_type === 'pickup') Bukti Pengambilan @else Bukti Pengiriman @endif" 
+                        class="max-w-full h-auto rounded-lg shadow-lg"
+                        style="max-height: 70vh;"
+                    >
+                </div>
+            @else
+                <div class="text-center py-8">
+                    <p class="text-gray-500">
+                        @if($order->shipping_type === 'pickup')
+                            Bukti pengambilan tidak tersedia
+                        @else
+                            Bukti pengiriman tidak tersedia
+                        @endif
+                    </p>
+                </div>
+            @endif
+            
+            <div class="modal-action">
+                <button 
+                    type="button" 
+                    class="btn btn-primary" 
+                    wire:click="closeDeliveryProofModal"
+                >
+                    Tutup
+                </button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button wire:click="closeDeliveryProofModal">close</button>
+        </form>
+    </dialog>
 </div>
+
+@script
+<script>
+    // Auto-refresh payment status every 30 seconds for pending payments
+    if ($wire.order && $wire.order.payment && $wire.order.payment.status === 'pending') {
+        setInterval(() => {
+            $wire.checkPaymentStatus();
+        }, 30000);
+    }
+    
+    // Listen for order cancellation success
+    window.addEventListener('order-cancelled', () => {
+        document.getElementById('cancel_order_modal').close();
+    });
+</script>
+@endscript

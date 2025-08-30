@@ -74,6 +74,7 @@
                         <span class="flex-1 ms-3 whitespace-nowrap">Products</span>
                     </a>
                 </li>
+
             </ul>
         </div>
     </aside>

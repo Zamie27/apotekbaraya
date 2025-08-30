@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('payment_methods', function (Blueprint $table) {
             $table->id('payment_method_id');
             $table->string('name');
-            $table->enum('type', ['cash', 'bank_transfer', 'e_wallet', 'qris']);
+            $table->enum('type', ['cash', 'bank_transfer', 'e_wallet', 'qris', 'virtual_account']);
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();

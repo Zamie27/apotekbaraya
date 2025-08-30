@@ -71,4 +71,20 @@ class OrderItem extends Model
     {
         return 'Rp ' . number_format($this->price, 0, ',', '.');
     }
+
+    /**
+     * Get quantity (alias for qty).
+     */
+    public function getQuantityAttribute(): int
+    {
+        return $this->qty;
+    }
+
+    /**
+     * Get subtotal (alias for total_price).
+     */
+    public function getSubtotalAttribute(): float
+    {
+        return $this->total_price;
+    }
 }

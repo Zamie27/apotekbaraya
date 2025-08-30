@@ -1,11 +1,14 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PaymentController;
+
 use App\Livewire\Dashboard;
 use App\Livewire\Kategori;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Admin\StoreSettings;
 use App\Livewire\Apoteker\Dashboard as ApotekerDashboard;
+use App\Livewire\Apoteker\Orders as ApotekerOrders;
 use App\Livewire\Kurir\Dashboard as KurirDashboard;
 use App\Livewire\Admin\Profile as AdminProfile;
 use App\Livewire\Apoteker\Profile as ApotekerProfile;
@@ -40,7 +43,12 @@ Route::get('/', function () {
 })->name('root');
 
 // Public homepage for guests
-Route::get('/dashboard', Dashboard::class)->name('home');
+Route::get('/dashboard', Dashboard::class)->name('dashboard')->middleware('auth');
+
+// Home route alias for dashboard (for backward compatibility)
+Route::get('/home', function () {
+    return redirect()->route('dashboard');
+})->name('home');
 
 // Public product description page (accessible by guests)
 Route::get('/produk/{id?}', \App\Livewire\Deskripsi::class)->name('produk.deskripsi');
@@ -50,6 +58,15 @@ Route::get('/search', \App\Livewire\Search::class)->name('search');
 
 // Public category page (accessible by guests)
 Route::get('/kategori/{slug?}', Kategori::class)->name('kategori');
+
+// Payment routes (accessible by Midtrans and authenticated users)
+Route::post('/payment/notification', [\App\Http\Controllers\WebhookController::class, 'midtransNotification'])->name('payment.notification');
+Route::get('/payment/finish', [PaymentController::class, 'finish'])->name('payment.finish');
+Route::middleware('auth')->get('/payment/status', [PaymentController::class, 'checkStatus'])->name('payment.status');
+Route::middleware('auth')->get('/payment', \App\Livewire\Payment::class)->name('payment.page');
+Route::middleware('auth')->get('/payment/snap', \App\Livewire\PaymentSnap::class)->name('payment.snap');
+
+
 
 // Cart and Checkout pages (requires authentication)
 Route::middleware('auth')->group(function () {
@@ -73,6 +90,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/dashboard', AdminDashboard::class);
         Route::get('/admin/profile', AdminProfile::class);
         Route::get('/admin/settings', StoreSettings::class)->name('admin.settings');
+
         // Add more admin routes here
         // Route::get('/admin/users', AdminUsers::class);
         // Route::get('/admin/products', AdminProducts::class);
@@ -80,7 +98,9 @@ Route::middleware('auth')->group(function () {
 
     // Apoteker routes - only apoteker can access
     Route::middleware('role:apoteker')->group(function () {
-        Route::get('/apoteker/dashboard', ApotekerDashboard::class);
+        Route::get('/apoteker/dashboard', ApotekerDashboard::class)->name('apoteker.dashboard');
+        Route::get('/apoteker/orders', ApotekerOrders::class)->name('apoteker.orders');
+        Route::get('/apoteker/orders/{orderId}', \App\Livewire\Apoteker\OrderDetail::class)->name('apoteker.orders.detail');
         Route::get('/apoteker/profile', ApotekerProfile::class);
         // Add more apoteker routes here
         // Route::get('/apoteker/prescriptions', ApotekerPrescriptions::class);
@@ -89,10 +109,10 @@ Route::middleware('auth')->group(function () {
 
     // Kurir routes - only kurir can access
     Route::middleware('role:kurir')->group(function () {
-        Route::get('/kurir/dashboard', KurirDashboard::class);
-        Route::get('/kurir/profile', KurirProfile::class);
+        Route::get('/kurir/dashboard', KurirDashboard::class)->name('kurir.dashboard');
+        Route::get('/kurir/profile', KurirProfile::class)->name('kurir.profile');
+        Route::get('/kurir/deliveries', \App\Livewire\Kurir\Deliveries::class)->name('kurir.deliveries');
         // Add more kurir routes here
-        // Route::get('/kurir/deliveries', KurirDeliveries::class);
         // Route::get('/kurir/routes', KurirRoutes::class);
     });
 
@@ -107,3 +127,8 @@ Route::middleware('auth')->group(function () {
         // Add more pelanggan routes here
     });
 });
+
+// Webhook routes - no authentication required
+Route::post('/webhook/midtrans', [\App\Http\Controllers\WebhookController::class, 'midtransNotification'])
+    ->name('webhook.midtrans')
+    ->withoutMiddleware(['web', 'auth']);

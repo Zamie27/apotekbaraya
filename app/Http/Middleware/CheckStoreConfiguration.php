@@ -20,8 +20,7 @@ class CheckStoreConfiguration
         $requiredSettings = [
             'store_name',
             'store_address',
-            'store_latitude',
-            'store_longitude',
+            'store_hours',
             'shipping_rate_per_km',
             'max_delivery_distance',
             'free_shipping_minimum'

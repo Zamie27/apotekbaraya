@@ -13,9 +13,25 @@ class DistanceCalculatorService
     private string $nominatimBaseUrl = 'https://nominatim.openstreetmap.org';
     private int $requestDelay = 0; // Reduced delay to prevent timeout, will implement rate limiting differently
 
+    private $addressData;
+    
     public function __construct()
     {
         // No API key needed for Nominatim
+        $this->loadAddressData();
+    }
+    
+    /**
+     * Load address data from JSON file for direct distance lookup
+     */
+    private function loadAddressData()
+    {
+        $jsonPath = base_path('alamatsubang.json');
+        
+        if (file_exists($jsonPath)) {
+            $jsonContent = file_get_contents($jsonPath);
+            $this->addressData = json_decode($jsonContent, true);
+        }
     }
 
     /**
@@ -53,24 +69,20 @@ class DistanceCalculatorService
     }
 
     /**
-     * Get store coordinates from settings (manual override)
-     * This provides accurate coordinates set manually in store settings
+     * Get store coordinates (static accurate coordinates)
+     * Using fixed coordinates for Apotek Baraya location
      */
     public function getStoreCoordinates(): array
     {
-        $latitude = StoreSetting::get('store_latitude');
-        $longitude = StoreSetting::get('store_longitude');
-        $address = StoreSetting::get('store_address');
+        $address = StoreSetting::get('store_address', 'Apotek Baraya');
         
-        if (!$latitude || !$longitude) {
-            throw new \Exception('Koordinat toko belum diatur. Silakan atur koordinat toko di pengaturan.');
-        }
-        
+        // Fixed accurate coordinates for Apotek Baraya
+        // These coordinates are manually verified for accuracy
         return [
-            'latitude' => (float) $latitude,
-            'longitude' => (float) $longitude,
+            'latitude' => -6.318318,
+            'longitude' => 107.694088,
             'formatted_address' => $address,
-            'source' => 'manual_store_settings'
+            'source' => 'static_coordinates'
         ];
     }
 
@@ -1100,44 +1112,188 @@ class DistanceCalculatorService
     }
 
     /**
+     * Get direct distance from alamatsubang.json based on village and sub-district
+     * 
+     * @param string $village
+     * @param string $subDistrict
+     * @param string|null $postalCode
+     * @return float|null Distance in kilometers, null if not found
+     */
+    public function getDirectDistance(string $village, string $subDistrict, string $postalCode = null): ?float
+    {
+        if (!$this->addressData || !$village || !$subDistrict) {
+            return null;
+        }
+        
+        // Find the original sub-district key
+        $originalSubDistrictKey = $this->findOriginalKey($subDistrict);
+        
+        if (!$originalSubDistrictKey || !isset($this->addressData[$originalSubDistrictKey])) {
+            return null;
+        }
+        
+        $data = $this->addressData[$originalSubDistrictKey];
+        
+        // Check if this is the new Subang format with postal codes as keys
+        if ($this->isSubangNewFormat($data)) {
+            // Handle Subang's new format where postal codes are keys
+            if ($postalCode && isset($data[$postalCode]['distances'])) {
+                $distances = $data[$postalCode]['distances'];
+                $originalVillageKey = $this->findOriginalVillageKey($village, $data[$postalCode]['desa']);
+                
+                if ($originalVillageKey && isset($distances[$originalVillageKey])) {
+                    return (float) $distances[$originalVillageKey];
+                }
+            }
+            
+            // If no postal code provided or not found, search through all postal codes
+            foreach ($data as $postalCodeKey => $postalData) {
+                if (is_numeric($postalCodeKey) && isset($postalData['distances']) && isset($postalData['desa'])) {
+                    $originalVillageKey = $this->findOriginalVillageKey($village, $postalData['desa']);
+                    
+                    if ($originalVillageKey && isset($postalData['distances'][$originalVillageKey])) {
+                        return (float) $postalData['distances'][$originalVillageKey];
+                    }
+                }
+            }
+        } else {
+            // Handle standard format
+            if (isset($data['distances'])) {
+                $originalVillageKey = $this->findOriginalVillageKey($village, $data['desa']);
+                
+                if ($originalVillageKey && isset($data['distances'][$originalVillageKey])) {
+                    return (float) $data['distances'][$originalVillageKey];
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Find original key from formatted key (helper method for distance lookup)
+     */
+    private function findOriginalKey($formattedKey)
+    {
+        foreach ($this->addressData as $originalKey => $data) {
+            // Try multiple comparison formats
+            $normalizedOriginal = strtolower(str_replace(' ', '_', $originalKey));
+            $normalizedInput = strtolower(str_replace(' ', '_', $formattedKey));
+            
+            if ($normalizedOriginal === $normalizedInput || 
+                strtolower($originalKey) === strtolower($formattedKey) ||
+                $originalKey === $formattedKey) {
+                return $originalKey;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Find original village key from formatted key (helper method for distance lookup)
+     */
+    private function findOriginalVillageKey($formattedKey, $villages)
+    {
+        if (is_array($villages)) {
+            foreach ($villages as $village) {
+                // Try multiple comparison formats
+                $normalizedOriginal = strtolower(str_replace(' ', '_', $village));
+                $normalizedInput = strtolower(str_replace(' ', '_', $formattedKey));
+                
+                if ($normalizedOriginal === $normalizedInput || 
+                    strtolower($village) === strtolower($formattedKey) ||
+                    $village === $formattedKey) {
+                    return $village;
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Check if data uses Subang's new format with postal codes as keys (helper method for distance lookup)
+     */
+    private function isSubangNewFormat($data)
+    {
+        // Check if the data has numeric keys (postal codes) instead of 'distances' and 'desa' keys
+        foreach ($data as $key => $value) {
+            if (is_numeric($key) && is_array($value) && isset($value['kodepos']) && isset($value['desa'])) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
      * Calculate distance from an address to store location
+     * Now supports both direct distance lookup and coordinate-based calculation
      */
     public function calculateDistanceFromAddress(string $address): array
     {
-        // Get coordinates from address
-        $coordinates = $this->getCoordinatesFromAddress($address);
+        // Try to get direct distance first if we can parse the address components
+        $components = $this->extractAddressComponents($address);
         
-        // Get store coordinates
-        $storeLat = (float) StoreSetting::get('store_latitude', 0);
-        $storeLng = (float) StoreSetting::get('store_longitude', 0);
-        
-        if (empty($storeLat) || empty($storeLng)) {
-            throw new \Exception('Koordinat toko belum diatur. Silakan atur koordinat toko terlebih dahulu.');
+        if (!empty($components['village']) && !empty($components['sub_district'])) {
+            $directDistance = $this->getDirectDistance(
+                $components['village'], 
+                $components['sub_district']
+            );
+            
+            if ($directDistance !== null) {
+                // Use direct distance from alamatsubang.json
+                return [
+                    'distance_km' => $directDistance,
+                    'duration_minutes' => round($directDistance * 3), // Rough estimate: 3 minutes per km
+                    'distance_text' => round($directDistance, 1) . ' km',
+                    'duration_text' => round($directDistance * 3) . ' mins',
+                    'formatted_address' => $address,
+                    'source' => 'direct_distance_data',
+                    'village' => $components['village'],
+                    'sub_district' => $components['sub_district']
+                ];
+            }
         }
         
-        // Calculate distance
-        $distanceData = $this->calculateDistance(
-            $storeLat,
-            $storeLng,
-            $coordinates['latitude'],
-            $coordinates['longitude']
-        );
-        
-        return [
-            'distance_km' => $distanceData['distance_km'],
-            'duration_minutes' => $distanceData['duration_minutes'],
-            'distance_text' => $distanceData['distance_text'],
-            'duration_text' => $distanceData['duration_text'],
-            'formatted_address' => $coordinates['formatted_address'],
-            'destination_coordinates' => [
-                'latitude' => $coordinates['latitude'],
-                'longitude' => $coordinates['longitude']
-            ],
-            'store_coordinates' => [
-                'latitude' => $storeLat,
-                'longitude' => $storeLng
-            ]
-        ];
+        // Fallback to coordinate-based calculation if direct distance not available
+        try {
+            // Get coordinates from address
+            $coordinates = $this->getCoordinatesFromAddress($address);
+            
+            // Get store coordinates
+            $storeLat = (float) StoreSetting::get('store_latitude', 0);
+            $storeLng = (float) StoreSetting::get('store_longitude', 0);
+            
+            if (empty($storeLat) || empty($storeLng)) {
+                throw new \Exception('Koordinat toko belum diatur. Silakan atur koordinat toko terlebih dahulu.');
+            }
+            
+            // Calculate distance
+            $distanceData = $this->calculateDistance(
+                $storeLat,
+                $storeLng,
+                $coordinates['latitude'],
+                $coordinates['longitude']
+            );
+            
+            return [
+                'distance_km' => $distanceData['distance_km'],
+                'duration_minutes' => $distanceData['duration_minutes'],
+                'distance_text' => $distanceData['distance_text'],
+                'duration_text' => $distanceData['duration_text'],
+                'formatted_address' => $coordinates['formatted_address'],
+                'destination_coordinates' => [
+                    'latitude' => $coordinates['latitude'],
+                    'longitude' => $coordinates['longitude']
+                ],
+                'store_coordinates' => [
+                    'latitude' => $storeLat,
+                    'longitude' => $storeLng
+                ],
+                'source' => 'coordinate_calculation'
+            ];
+        } catch (\Exception $e) {
+            throw new \Exception('Tidak dapat menghitung jarak untuk alamat: ' . $address . '. Error: ' . $e->getMessage());
+        }
     }
 
     /**

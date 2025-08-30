@@ -35,18 +35,6 @@
                     Informasi Toko
                 </h2>
 
-                {{-- Info Alert --}}
-                <div class="alert alert-info mb-6">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <div>
-                        <h3 class="font-bold">Geocoding Otomatis</h3>
-                        <div class="text-sm">Koordinat toko akan otomatis didapatkan berdasarkan alamat detail yang Anda masukkan. Pastikan alamat lengkap dan akurat untuk hasil terbaik.</div>
-                    </div>
-                </div>
-
                 {{-- Store Name --}}
                 <div class="form-control mb-4">
                     <label class="label">
@@ -202,63 +190,24 @@
                     @enderror
                 </div>
 
-                {{-- Coordinates Section --}}
-                <div class="divider">Koordinat Toko</div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    {{-- Latitude --}}
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Latitude</span>
-                        </label>
-                        <input type="number"
-                            step="any"
-                            wire:model.live="store_latitude"
-                            class="input input-bordered w-full @error('store_latitude') input-error @enderror"
-                            placeholder="-6.200000">
-                        @error('store_latitude')
-                        <label class="label">
-                            <span class="label-text-alt text-error">{{ $message }}</span>
-                        </label>
-                        @enderror
-                    </div>
-
-                    {{-- Longitude --}}
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Longitude</span>
-                        </label>
-                        <input type="number"
-                            step="any"
-                            wire:model.live="store_longitude"
-                            class="input input-bordered w-full @error('store_longitude') input-error @enderror"
-                            placeholder="106.816666">
-                        @error('store_longitude')
-                        <label class="label">
-                            <span class="label-text-alt text-error">{{ $message }}</span>
-                        </label>
-                        @enderror
-                    </div>
+                {{-- Store Hours --}}
+                <div class="form-control mb-4">
+                    <label class="label">
+                        <span class="label-text font-medium">Jam Operasional <span class="text-red-500">*</span></span>
+                    </label>
+                    <input type="text"
+                        wire:model.live="store_hours"
+                        class="input input-bordered w-full @error('store_hours') input-error @enderror"
+                        placeholder="Contoh: Senin-Sabtu: 08:00-20:00">
+                    <label class="label">
+                        <span class="label-text-alt text-gray-500">Jam buka toko untuk layanan pickup</span>
+                    </label>
+                    @error('store_hours')
+                    <label class="label">
+                        <span class="label-text-alt text-error">{{ $message }}</span>
+                    </label>
+                    @enderror
                 </div>
-
-                {{-- Get Coordinates Button --}}
-                <button type="button"
-                    wire:click="getCoordinatesFromAddress"
-                    class="btn btn-outline btn-info w-full mb-4"
-                    wire:loading.attr="disabled"
-                    wire:target="getCoordinatesFromAddress">
-                    <span wire:loading.remove wire:target="getCoordinatesFromAddress">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        Dapatkan Koordinat dari Alamat
-                    </span>
-                    <span wire:loading wire:target="getCoordinatesFromAddress">
-                        <span class="loading loading-spinner loading-sm"></span>
-                        Mengambil koordinat...
-                    </span>
-                </button>
             </div>
         </div>
 
@@ -337,112 +286,7 @@
         </div>
     </div>
 
-    {{-- Distance Calculator Test Section --}}
-    <div class="card bg-base-100 shadow-xl mt-8">
-        <div class="card-body">
-            <h2 class="card-title text-xl mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
-                </svg>
-                Test Perhitungan Jarak
-            </h2>
-            <p class="text-gray-600 mb-4">Uji coba perhitungan jarak dan biaya pengiriman dari alamat tertentu ke toko</p>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {{-- Test Input --}}
-                <div>
-                    <div class="form-control mb-4">
-                        <label class="label">
-                            <span class="label-text font-medium">Alamat Test</span>
-                        </label>
-                        <textarea wire:model.live="testAddress"
-                            class="textarea textarea-bordered w-full resize-y min-h-[3rem]"
-                            placeholder="Masukkan alamat untuk test perhitungan jarak"></textarea>
-                    </div>
-
-                    <div class="flex gap-2">
-                        <button type="button"
-                            wire:click="testDistanceCalculation"
-                            class="btn btn-secondary flex-1"
-                            wire:loading.attr="disabled"
-                            wire:target="testDistanceCalculation">
-                            <span wire:loading.remove wire:target="testDistanceCalculation">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16l2.879-2.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Hitung Jarak
-                            </span>
-                            <span wire:loading wire:target="testDistanceCalculation">
-                                <span class="loading loading-spinner loading-sm"></span>
-                                Menghitung...
-                            </span>
-                        </button>
-
-                        @if($testResult)
-                        <button type="button"
-                            wire:click="clearTestResult"
-                            class="btn btn-outline">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                        </button>
-                        @endif
-                    </div>
-                </div>
-
-                {{-- Test Results --}}
-                <div>
-                    @if($testResult)
-                    <div class="bg-base-200 rounded-lg p-4">
-                        <h3 class="font-semibold text-lg mb-3">Hasil Perhitungan</h3>
-
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Alamat:</span>
-                                <span class="font-medium text-right max-w-xs truncate">{{ $testResult['address'] }}</span>
-                            </div>
-
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Jarak:</span>
-                                <span class="font-medium">{{ number_format($testResult['distance_km'], 2) }} km</span>
-                            </div>
-
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Estimasi Waktu:</span>
-                                <span class="font-medium">{{ $testResult['duration_text'] }}</span>
-                            </div>
-
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Biaya Pengiriman:</span>
-                                <span class="font-medium {{ $testResult['is_free_shipping'] ? 'text-green-600' : 'text-blue-600' }}">
-                                    @if($testResult['is_free_shipping'])
-                                    GRATIS
-                                    @else
-                                    Rp {{ number_format($testResult['shipping_cost'], 0, ',', '.') }}
-                                    @endif
-                                </span>
-                            </div>
-
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Status Pengiriman:</span>
-                                <span class="badge {{ $testResult['delivery_available'] ? 'badge-success' : 'badge-error' }}">
-                                    {{ $testResult['delivery_available'] ? 'Tersedia' : 'Tidak Tersedia' }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    @else
-                    <div class="bg-base-200 rounded-lg p-4 text-center text-gray-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
-                        </svg>
-                        <p>Masukkan alamat dan klik "Hitung Jarak" untuk melihat hasil</p>
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>

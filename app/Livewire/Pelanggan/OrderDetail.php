@@ -3,16 +3,28 @@
 namespace App\Livewire\Pelanggan;
 
 use App\Models\Order;
+use App\Services\MidtransService;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 #[Layout('components.layouts.user')]
 
 class OrderDetail extends Component
 {
+    use WithFileUploads;
     public $orderId;
     public $order;
+    public $cancelReason = '';
+    public $cancelReasonOther = '';
+    
+    // Delivery proof modal properties
+    public $showDeliveryProofModal = false;
+    public $deliveryProofImage = null;
+    
+    // Note: Properti konfirmasi pesanan dihapus karena pelanggan tidak boleh mengkonfirmasi pesanan
 
     public function mount($orderId)
     {
@@ -41,7 +53,7 @@ class OrderDetail extends Component
     }
 
     /**
-     * Cancel order (if allowed)
+     * Cancel order (if allowed) - old method kept for compatibility
      */
     public function cancelOrder()
     {
@@ -53,6 +65,218 @@ class OrderDetail extends Component
         $this->order->update(['status' => 'cancelled']);
         $this->loadOrder(); // Refresh order data
         session()->flash('success', 'Pesanan berhasil dibatalkan!');
+    }
+
+    /**
+     * Confirm order cancellation
+     */
+    public function confirmCancelOrder()
+    {
+        // Validate cancel reason
+        $this->validate([
+            'cancelReason' => 'required|string',
+            'cancelReasonOther' => 'required_if:cancelReason,lainnya|min:3'
+        ], [
+            'cancelReason.required' => 'Alasan pembatalan harus dipilih.',
+            'cancelReasonOther.required_if' => 'Alasan lainnya harus diisi.',
+            'cancelReasonOther.min' => 'Alasan lainnya minimal 3 karakter.'
+        ]);
+
+        if (!$this->order->canBeCancelled()) {
+            session()->flash('error', 'Pesanan tidak dapat dibatalkan!');
+            return;
+        }
+
+        // Prepare cancel reason text
+        $reasonText = match($this->cancelReason) {
+            'salah_pesan' => 'Salah membuat pesanan',
+            'ganti_barang' => 'Ingin mengganti barang',
+            'ganti_alamat' => 'Ingin mengganti alamat pengiriman',
+            'tidak_jadi' => 'Tidak jadi membeli',
+            'masalah_pembayaran' => 'Masalah dengan pembayaran',
+            'lainnya' => $this->cancelReasonOther,
+            default => 'Dibatalkan oleh pelanggan'
+        };
+
+        try {
+            // Cancel transaction in Midtrans first if order has payment
+            if ($this->order->payment && $this->order->payment->snap_token) {
+                $midtransService = new \App\Services\MidtransService();
+                $cancelResult = $midtransService->cancelTransaction($this->order->order_number);
+                
+                if (!$cancelResult['success']) {
+                    \Log::warning('Failed to cancel Midtrans transaction, proceeding with local cancellation', [
+                        'order_id' => $this->order->order_id,
+                        'order_number' => $this->order->order_number,
+                        'midtrans_error' => $cancelResult['message'] ?? 'Unknown error'
+                    ]);
+                }
+            }
+
+            // Update order status to cancelled
+            $this->order->update([
+                'status' => 'cancelled',
+                'cancelled_at' => now(),
+                'cancelled_by' => Auth::id(),
+                'cancel_reason' => $reasonText
+            ]);
+
+            // Update payment status if exists
+            if ($this->order->payment) {
+                $this->order->payment->update([
+                    'status' => 'cancelled',
+                    'cancelled_at' => now()
+                ]);
+            }
+
+            // Reset form
+            $this->cancelReason = '';
+            $this->cancelReasonOther = '';
+
+            // Dispatch browser event to close modal
+            $this->dispatch('order-cancelled');
+            
+            session()->flash('success', 'Pesanan dan pembayaran berhasil dibatalkan!');
+            
+            // Redirect after a short delay to allow modal to close
+            $this->redirect(route('pelanggan.orders'), navigate: true);
+        } catch (\Exception $e) {
+            \Log::error('Error cancelling order', [
+                'order_id' => $this->order->order_id,
+                'error' => $e->getMessage()
+            ]);
+            
+            session()->flash('error', 'Terjadi kesalahan saat membatalkan pesanan.');
+        }
+    }
+
+    /**
+     * Check payment status from Midtrans and update order if needed
+     */
+    public function checkPaymentStatus()
+    {
+        try {
+            $midtransService = app(MidtransService::class);
+            $statusResult = $midtransService->getTransactionStatus($this->order->order_number);
+            
+            if ($statusResult['success']) {
+                $transactionData = $statusResult['data'];
+                $transactionStatus = $transactionData['transaction_status'] ?? null;
+                
+                Log::info('Payment status checked', [
+                    'order_id' => $this->order->order_id,
+                    'order_number' => $this->order->order_number,
+                    'transaction_status' => $transactionStatus
+                ]);
+                
+                // Update payment and order status based on Midtrans response
+                 if ($transactionStatus === 'settlement' || $transactionStatus === 'capture') {
+                     // Payment successful - update payment and order status
+                     $this->order->payment->update([
+                         'status' => 'paid',
+                         'paid_at' => now(),
+                         'transaction_id' => $transactionData['transaction_id'] ?? null,
+                         'payment_type' => $transactionData['payment_type'] ?? null,
+                     ]);
+                    
+                    $this->order->update([
+                        'status' => 'waiting_confirmation',
+                        'confirmed_at' => now()
+                    ]);
+                    
+                    // Reload order data
+                    $this->loadOrder();
+                    
+                    session()->flash('success', 'Status pembayaran berhasil diperbarui! Pesanan Anda sedang menunggu konfirmasi.');
+                    return;
+                }
+                
+                session()->flash('info', 'Status pembayaran: ' . ucfirst(str_replace('_', ' ', $transactionStatus)));
+            } else {
+                session()->flash('error', 'Gagal memeriksa status pembayaran.');
+            }
+        } catch (\Exception $e) {
+            Log::error('Error checking payment status', [
+                'order_id' => $this->order->order_id,
+                'error' => $e->getMessage()
+            ]);
+            
+            session()->flash('error', 'Terjadi kesalahan saat memeriksa status pembayaran.');
+        }
+    }
+
+    /**
+     * Continue payment for pending orders using SNAP Token
+     */
+    public function continuePayment()
+    {
+        // First, check current payment status from Midtrans
+        $this->checkPaymentStatus();
+        
+        // Reload order to get updated status
+        $this->loadOrder();
+        
+        // Check if payment is already completed
+         if ($this->order->payment && $this->order->payment->status === 'paid') {
+             session()->flash('info', 'Pembayaran sudah berhasil! Pesanan Anda sedang diproses.');
+             return;
+         }
+         
+         // Check if order can continue payment
+         if (!$this->order->payment || $this->order->payment->status !== 'pending') {
+             session()->flash('error', 'Pembayaran tidak dapat dilanjutkan!');
+             return;
+         }
+
+        if ($this->order->isPaymentExpired()) {
+            session()->flash('error', 'Pembayaran telah kedaluwarsa. Silakan buat pesanan baru.');
+            return;
+        }
+
+        try {
+            // Check if SNAP token already exists and still valid
+            if ($this->order->payment->snap_token) {
+                // Redirect to payment page with existing SNAP token
+                session([
+                    'order_id' => $this->order->order_id,
+                    'snap_token' => $this->order->payment->snap_token
+                ]);
+                return redirect()->route('payment.snap');
+            }
+
+            // Create new SNAP Token with unique order ID
+            $midtransService = app(MidtransService::class);
+            $snapResult = $midtransService->createSnapToken($this->order);
+            
+            if ($snapResult['success']) {
+                // Update payment with SNAP token
+                $this->order->payment->update([
+                    'snap_token' => $snapResult['snap_token']
+                ]);
+                
+                // Store in session and redirect to payment page
+                session([
+                    'order_id' => $this->order->order_id,
+                    'snap_token' => $snapResult['snap_token']
+                ]);
+                
+                return redirect()->route('payment.snap');
+            } else {
+                Log::error('Failed to create Midtrans SNAP Token for continue payment', [
+                    'order_id' => $this->order->order_id,
+                    'error' => $snapResult['message']
+                ]);
+                
+                session()->flash('error', 'Gagal membuat token pembayaran: ' . $snapResult['message']);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error creating SNAP token for continue payment', [
+                'order_id' => $this->order->order_id,
+                'error' => $e->getMessage()
+            ]);
+            
+            session()->flash('error', 'Terjadi kesalahan saat membuat token pembayaran.');
+        }
     }
 
     /**
@@ -83,13 +307,59 @@ class OrderDetail extends Component
     }
 
     /**
+     * Show delivery proof modal
+     */
+    public function showDeliveryProof($imagePath)
+    {
+        $this->deliveryProofImage = $imagePath;
+        $this->showDeliveryProofModal = true;
+    }
+
+    /**
+     * Close delivery proof modal
+     */
+    public function closeDeliveryProofModal()
+    {
+        $this->showDeliveryProofModal = false;
+        $this->deliveryProofImage = null;
+    }
+
+    // Note: Konfirmasi pesanan hanya dilakukan oleh apoteker, bukan pelanggan
+    // Method openConfirmModal, closeConfirmModal, dan confirmOrderAction telah dihapus
+
+    /**
      * Get order timeline for tracking
      */
     public function getOrderTimelineProperty()
     {
         $timeline = [];
 
-        // Order created
+        // Check if order is cancelled first
+        if ($this->order->status === 'cancelled') {
+            // Order created
+            $timeline[] = [
+                'status' => 'created',
+                'label' => 'Pesanan Dibuat',
+                'date' => $this->order->created_at,
+                'completed' => true,
+                'icon' => 'shopping-cart'
+            ];
+
+            // Cancelled status
+            $timeline[] = [
+                'status' => 'cancelled',
+                'label' => 'Pesanan Dibatalkan',
+                'date' => $this->order->updated_at,
+                'completed' => true,
+                'icon' => 'x-circle',
+                'is_cancelled' => true,
+                'cancel_reason' => $this->order->cancel_reason
+            ];
+
+            return $timeline;
+        }
+
+        // 1. Order created - always show as completed
         $timeline[] = [
             'status' => 'created',
             'label' => 'Pesanan Dibuat',
@@ -98,71 +368,109 @@ class OrderDetail extends Component
             'icon' => 'shopping-cart'
         ];
 
-        // Order confirmed
-        if ($this->order->confirmed_at) {
+        // 2. Payment status - always show
+        if ($this->order->payment && $this->order->payment->isPaid()) {
             $timeline[] = [
-                'status' => 'confirmed',
-                'label' => 'Pesanan Dikonfirmasi',
-                'date' => $this->order->confirmed_at,
+                'status' => 'payment_completed',
+                'label' => 'Pembayaran Berhasil',
+                'date' => $this->order->payment->paid_at,
                 'completed' => true,
-                'icon' => 'check-circle'
+                'icon' => 'credit-card'
             ];
         } else {
             $timeline[] = [
-                'status' => 'confirmed',
-                'label' => 'Menunggu Konfirmasi',
+                'status' => 'payment_pending',
+                'label' => 'Menunggu Pembayaran',
                 'date' => null,
                 'completed' => false,
-                'icon' => 'clock'
+                'icon' => 'credit-card'
             ];
         }
 
-        // Processing/Shipped
-        if (in_array($this->order->status, ['processing', 'shipped', 'delivered'])) {
+        // 3. Order confirmed - show if payment is completed
+        if ($this->order->payment && $this->order->payment->isPaid()) {
+            if ($this->order->status === 'waiting_confirmation') {
+                $timeline[] = [
+                    'status' => 'waiting_confirmation',
+                    'label' => 'Menunggu Konfirmasi',
+                    'date' => null,
+                    'completed' => false,
+                    'icon' => 'clock'
+                ];
+            } else {
+                $timeline[] = [
+                    'status' => 'confirmed',
+                    'label' => 'Pesanan Dikonfirmasi',
+                    'date' => $this->order->confirmed_at,
+                    'completed' => in_array($this->order->status, ['confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered']),
+                    'icon' => 'check-circle'
+                ];
+            }
+        }
+
+        // 4. Processing - show if confirmed or beyond
+        if ($this->order->payment && $this->order->payment->isPaid() && in_array($this->order->status, ['confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered'])) {
             $timeline[] = [
                 'status' => 'processing',
                 'label' => 'Pesanan Diproses',
-                'date' => $this->order->confirmed_at,
-                'completed' => true,
+                'date' => in_array($this->order->status, ['processing', 'ready_to_ship', 'shipped', 'delivered']) ? $this->order->confirmed_at : null,
+                'completed' => in_array($this->order->status, ['processing', 'ready_to_ship', 'shipped', 'delivered']),
                 'icon' => 'cog'
             ];
         }
 
-        // Shipped
-        if ($this->order->shipped_at) {
+        // 5. Ready to ship/pickup - show if ready_to_ship or beyond
+        if ($this->order->payment && $this->order->payment->isPaid() && in_array($this->order->status, ['ready_to_ship', 'shipped', 'delivered'])) {
             $timeline[] = [
-                'status' => 'shipped',
-                'label' => $this->order->shipping_type === 'delivery' ? 'Pesanan Dikirim' : 'Siap Diambil',
-                'date' => $this->order->shipped_at,
-                'completed' => true,
-                'icon' => $this->order->shipping_type === 'delivery' ? 'truck' : 'package'
-            ];
-        } else if (in_array($this->order->status, ['shipped', 'delivered'])) {
-            $timeline[] = [
-                'status' => 'shipped',
-                'label' => $this->order->shipping_type === 'delivery' ? 'Menunggu Pengiriman' : 'Menunggu Pickup',
-                'date' => null,
-                'completed' => false,
-                'icon' => $this->order->shipping_type === 'delivery' ? 'truck' : 'package'
+                'status' => 'ready_to_ship',
+                'label' => $this->order->shipping_type === 'delivery' ? 'Pesanan Siap Diantar' : 'Pesanan Siap Diambil',
+                'date' => $this->order->ready_to_ship_at,
+                'completed' => in_array($this->order->status, ['ready_to_ship', 'shipped', 'delivered']),
+                'icon' => $this->order->shipping_type === 'delivery' ? 'package' : 'package-check'
             ];
         }
 
-        // Delivered
-        if ($this->order->delivered_at) {
+        // 6. Shipped - show if shipped or delivered (only for delivery type)
+        if ($this->order->payment && $this->order->payment->isPaid() && $this->order->shipping_type === 'delivery' && in_array($this->order->status, ['shipped', 'delivered'])) {
             $timeline[] = [
-                'status' => 'delivered',
-                'label' => $this->order->shipping_type === 'delivery' ? 'Pesanan Diterima' : 'Pesanan Diambil',
-                'date' => $this->order->delivered_at,
-                'completed' => true,
-                'icon' => 'check-circle'
+                'status' => 'shipped',
+                'label' => 'Pesanan Diantar',
+                'date' => $this->order->shipped_at,
+                'completed' => in_array($this->order->status, ['shipped', 'delivered']),
+                'icon' => 'truck'
             ];
-        } else if ($this->order->status === 'delivered') {
+        }
+
+        // 7. Picked up - show if picked_up (for pickup orders)
+        if ($this->order->payment && $this->order->payment->isPaid() && $this->order->shipping_type === 'pickup' && in_array($this->order->status, ['picked_up', 'completed'])) {
+            $pickupProof = $this->order->pickup_image;
+            
+            $timeline[] = [
+                'status' => 'picked_up',
+                'label' => 'Pesanan Diambil',
+                'date' => $this->order->picked_up_at,
+                'completed' => in_array($this->order->status, ['picked_up', 'completed']),
+                'icon' => 'check-circle',
+                'delivery_proof' => $pickupProof,
+                'show_proof_link' => in_array($this->order->status, ['picked_up', 'completed']) && $pickupProof
+            ];
+        }
+
+        // 8. Delivered - show if delivered (for delivery orders)
+        if ($this->order->payment && $this->order->payment->isPaid() && $this->order->shipping_type === 'delivery' && $this->order->status === 'delivered') {
+            $deliveryProof = null;
+            if ($this->order->delivery && $this->order->delivery->delivery_photo) {
+                $deliveryProof = $this->order->delivery->delivery_photo;
+            }
+            
             $timeline[] = [
                 'status' => 'delivered',
-                'label' => $this->order->shipping_type === 'delivery' ? 'Menunggu Konfirmasi Penerimaan' : 'Menunggu Pickup',
-                'date' => null,
-                'completed' => false,
-                'icon' => 'check-circle'
+                'label' => 'Pesanan Sampai Tujuan',
+                'date' => $this->order->delivered_at,
+                'completed' => $this->order->status === 'delivered',
+                'icon' => 'check-circle',
+                'delivery_proof' => $deliveryProof,
+                'show_proof_link' => $this->order->status === 'delivered' && $deliveryProof
             ];
         }
 
@@ -175,10 +483,38 @@ class OrderDetail extends Component
     public function getShippingAddressProperty()
     {
         if ($this->order->shipping_type === 'pickup') {
-            return 'Ambil di Toko';
+            return 'Ambil di apotek/toko';
         }
 
-        return $this->order->shipping_address;
+        // Handle array shipping_address
+        if (is_array($this->order->shipping_address)) {
+            $address = $this->order->shipping_address;
+            $parts = [];
+            
+            // Use correct field names from CheckoutService
+            if (!empty($address['detailed_address'])) {
+                $parts[] = $address['detailed_address'];
+            }
+            if (!empty($address['village'])) {
+                $parts[] = $address['village'];
+            }
+            if (!empty($address['sub_district'])) {
+                $parts[] = $address['sub_district'];
+            }
+            if (!empty($address['regency'])) {
+                $parts[] = $address['regency'];
+            }
+            if (!empty($address['province'])) {
+                $parts[] = $address['province'];
+            }
+            if (!empty($address['postal_code'])) {
+                $parts[] = $address['postal_code'];
+            }
+            
+            return !empty($parts) ? implode(', ', $parts) : 'Alamat tidak lengkap';
+        }
+
+        return $this->order->shipping_address ?? 'Alamat tidak tersedia';
     }
 
     public function render()

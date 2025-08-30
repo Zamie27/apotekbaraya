@@ -45,6 +45,7 @@
                     <ul
                         tabindex="0"
                         class="p-2 mt-3 shadow menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] w-52">
+                        <li><a href="{{ route('kurir.deliveries') }}">Manajemen Pengiriman</a></li>
                         <li><a href="/kurir/profile">Profil</a></li>
                         <li><a href="/kurir/settings">Pengaturan</a></li>
                         <li><a href="/logout" class="text-left text-red-600 hover:bg-base-200">Keluar</a></li>

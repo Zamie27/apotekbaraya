@@ -26,8 +26,12 @@ class UserAddress extends Model
         'detailed_address',  // Alamat lengkap spesifik untuk kurir
         'notes',
         'is_default',
-        'latitude',
-        'longitude',
+        // Cascading dropdown keys
+        'province_key',      // Key for province dropdown (jawa_barat)
+        'regency_key',       // Key for regency dropdown (subang)
+        'sub_district_key',  // Key for sub-district dropdown
+        'village_key',       // Key for village dropdown
+        'address',           // Keep for backward compatibility
     ];
 
     protected $casts = [

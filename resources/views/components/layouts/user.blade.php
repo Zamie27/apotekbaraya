@@ -10,6 +10,11 @@
     <!-- vite end -->
 
     @livewireStyles
+    
+    <!-- Google reCAPTCHA v3 -->
+    <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
+    
+    @stack('head')
 </head>
 
 <body class="min-h-screen bg-base-200">
@@ -167,6 +172,8 @@
 
     <!-- Alpine.js for interactive components -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    @stack('scripts')
 
     <script>
 

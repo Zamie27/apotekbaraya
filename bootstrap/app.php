@@ -20,6 +20,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'guest' => RedirectIfAuthenticated::class,
             'store.config' => CheckStoreConfiguration::class,
         ]);
+        
+        // Exclude Midtrans webhook from CSRF verification
+        $middleware->validateCsrfTokens(except: [
+            'payment/notification',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

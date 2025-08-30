@@ -21,3 +21,13 @@
     -ms-overflow-style: none; /* IE & Edge */
     scrollbar-width: none; /* Firefox */
 }
+
+/* Fix for any unwanted list styling - exclude breadcrumbs */
+.orders-page *:not(.breadcrumbs *) {
+    list-style: none !important;
+}
+
+.orders-page *:not(.breadcrumbs *)::before,
+.orders-page *:not(.breadcrumbs *)::after {
+    content: none !important;
+}

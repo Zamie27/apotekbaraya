@@ -1,0 +1,735 @@
+{
+    "Binong": {
+        "kodepos": "41253",
+        "desa": [
+            "Binong",
+            "Cicadas",
+            "Citrajaya",
+            "Karangsari",
+            "Karangwangi",
+            "Kediri",
+            "Kihiyang",
+            "Mulyasari",
+            "Nangerang"
+        ],
+        "distances": {
+            "Binong": 22,
+            "Cicadas": 19,
+            "Citrajaya": 18,
+            "Karangsari": 15,
+            "Karangwangi": 20,
+            "Kediri": 22,
+            "Kihiyang": 17,
+            "Mulyasari": 24,
+            "Nangerang": 19
+        }
+    },
+    "Blanakan": {
+        "kodepos": "41259",
+        "desa": [
+            "Blanakan",
+            "Cilamaya Girang",
+            "Cilamaya Hilir",
+            "Jayamukti",
+            "Langensari",
+            "Muara",
+            "Rawamekar",
+            "Rawameneng",
+            "Tanjungtiga"
+        ],
+        "distances": {
+            "Blanakan": 46,
+            "Cilamaya Girang": 53,
+            "Cilamaya Hilir": 54,
+            "Jayamukti": 49,
+            "Langensari": 47,
+            "Muara": 46,
+            "Rawamekar": 48,
+            "Rawameneng": 50,
+            "Tanjungtiga": 46
+        }
+    },
+    "Ciasem": {
+        "kodepos": "41256",
+        "desa": [
+            "Ciasem Hilir",
+            "Ciasem Tengah",
+            "Ciasembaru",
+            "Dukuh",
+            "Jatibaru",
+            "Pinangsari",
+            "Sukahaji",
+            "Sukamandijaya",
+            "Ciasem Girang"
+        ],
+        "distances": {
+            "Ciasem Hilir": 39,
+            "Ciasem Tengah": 37,
+            "Ciasembaru": 40,
+            "Dukuh": 33,
+            "Jatibaru": 32,
+            "Pinangsari": 50,
+            "Sukahaji": 46,
+            "Sukamandijaya": 37,
+            "Ciasem Girang": 43
+        }
+    },
+    "Ciater": {
+        "kodepos": "41280",
+        "desa": [
+            "Ciater",
+            "Cibeusi",
+            "Cibitung",
+            "Cisaat",
+            "Nagrak",
+            "Palasari",
+            "Sanca"
+        ],
+        "distances": {
+            "Ciater": 34,
+            "Cibeusi": 35,
+            "Cibitung": 32,
+            "Cisaat": 28,
+            "Nagrak": 34,
+            "Palasari": 29,
+            "Sanca": 27
+        }
+    },
+    "Cibogo": {
+        "kodepos": "41285",
+        "desa": [
+            "Belendung",
+            "Cibalandong Jaya",
+            "Cibogo",
+            "Cinangsi",
+            "Cisaga",
+            "Majasari",
+            "Padaasih",
+            "Sadawarna",
+            "Sumurbarang"
+        ],
+        "distances": {
+            "Belendung": 25,
+            "Cibalandong Jaya": 35,
+            "Cibogo": 28,
+            "Cinangsi": 26,
+            "Cisaga": 22,
+            "Majasari": 27,
+            "Padaasih": 32,
+            "Sadawarna": 30,
+            "Sumurbarang": 38
+        }
+    },
+    "Cijambe": {
+        "kodepos": "41286",
+        "desa": [
+            "Bantarsari",
+            "Cijambe",
+            "Cikadu",
+            "Cimenteng",
+            "Cirangkong",
+            "Gunungtua",
+            "Sukahurip",
+            "Tanjungwangi"
+        ],
+        "distances": {
+            "Bantarsari": 12,
+            "Cijambe": 14,
+            "Cikadu": 28,
+            "Cimenteng": 31,
+            "Cirangkong": 18,
+            "Gunungtua": 14,
+            "Sukahurip": 12,
+            "Tanjungwangi": 11
+        }
+    },
+    "Cikaum": {
+        "kodepos": "41266",
+        "desa": [
+            "Cikaum Barat",
+            "Cikaum Timur",
+            "Gandasari",
+            "Kawunganten",
+            "Mekarsari",
+            "Pasirmuncang",
+            "Sindangsari",
+            "Tanjungsari Barat",
+            "Tanjungsari Timur"
+        ],
+        "distances": {
+            "Cikaum Barat": 23,
+            "Cikaum Timur": 19,
+            "Gandasari": 27,
+            "Kawunganten": 17,
+            "Mekarsari": 29,
+            "Pasirmuncang": 25,
+            "Sindangsari": 16,
+            "Tanjungsari Barat": 26,
+            "Tanjungsari Timur": 23
+        }
+    },
+    "Cipeundeuy": {
+        "kodepos": "41272",
+        "desa": [
+            "Banggalamulya",
+            "Cimayasari",
+            "Cipeundeuy",
+            "Jatupang",
+            "Lengkong",
+            "Sawangan",
+            "Wantilan"
+        ],
+        "distances": {
+            "Banggalamulya": 28,
+            "Cimayasari": 37,
+            "Cipeundeuy": 31,
+            "Jatupang": 24,
+            "Lengkong": 25,
+            "Sawangan": 29,
+            "Wantilan": 28
+        }
+    },
+    "Cipunagara": {
+        "kodepos": "41257",
+        "desa": [
+            "Jati",
+            "Kosambi",
+            "Manyingsal",
+            "Padamulya",
+            "Parigimulya",
+            "Sidajaya",
+            "Sidamulya",
+            "Simpar",
+            "Tanjung",
+            "Wanasari"
+        ],
+        "distances": {
+            "Jati": 14,
+            "Kosambi": 17,
+            "Manyingsal": 13,
+            "Padamulya": 10,
+            "Parigimulya": 17,
+            "Sidajaya": 22,
+            "Sidamulya": 19,
+            "Simpar": 17,
+            "Tanjung": 21,
+            "Wanasari": 10
+        }
+    },
+    "Cisalak": {
+        "kodepos": "41283",
+        "desa": [
+            "Cigadog",
+            "Cimanggu",
+            "Cisalak",
+            "Cupunagara",
+            "Darmaga",
+            "Gardusayang",
+            "Mayang",
+            "Pakuhaji",
+            "Sukakerti"
+        ],
+        "distances": {
+            "Cigadog": 29,
+            "Cimanggu": 36,
+            "Cisalak": 32,
+            "Cupunagara": 42,
+            "Darmaga": 30,
+            "Gardusayang": 34,
+            "Mayang": 38,
+            "Pakuhaji": 37,
+            "Sukakerti": 34
+        }
+    },
+    "Compreng": {
+        "kodepos": "41258",
+        "desa": [
+            "Compreng",
+            "Jatimulya",
+            "Jatireja",
+            "Kalensari",
+            "Kiarasari",
+            "Mekarjaya",
+            "Sukadana",
+            "Sukatani"
+        ],
+        "distances": {
+            "Compreng": 22,
+            "Jatimulya": 24,
+            "Jatireja": 23,
+            "Kalensari": 30,
+            "Kiarasari": 23,
+            "Mekarjaya": 26,
+            "Sukadana": 20,
+            "Sukatani": 25
+        }
+    },
+    "Dawuan": {
+        "kodepos": "41270",
+        "desa": [
+            "Batusari",
+            "Cisampih",
+            "Dawuan Kaler",
+            "Dawuan Kidul",
+            "Jambelaer",
+            "Manyeti",
+            "Margasari",
+            "Rawalele",
+            "Situsari",
+            "Sukasari"
+        ],
+        "distances": {
+            "Batusari": 13,
+            "Cisampih": 17,
+            "Dawuan Kaler": 12,
+            "Dawuan Kidul": 13,
+            "Jambelaer": 25,
+            "Manyeti": 11,
+            "Margasari": 13,
+            "Rawalele": 10,
+            "Situsari": 11,
+            "Sukasari": 9
+        }
+    },
+    "Jalancagak": {
+        "kodepos": "41281",
+        "desa": [
+            "Bunihayu",
+            "Curugrendeng",
+            "Jalancagak",
+            "Kumpay",
+            "Sarireja",
+            "Tambakan",
+            "Tambakmekar"
+        ],
+        "distances": {
+            "Bunihayu": 22,
+            "Curugrendeng": 25,
+            "Jalancagak": 17,
+            "Kumpay": 20,
+            "Sarireja": 23,
+            "Tambakan": 19,
+            "Tambakmekar": 17
+        }
+    },
+    "Kalijati": {
+        "kodepos": "41271",
+        "desa": [
+            "Banggalamulya",
+            "Caracas",
+            "Ciruluk",
+            "Jalupang",
+            "Marengmang",
+            "Kaliangsana",
+            "Kalijati Barat",
+            "Kalijati Timur",
+            "Tanggulun Barat",
+            "Tanggulun Timur"
+        ],
+        "distances": {
+            "Banggalamulya": 28,
+            "Caracas": 27,
+            "Ciruluk": 17,
+            "Jalupang": 24,
+            "Marengmang": 21,
+            "Kaliangsana": 18,
+            "Kalijati Barat": 19,
+            "Kalijati Timur": 16,
+            "Tanggulun Barat": 23,
+            "Tanggulun Timur": 22
+        }
+    },
+    "Kasomalang": {
+        "kodepos": "41287",
+        "desa": [
+            "Bojongloa",
+            "Cimanglid",
+            "Kasomalang Kulon",
+            "Kasomalang Wetan",
+            "Pasanggrahan",
+            "Sindangsari",
+            "Sukamelang",
+            "Tenjolaya"
+        ],
+        "distances": {
+            "Bojongloa": 26,
+            "Cimanglid": 25,
+            "Kasomalang Kulon": 26,
+            "Kasomalang Wetan": 22,
+            "Pasanggrahan": 33,
+            "Sindangsari": 27,
+            "Sukamelang": 24,
+            "Tenjolaya": 27
+        }
+    },
+    "Legonkulon": {
+        "kodepos": "41254",
+        "desa": [
+            "Bobos",
+            "Karangmulya",
+            "Legon Kulon",
+            "Legon Wetan",
+            "Mayangan",
+            "Pangarengan",
+            "Tegalurung"
+        ],
+        "distances": {
+            "Bobos": 39,
+            "Karangmulya": 37,
+            "Legon Kulon": 40,
+            "Legon Wetan": 44,
+            "Mayangan": 34,
+            "Pangarengan": 45,
+            "Tegalurung": 41
+        }
+    },
+    "Pabuaran": {
+        "kodepos": "41262",
+        "desa": [
+            "Balebandung Jaya",
+            "Cihambulu",
+            "Kadawung",
+            "Karanghegar",
+            "Pabuaran",
+            "Pringkasap",
+            "Salamjaya",
+            "Siluman"
+        ],
+        "distances": {
+            "Balebandung Jaya": 41,
+            "Cihambulu": 42,
+            "Kadawung": 38,
+            "Karanghegar": 34,
+            "Pabuaran": 42,
+            "Pringkasap": 34,
+            "Salamjaya": 34,
+            "Siluman": 45
+        }
+    },
+    "Pagaden": {
+        "kodepos": "41251",
+        "desa": [
+            "Gambarsari",
+            "Gembor",
+            "Gunungsari",
+            "Gunungsembung",
+            "Jabong",
+            "Kamarung",
+            "Neglasari",
+            "Pagaden",
+            "Sukamulya",
+            "Sumbersari"
+        ],
+        "distances": {
+            "Gambarsari": 15,
+            "Gembor": 7,
+            "Gunungsari": 7,
+            "Gunungsembung": 5,
+            "Jabong": 4,
+            "Kamarung": 12,
+            "Neglasari": 14,
+            "Pagaden": 11,
+            "Sukamulya": 9,
+            "Sumbersari": 16
+        }
+    },
+    "Pagaden Barat": {
+        "kodepos": "41252",
+        "desa": [
+            "Balimbing",
+            "Bendungan",
+            "Cidadap",
+            "Cidahu",
+            "Margahayu",
+            "Mekarwangi",
+            "Munjul",
+            "Pangsor",
+            "Sumurgintung"
+        ],
+        "distances": {
+            "Balimbing": 11,
+            "Bendungan": 15,
+            "Cidadap": 10,
+            "Cidahu": 8,
+            "Margahayu": 12,
+            "Mekarwangi": 18,
+            "Munjul": 17,
+            "Pangsor": 12,
+            "Sumurgintung": 6
+        }
+    },
+    "Pamanukan": {
+        "kodepos": "41264",
+        "desa": [
+            "Bongas",
+            "Lengkongjaya",
+            "Mulyasari",
+            "Pamanukan",
+            "Pamanukan Hilir",
+            "Pamanukan Sebrang",
+            "Rancahilir",
+            "Rancasari"
+        ],
+        "distances": {
+            "Bongas": 32,
+            "Lengkongjaya": 35,
+            "Mulyasari": 34,
+            "Pamanukan": 35,
+            "Pamanukan Hilir": 36,
+            "Pamanukan Sebrang": 36,
+            "Rancahilir": 33,
+            "Rancasari": 32
+        }
+    },
+    "PatokBeusi": {
+        "kodepos": "41263",
+        "desa": [
+            "Ciberes",
+            "Gempolsari",
+            "Jatiragas Hilir",
+            "Rancaasih",
+            "Rancabango",
+            "Rancajaya",
+            "Rancamulya",
+            "Tambakjati",
+            "Tanjungrasa",
+            "Tanjungrasa Kidul"
+        ],
+        "distances": {
+            "Ciberes": 48,
+            "Gempolsari": 41,
+            "Jatiragas Hilir": 51,
+            "Rancaasih": 35,
+            "Rancabango": 31,
+            "Rancajaya": 43,
+            "Rancamulya": 39,
+            "Tambakjati": 45,
+            "Tanjungrasa": 51,
+            "Tanjungrasa Kidul": 48
+        }
+    },
+    "Purwadadi": {
+        "kodepos": "41261",
+        "desa": [
+            "Belendung",
+            "Koranji",
+            "Pagon",
+            "Panyingkiran",
+            "Parapatan",
+            "Pasirbungur",
+            "Purwadadi Barat",
+            "Purwadadi Timur",
+            "Rancamahi",
+            "Wanakerta"
+        ],
+        "distances": {
+            "Belendung": 24,
+            "Koranji": 27,
+            "Pagon": 21,
+            "Panyingkiran": 30,
+            "Parapatan": 19,
+            "Pasirbungur": 27,
+            "Purwadadi Barat": 26,
+            "Purwadadi Timur": 22,
+            "Rancamahi": 30,
+            "Wanakerta": 22
+        }
+    },
+    "Pusakajaya": {
+        "kodepos": "41255",
+        "desa": [
+            "Bojongjaya",
+            "Bojong Tengah",
+            "Cigugur",
+            "Cigugur Kaler",
+            "Karanganyar",
+            "Kebondanas",
+            "Pusakajaya",
+            "Rangdu"
+        ],
+        "distances": {
+            "Bojongjaya": 34,
+            "Bojong Tengah": 33,
+            "Cigugur": 33,
+            "Cigugur Kaler": 37,
+            "Karanganyar": 42,
+            "Kebondanas": 40,
+            "Pusakajaya": 35,
+            "Rangdu": 37
+        }
+    },
+    "Pusakanagara": {
+        "kodepos": "41265",
+        "desa": [
+            "Gempol",
+            "Kalentambo",
+            "Kotasari",
+            "Mundusari",
+            "Patimban",
+            "Pusakaratu",
+            "Rancadaka"
+        ],
+        "distances": {
+            "Gempol": 28,
+            "Kalentambo": 40,
+            "Kotasari": 38,
+            "Mundusari": 38,
+            "Patimban": 44,
+            "Pusakaratu": 38,
+            "Rancadaka": 41
+        }
+    },
+    "Sagalaherang": {
+        "kodepos": "41282",
+        "desa": [
+            "Cicadas",
+            "Curugagung",
+            "Dayeuhkolot",
+            "Leles",
+            "Sagalaherang",
+            "Sagalaherang Kaler",
+            "Sukamandi"
+        ],
+        "distances": {
+            "Cicadas": 34,
+            "Curugagung": 21,
+            "Dayeuhkolot": 30,
+            "Leles": 32,
+            "Sagalaherang": 28,
+            "Sagalaherang Kaler": 28,
+            "Sukamandi": 34
+        }
+    },
+    "Serangpanjang": {
+        "kodepos": "41288",
+        "desa": [
+            "Cijengkol",
+            "Cikujang",
+            "Cintamekar",
+            "Cipancar",
+            "Ponggang",
+            "Talagasari"
+        ],
+        "distances": {
+            "Cijengkol": 32,
+            "Cikujang": 35,
+            "Cintamekar": 33,
+            "Cipancar": 38,
+            "Ponggang": 39,
+            "Talagasari": 27
+        }
+    },
+    "Subang": {
+        "41211": {
+            "kodepos": "41211",
+            "desa": ["Parung", "Karanganyar", "Sukamelang", "Wanareja"],
+            "distances": {
+                "Parung": 10,
+                "Karanganyar": 3,
+                "Sukamelang": 1,
+                "Wanareja": 9
+            }
+        },
+        "41212": {
+            "kodepos": "41212",
+            "desa": ["Dangdeur"],
+            "distances": {
+                "Dangdeur": 7
+            }
+        },
+        "41213": {
+            "kodepos": "41213",
+            "desa": ["Cigadung"],
+            "distances": {
+                "Cigadung": 6
+            }
+        },
+        "41214": {
+            "kodepos": "41214",
+            "desa": ["Pasirkareumbi"],
+            "distances": {
+                "Pasirkareumbi": 6
+            }
+        },
+        "41215": {
+            "kodepos": "41215",
+            "desa": ["Soklat"],
+            "distances": {
+                "Soklat": 6
+            }
+        }
+    },
+    "Sukasari": {
+        "kodepos": "41250",
+        "desa": [
+            "Anggasari",
+            "Batangsari",
+            "Curugreja",
+            "Mandalawangi",
+            "Sukamaju",
+            "Sukareja",
+            "Sukasari"
+        ],
+        "distances": {
+            "Anggasari": 43,
+            "Batangsari": 41,
+            "Curugreja": 35,
+            "Mandalawangi": 44,
+            "Sukamaju": 44,
+            "Sukareja": 35,
+            "Sukasari": 42
+        }
+    },
+    "Tambakdahan": {
+        "kodepos": "41267",
+        "desa": [
+            "Bojonegara",
+            "Bojongkeding",
+            "Gardumukti",
+            "Kertajaya",
+            "Mariuk",
+            "Rancaudik",
+            "Tambakdahan",
+            "Tanjungrasa",
+            "Wanajaya"
+        ],
+        "distances": {
+            "Bojonegara": 33,
+            "Bojongkeding": 30,
+            "Gardumukti": 34,
+            "Kertajaya": 28,
+            "Mariuk": 31,
+            "Rancaudik": 30,
+            "Tambakdahan": 26,
+            "Tanjungrasa": 51,
+            "Wanajaya": 32
+        }
+    },
+    "Tanjungsiang": {
+        "kodepos": "41284",
+        "desa": [
+            "Buniara",
+            "Cibuluh",
+            "Cikawung",
+            "Cimeuhmal",
+            "Gandasoli",
+            "Kawungluwuk",
+            "Rancamanggung",
+            "Sindanglaya",
+            "Sirap",
+            "Tanjung Siang"
+        ],
+        "distances": {
+            "Buniara": 42,
+            "Cibuluh": 31,
+            "Cikawung": 44,
+            "Cimeuhmal": 43,
+            "Gandasoli": 32,
+            "Kawungluwuk": 34,
+            "Rancamanggung": 35,
+            "Sindanglaya": 35,
+            "Sirap": 36,
+            "Tanjung Siang": 39
+        }
+    }
+}

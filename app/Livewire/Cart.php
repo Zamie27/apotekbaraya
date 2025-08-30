@@ -15,8 +15,6 @@ class Cart extends Component
 
     public $cart;
     public $cartSummary;
-    public $selectedItems = []; // Array untuk menyimpan item yang dipilih
-    public $selectAll = false; // Checkbox select all
 
     protected $cartService;
 
@@ -36,69 +34,14 @@ class Cart extends Component
     {
         $this->cart = $this->cartService->getCart();
         $this->cartSummary = $this->cartService->getCartSummary();
-
-        // Jangan reset selected items setiap kali load cart
-        // Hanya reset jika selectedItems belum diinisialisasi
-        if (!is_array($this->selectedItems)) {
-            $this->selectedItems = [];
-        }
-        
-        // Pastikan selectedItems hanya berisi item yang masih ada di cart
-        if (!empty($this->selectedItems) && $this->cart && $this->cart->cartItems) {
-            $existingItemIds = $this->cart->cartItems->pluck('cart_item_id')->toArray();
-            $this->selectedItems = array_intersect($this->selectedItems, $existingItemIds);
-        }
     }
 
-    public function updatedSelectAll($value)
-    {
-        if ($value) {
-            // Select semua item - ambil semua cart_item_id yang ada dan cast ke string
-            $this->selectedItems = $this->cart->cartItems->pluck('cart_item_id')->map(function($id) {
-                return (string) $id;
-            })->toArray();
-        } else {
-            // Unselect semua item
-            $this->selectedItems = [];
-        }
-        
-
-    }
-
-    public function updatedSelectedItems($value)
-    {
-        // Pastikan selectedItems adalah array
-        if (!is_array($this->selectedItems)) {
-            $this->selectedItems = [];
-        }
-        
-        // Update selectAll berdasarkan selectedItems
-        $totalItems = $this->cart->cartItems->count();
-        $selectedCount = count($this->selectedItems);
-        
-        // Set selectAll ke true hanya jika semua item terpilih
-        // Set selectAll ke false jika tidak semua item terpilih
-        $this->selectAll = $totalItems > 0 && $selectedCount === $totalItems;
-        
-
-    }
-    
     /**
-     * Update selectAll status saat component di-render
+     * Get cart summary for all items (no selection needed)
      */
-    public function updateSelectAllStatus()
+    public function getCartSummary()
     {
-        if ($this->cart && $this->cart->cartItems) {
-            $totalItems = $this->cart->cartItems->count();
-            $selectedCount = count($this->selectedItems);
-            $this->selectAll = $totalItems > 0 && $selectedCount === $totalItems;
-        }
-    }
-
-    public function getSelectedItemsSummary()
-    {
-        // Jika tidak ada item yang dipilih, return summary kosong
-        if (empty($this->selectedItems)) {
+        if (!$this->cart || $this->cart->isEmpty()) {
             return [
                 'count' => 0,
                 'subtotal' => 0,
@@ -108,20 +51,18 @@ class Cart extends Component
             ];
         }
 
-        $selectedCartItems = $this->cart->cartItems->whereIn('cart_item_id', $this->selectedItems);
-
-        $subtotal = $selectedCartItems->sum(function ($item) {
+        $subtotal = $this->cart->cartItems->sum(function ($item) {
             return $item->quantity * $item->product->final_price;
         });
 
-        $originalTotal = $selectedCartItems->sum(function ($item) {
+        $originalTotal = $this->cart->cartItems->sum(function ($item) {
             return $item->quantity * $item->product->price;
         });
 
         $totalDiscount = $originalTotal - $subtotal;
 
         return [
-            'count' => $selectedCartItems->sum('quantity'),
+            'count' => $this->cart->cartItems->sum('quantity'),
             'subtotal' => $subtotal,
             'formatted_subtotal' => 'Rp ' . number_format($subtotal, 0, ',', '.'),
             'total_discount' => $totalDiscount,
@@ -269,12 +210,7 @@ class Cart extends Component
 
     public function proceedToCheckout()
     {
-        // Jika ada item yang dipilih, checkout hanya item tersebut
-        if (!empty($this->selectedItems)) {
-            return $this->checkoutSelectedItems();
-        }
-
-        // Jika tidak ada yang dipilih, checkout semua item
+        // Validate all items in cart
         $validation = $this->cartService->validateCart();
 
         if (!$validation['valid']) {
@@ -288,36 +224,10 @@ class Cart extends Component
             return;
         }
 
-        // Redirect to checkout page
-        return redirect()->route('checkout');
-    }
+        // Clear any previous checkout session data
+        session()->forget('checkout_items');
 
-    public function checkoutSelectedItems()
-    {
-        if (empty($this->selectedItems)) {
-            $this->dispatch('show-toast', 'error', 'Pilih minimal satu item untuk checkout', 3000);
-            return;
-        }
-
-        // Validasi item yang dipilih
-        $selectedCartItems = $this->cart->cartItems->whereIn('cart_item_id', $this->selectedItems);
-
-        $errors = [];
-        foreach ($selectedCartItems as $item) {
-            if ($item->quantity > $item->product->stock) {
-                $errors[] = "Stok {$item->product->name} tidak mencukupi. Tersedia: {$item->product->stock}";
-            }
-        }
-
-        if (!empty($errors)) {
-            $this->dispatch('show-toast', 'error', 'Ada masalah dengan item yang dipilih: ' . implode(', ', $errors), 5000);
-            return;
-        }
-
-        // Simpan selected items ke session untuk checkout
-        session(['checkout_items' => $this->selectedItems]);
-
-        // Redirect to checkout page
+        // Redirect to checkout page (all items will be processed)
         return redirect()->route('checkout');
     }
 
@@ -331,9 +241,6 @@ class Cart extends Component
 
     public function render()
     {
-        // Update status selectAll sebelum render
-        $this->updateSelectAllStatus();
-        
         return view('livewire.cart');
     }
 }

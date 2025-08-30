@@ -25,7 +25,9 @@ class Delivery extends Model
         'delivery_type',
         'estimated_delivery',
         'delivered_at',
-        'delivery_notes'
+        'delivery_notes',
+        'delivery_photo',
+        'delivery_status'
     ];
 
     /**
@@ -105,5 +107,52 @@ class Delivery extends Model
     public function scopeCompleted($query)
     {
         return $query->whereNotNull('delivered_at');
+    }
+
+    /**
+     * Get delivery status label in Indonesian.
+     */
+    public function getDeliveryStatusLabelAttribute(): string
+    {
+        return match($this->delivery_status) {
+            'pending' => 'Menunggu Pengiriman',
+            'ready_to_ship' => 'Siap Diantar',
+            'in_transit' => 'Pesanan Diantar',
+            'delivered' => 'Pesanan Selesai',
+            'failed' => 'Pesanan Dibatalkan',
+            default => 'Status Tidak Dikenal'
+        };
+    }
+
+    /**
+     * Check if delivery can be updated by courier.
+     */
+    public function canBeUpdatedByCourier(): bool
+    {
+        return in_array($this->delivery_status, ['ready_to_ship', 'in_transit']);
+    }
+
+    /**
+     * Check if delivery is ready to be shipped by courier.
+     */
+    public function isReadyToShip(): bool
+    {
+        return $this->delivery_status === 'ready_to_ship';
+    }
+
+    /**
+     * Check if delivery is in transit.
+     */
+    public function isInTransit(): bool
+    {
+        return $this->delivery_status === 'in_transit';
+    }
+
+    /**
+     * Scope for deliveries by status.
+     */
+    public function scopeByStatus($query, $status)
+    {
+        return $query->where('delivery_status', $status);
     }
 }
