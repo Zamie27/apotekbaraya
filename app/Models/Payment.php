@@ -81,7 +81,7 @@ class Payment extends Model
         }
 
         // Fallback to manual mapping
-        return match($this->payment_method) {
+        return match ($this->payment_method) {
             'cod' => 'Cash on Delivery (COD)',
             'qris' => 'QRIS',
             'bank_transfer' => 'Transfer Bank',
@@ -102,8 +102,8 @@ class Payment extends Model
         if (empty($this->status)) {
             return 'Status Tidak Diketahui';
         }
-        
-        return match($this->status) {
+
+        return match ($this->status) {
             'pending' => 'Menunggu Pembayaran',
             'paid' => 'Sudah Dibayar',
             'verified' => 'Terverifikasi',
@@ -130,8 +130,8 @@ class Payment extends Model
         if (empty($this->status)) {
             return 'badge-neutral';
         }
-        
-        return match($this->status) {
+
+        return match ($this->status) {
             'pending' => 'badge-warning',
             'verified' => 'badge-success',
             'paid' => 'badge-success',
@@ -158,7 +158,7 @@ class Payment extends Model
             return $this->paymentMethod->getIconClass();
         }
 
-        return match($this->payment_method) {
+        return match ($this->payment_method) {
             'cod' => 'fas fa-money-bill-wave',
             'qris' => 'fas fa-qrcode',
             'bank_transfer' => 'fas fa-university',
@@ -176,7 +176,7 @@ class Payment extends Model
             return $this->paymentMethod->getColorClass();
         }
 
-        return match($this->payment_method) {
+        return match ($this->payment_method) {
             'cod' => 'text-green-600',
             'qris' => 'text-blue-600',
             'bank_transfer' => 'text-purple-600',
