@@ -12,10 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->timestamp('ready_for_pickup_at')->nullable()->after('ready_to_ship_at');
-            $table->timestamp('picked_up_at')->nullable()->after('ready_for_pickup_at');
-            $table->timestamp('completed_at')->nullable()->after('delivered_at');
-            $table->string('pickup_image')->nullable()->after('receipt_image');
+            // Check if columns don't exist before adding them
+            if (!Schema::hasColumn('orders', 'picked_up_at')) {
+                $table->timestamp('picked_up_at')->nullable()->after('ready_for_pickup_at');
+            }
+            if (!Schema::hasColumn('orders', 'completed_at')) {
+                $table->timestamp('completed_at')->nullable()->after('delivered_at');
+            }
+            if (!Schema::hasColumn('orders', 'pickup_image')) {
+                $table->string('pickup_image')->nullable()->after('delivered_at');
+            }
         });
     }
 
@@ -25,12 +31,21 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn([
-                'ready_for_pickup_at', 
-                'picked_up_at',
-                'completed_at',
-                'pickup_image'
-            ]);
+            // Only drop columns that exist
+            $columnsToDrop = [];
+            if (Schema::hasColumn('orders', 'picked_up_at')) {
+                $columnsToDrop[] = 'picked_up_at';
+            }
+            if (Schema::hasColumn('orders', 'completed_at')) {
+                $columnsToDrop[] = 'completed_at';
+            }
+            if (Schema::hasColumn('orders', 'pickup_image')) {
+                $columnsToDrop[] = 'pickup_image';
+            }
+            
+            if (!empty($columnsToDrop)) {
+                $table->dropColumn($columnsToDrop);
+            }
         });
     }
 };
