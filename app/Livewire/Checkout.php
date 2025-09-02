@@ -515,7 +515,10 @@ class Checkout extends Component
                 ]);
                 
                 // Update order status to waiting payment
-                $order->update(['status' => 'waiting_payment']);
+                $order->update([
+                    'status' => 'waiting_payment',
+                    'waiting_payment_at' => now()
+                ]);
                 
                 Log::info('SNAP Token created successfully', [
                     'order_id' => $order->order_id,

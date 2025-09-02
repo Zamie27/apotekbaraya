@@ -74,6 +74,7 @@ class PaymentController extends Controller
                             $payment->status = 'paid';
                             $payment->paid_at = now();
                             $order->status = 'waiting_confirmation';
+                            $order->waiting_confirmation_at = now();
                         }
                         break;
 
@@ -81,6 +82,7 @@ class PaymentController extends Controller
                         $payment->status = 'paid';
                         $payment->paid_at = now();
                         $order->status = 'waiting_confirmation';
+                        $order->waiting_confirmation_at = now();
                         break;
 
                     case 'pending':

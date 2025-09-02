@@ -458,16 +458,19 @@
                             class="btn {{ $actionType === 'cancel' ? 'btn-error' : ($actionType === 'deliver' ? 'btn-success' : ($actionType === 'confirm' ? 'btn-success' : ($actionType === 'ready_to_ship' ? 'btn-warning' : 'btn-primary'))) }}"
                             wire:loading.attr="disabled"
                         >
+                            <!-- Loading Spinner -->
+                            <span wire:loading wire:target="submitAction" class="loading loading-spinner loading-sm mr-2"></span>
+                            
                             @if($actionType === 'confirm')
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" wire:loading.remove>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" wire:loading.remove wire:target="submitAction">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                 </svg>
                             @elseif($actionType === 'ready_to_ship')
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" wire:loading.remove>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" wire:loading.remove wire:target="submitAction">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                             @endif
-                            <span wire:loading.remove>
+                            <span wire:loading.remove wire:target="submitAction">
                                 @if($actionType === 'confirm')
                                     Konfirmasi Pesanan
                                 @elseif($actionType === 'cancel')
@@ -486,8 +489,26 @@
                                     Selesaikan Pesanan
                                 @endif
                             </span>
-                            <span wire:loading class="loading loading-spinner loading-sm"></span>
-                            <span wire:loading>Memproses...</span>
+                            <span wire:loading wire:target="submitAction">
+                                @if($actionType === 'confirm')
+                                    Mengkonfirmasi...
+                                @elseif($actionType === 'cancel')
+                                    Membatalkan...
+                                @elseif($actionType === 'process')
+                                    Memproses...
+                                @elseif($actionType === 'ready_to_ship')
+                                    {{ $order->shipping_type === 'pickup' ? 'Mengunggah & Memproses...' : 'Mengunggah & Memproses...' }}
+                                @elseif($actionType === 'ship')
+                                    Memproses...
+                                @elseif($actionType === 'pickup')
+                                    Mengkonfirmasi...
+                                @elseif($actionType === 'cancel_delivery')
+                                    Membatalkan...
+                                @elseif($actionType === 'deliver')
+                                    Menyelesaikan...
+                                @endif
+                            </span>
+
                         </button>
                     </div>
                 </form>
@@ -496,11 +517,33 @@
         </div>
     @endif
 
-    <!-- Loading State -->
-    <div wire:loading.delay class="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
-        <div class="bg-base-100 p-6 rounded-lg shadow-lg flex items-center space-x-3">
-            <span class="loading loading-spinner loading-md"></span>
-            <span>Memproses...</span>
-        </div>
-    </div>
+    <!-- JavaScript to handle loading state reset -->
+    <script>
+        document.addEventListener('livewire:init', () => {
+            // Listen for reset loading state event
+            Livewire.on('reset-loading-state', () => {
+                // Force remove loading attributes from all buttons
+                const buttons = document.querySelectorAll('button[wire\\:loading]');
+                buttons.forEach(button => {
+                    button.removeAttribute('disabled');
+                    // Remove loading spinner
+                    const spinner = button.querySelector('.loading-spinner');
+                    if (spinner) {
+                        spinner.style.display = 'none';
+                    }
+                    // Show normal button content
+                    const normalContent = button.querySelector('[wire\\:loading\\.remove]');
+                    if (normalContent) {
+                        normalContent.style.display = 'inline-flex';
+                    }
+                    // Hide loading content
+                    const loadingContent = button.querySelector('[wire\\:loading]:not([wire\\:loading\\.remove])');
+                    if (loadingContent && !loadingContent.classList.contains('loading-spinner')) {
+                        loadingContent.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+
 </div>

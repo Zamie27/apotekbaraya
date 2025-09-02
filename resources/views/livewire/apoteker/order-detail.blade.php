@@ -84,12 +84,23 @@
                                 <div class="flex items-start gap-4">
                                     <div class="flex-shrink-0">
                                         @if ($step['completed'])
-                                            <div class="w-8 h-8 bg-success rounded-full flex items-center justify-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            </div>
+                                            @if ($step['label'] === 'Dibatalkan')
+                                                <!-- Cancelled status with red styling -->
+                                                <div class="w-8 h-8 bg-error rounded-full flex items-center justify-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </div>
+                                            @else
+                                                <!-- Normal completed status with green styling -->
+                                                <div class="w-8 h-8 bg-success rounded-full flex items-center justify-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                            @endif
                                         @else
+                                            <!-- Pending status with gray styling -->
                                             <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -98,9 +109,17 @@
                                         @endif
                                     </div>
                                     <div class="flex-1">
-                                        <h4 class="font-medium {{ $step['completed'] ? 'text-success' : 'text-gray-600' }}">
-                                            {{ $step['label'] }}
-                                        </h4>
+                                        @if ($step['label'] === 'Dibatalkan')
+                                            <!-- Cancelled status text with red color -->
+                                            <h4 class="font-medium {{ $step['completed'] ? 'text-error' : 'text-gray-600' }}">
+                                                {{ $step['label'] }}
+                                            </h4>
+                                        @else
+                                            <!-- Normal status text -->
+                                            <h4 class="font-medium {{ $step['completed'] ? 'text-success' : 'text-gray-600' }}">
+                                                {{ $step['label'] }}
+                                            </h4>
+                                        @endif
                                         @if ($step['date'])
                                             <p class="text-sm text-gray-500">{{ $step['date']->format('d M Y, H:i') }}</p>
                                         @endif
@@ -297,8 +316,75 @@
     <!-- Listen for order updates -->
     <script>
         document.addEventListener('livewire:init', () => {
-            Livewire.on('order-updated', () => {
-                @this.refreshOrder();
+            // Listen for order updates from OrderStatusActions component
+            Livewire.on('orderUpdated', () => {
+                @this.handleOrderUpdate();
+            });
+            
+            // Listen for notification events with auto-hide
+            Livewire.on('show-notification', (event) => {
+                // Handle both array and object event formats
+                let notificationData;
+                if (Array.isArray(event) && event.length > 0) {
+                    notificationData = event[0];
+                } else if (typeof event === 'object' && event !== null) {
+                    notificationData = event;
+                } else {
+                    console.error('Invalid notification event format:', event);
+                    return;
+                }
+                
+                const { type, message, autoHide, delay } = notificationData;
+                
+                // Validate required fields
+                if (!type || !message) {
+                    console.error('Missing required notification fields:', notificationData);
+                    return;
+                }
+                
+                // Remove any existing notifications to prevent stacking
+                const existingNotifications = document.querySelectorAll('.notification-toast');
+                existingNotifications.forEach(notification => {
+                    notification.remove();
+                });
+                
+                // Create notification element
+                const notification = document.createElement('div');
+                notification.className = `alert alert-${type === 'success' ? 'success' : 'error'} fixed top-4 right-4 z-50 max-w-md shadow-lg notification-toast`;
+                notification.innerHTML = `
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                            ${type === 'success' ? 
+                                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />' :
+                                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />'
+                            }
+                        </svg>
+                        <span class="ml-2">${message}</span>
+                        <button class="btn btn-sm btn-ghost ml-auto" onclick="this.parentElement.parentElement.remove()">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                
+                // Add to page
+                document.body.appendChild(notification);
+                
+                // Auto-hide if specified
+                if (autoHide && delay) {
+                    setTimeout(() => {
+                        if (notification.parentElement) {
+                            notification.style.transition = 'opacity 0.3s ease-out';
+                            notification.style.opacity = '0';
+                            setTimeout(() => {
+                                if (notification.parentElement) {
+                                    notification.remove();
+                                }
+                            }, 300);
+                        }
+                    }, delay);
+                }
             });
         });
     </script>

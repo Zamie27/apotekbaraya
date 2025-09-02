@@ -39,14 +39,21 @@ class Order extends Model
         'shipping_address',
         'notes',
         'confirmed_at',
+        'processing_at',
         'receipt_image',
         'confirmation_note',
         'cancelled_at',
         'cancel_reason',
         'cancelled_by',
+        'waiting_payment_at',
+        'waiting_confirmation_at',
         'ready_to_ship_at',
+        'ready_for_pickup_at',
         'shipped_at',
-        'delivered_at'
+        'picked_up_at',
+        'delivered_at',
+        'completed_at',
+        'pickup_image'
     ];
 
     /**
@@ -62,11 +69,17 @@ class Order extends Model
         'shipping_address' => 'array',
         'payment_instructions' => 'array',
         'payment_expired_at' => 'datetime',
+        'waiting_payment_at' => 'datetime',
+        'waiting_confirmation_at' => 'datetime',
         'confirmed_at' => 'datetime',
+        'processing_at' => 'datetime',
         'cancelled_at' => 'datetime',
         'ready_to_ship_at' => 'datetime',
+        'ready_for_pickup_at' => 'datetime',
         'shipped_at' => 'datetime',
-        'delivered_at' => 'datetime'
+        'picked_up_at' => 'datetime',
+        'delivered_at' => 'datetime',
+        'completed_at' => 'datetime'
     ];
 
     /**
@@ -394,7 +407,8 @@ class Order extends Model
         }
 
         $this->update([
-            'status' => 'processing'
+            'status' => 'processing',
+            'processing_at' => now()
         ]);
 
         return true;
@@ -512,6 +526,12 @@ class Order extends Model
             'delivered_at' => now()
         ]);
 
+        // Automatically mark as completed for delivery orders
+        $this->update([
+            'status' => 'completed',
+            'completed_at' => now()
+        ]);
+
         return true;
     }
 
@@ -576,12 +596,18 @@ class Order extends Model
      */
     public function getStatusWorkflowAttribute(): array
     {
+        // Define all possible statuses for both delivery and pickup
+        $allDeliveryStatuses = ['waiting_payment', 'waiting_confirmation', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered', 'completed'];
+        $allPickupStatuses = ['waiting_payment', 'waiting_confirmation', 'confirmed', 'processing', 'ready_for_pickup', 'picked_up', 'completed'];
+        
         $steps = [
             [
                 'status' => 'pending',
                 'label' => 'Pesanan Dibuat',
                 'description' => 'Pesanan telah dibuat dan menunggu pembayaran',
-                'completed' => in_array($this->status, ['waiting_payment', 'waiting_confirmation', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered']),
+                'completed' => $this->status === 'pending' || ($this->shipping_type === 'delivery' ? 
+                    in_array($this->status, $allDeliveryStatuses) : 
+                    in_array($this->status, $allPickupStatuses)),
                 'current' => $this->status === 'pending',
                 'date' => $this->created_at
             ],
@@ -589,23 +615,29 @@ class Order extends Model
                 'status' => 'waiting_payment',
                 'label' => 'Menunggu Pembayaran',
                 'description' => 'Pesanan menunggu pembayaran dari pelanggan',
-                'completed' => in_array($this->status, ['waiting_confirmation', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered']),
+                'completed' => $this->status === 'waiting_payment' || ($this->shipping_type === 'delivery' ? 
+                    in_array($this->status, ['waiting_confirmation', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered', 'completed']) : 
+                    in_array($this->status, ['waiting_confirmation', 'confirmed', 'processing', 'ready_for_pickup', 'picked_up', 'completed'])),
                 'current' => $this->status === 'waiting_payment',
-                'date' => null
+                'date' => $this->waiting_payment_at
             ],
             [
                 'status' => 'waiting_confirmation',
                 'label' => 'Menunggu Konfirmasi',
                 'description' => 'Pesanan telah dibayar dan menunggu konfirmasi dari apoteker',
-                'completed' => in_array($this->status, ['confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered']),
+                'completed' => $this->status === 'waiting_confirmation' || ($this->shipping_type === 'delivery' ? 
+                    in_array($this->status, ['confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered', 'completed']) : 
+                    in_array($this->status, ['confirmed', 'processing', 'ready_for_pickup', 'picked_up', 'completed'])),
                 'current' => $this->status === 'waiting_confirmation',
-                'date' => null
+                'date' => $this->waiting_confirmation_at
             ],
             [
                 'status' => 'confirmed',
                 'label' => 'Dikonfirmasi',
                 'description' => 'Pesanan telah dikonfirmasi dan akan diproses',
-                'completed' => in_array($this->status, ['processing', 'ready_to_ship', 'shipped', 'delivered']),
+                'completed' => $this->status === 'confirmed' || ($this->shipping_type === 'delivery' ? 
+                    in_array($this->status, ['processing', 'ready_to_ship', 'shipped', 'delivered', 'completed']) : 
+                    in_array($this->status, ['processing', 'ready_for_pickup', 'picked_up', 'completed'])),
                 'current' => $this->status === 'confirmed',
                 'date' => $this->confirmed_at
             ],
@@ -613,35 +645,74 @@ class Order extends Model
                 'status' => 'processing',
                 'label' => 'Diproses',
                 'description' => 'Pesanan sedang disiapkan',
-                'completed' => in_array($this->status, ['ready_to_ship', 'shipped', 'delivered']),
+                'completed' => $this->status === 'processing' || ($this->shipping_type === 'delivery' ? 
+                    in_array($this->status, ['ready_to_ship', 'shipped', 'delivered', 'completed']) : 
+                    in_array($this->status, ['ready_for_pickup', 'picked_up', 'completed'])),
                 'current' => $this->status === 'processing',
-                'date' => null // Will be added when status changes
-            ],
-            [
-                'status' => 'ready_to_ship',
-                'label' => 'Siap Diantar',
-                'description' => 'Pesanan telah siap dan menunggu kurir untuk diantar',
-                'completed' => in_array($this->status, ['shipped', 'delivered']),
-                'current' => $this->status === 'ready_to_ship',
-                'date' => $this->ready_to_ship_at
-            ],
-            [
-                'status' => 'shipped',
-                'label' => 'Dikirim',
-                'description' => $this->shipping_type === 'delivery' ? 'Pesanan sedang dalam perjalanan' : 'Pesanan siap diambil',
-                'completed' => $this->status === 'delivered',
-                'current' => $this->status === 'shipped',
-                'date' => $this->shipped_at
-            ],
-            [
-                'status' => 'delivered',
-                'label' => 'Selesai',
-                'description' => $this->shipping_type === 'delivery' ? 'Pesanan telah diterima' : 'Pesanan telah diambil',
-                'completed' => $this->status === 'delivered',
-                'current' => $this->status === 'delivered',
-                'date' => $this->delivered_at
+                'date' => $this->processing_at
             ]
         ];
+
+        // Delivery specific steps
+        if ($this->shipping_type === 'delivery') {
+            $steps[] = [
+                'status' => 'ready_to_ship',
+                'label' => 'Siap Diantar',
+                'description' => 'Pesanan siap untuk dikirim ke kurir',
+                'completed' => $this->status === 'ready_to_ship' || in_array($this->status, ['shipped', 'delivered', 'completed']),
+                'current' => $this->status === 'ready_to_ship',
+                'date' => $this->ready_to_ship_at
+            ];
+            
+            $steps[] = [
+                'status' => 'shipped',
+                'label' => 'Sedang Diantar',
+                'description' => 'Pesanan sedang dalam perjalanan',
+                'completed' => $this->status === 'shipped' || in_array($this->status, ['delivered', 'completed']),
+                'current' => $this->status === 'shipped',
+                'date' => $this->shipped_at
+            ];
+            
+            $steps[] = [
+                'status' => 'delivered',
+                'label' => 'Sampai Tujuan',
+                'description' => 'Pesanan telah sampai di tujuan',
+                'completed' => $this->status === 'delivered' || $this->status === 'completed',
+                'current' => $this->status === 'delivered',
+                'date' => $this->delivered_at
+            ];
+        } else {
+            // Add pickup-specific steps
+            $steps[] = [
+                'status' => 'ready_for_pickup',
+                'label' => 'Siap Diambil',
+                'description' => 'Pesanan telah siap dan dapat diambil di toko',
+                'completed' => $this->status === 'ready_for_pickup' || in_array($this->status, ['picked_up', 'completed']),
+                'current' => $this->status === 'ready_for_pickup',
+                'date' => $this->ready_for_pickup_at ?? $this->ready_to_ship_at
+            ];
+            
+            $steps[] = [
+                'status' => 'picked_up',
+                'label' => 'Diambil',
+                'description' => 'Pesanan telah diambil pelanggan',
+                'completed' => $this->status === 'picked_up' || $this->status === 'completed',
+                'current' => $this->status === 'picked_up',
+                'date' => $this->picked_up_at
+            ];
+        }
+
+        // Add completed step for both delivery and pickup
+        if (!$this->isCancelled()) {
+            $steps[] = [
+                'status' => 'completed',
+                'label' => 'Selesai',
+                'description' => 'Pesanan telah selesai',
+                'completed' => $this->status === 'completed',
+                'current' => $this->status === 'completed',
+                'date' => $this->completed_at
+            ];
+        }
 
         // Add cancellation step if order is cancelled
         if ($this->isCancelled()) {

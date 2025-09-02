@@ -181,7 +181,7 @@ class OrderDetail extends Component
                     
                     $this->order->update([
                         'status' => 'waiting_confirmation',
-                        'confirmed_at' => now()
+                        'waiting_confirmation_at' => now()
                     ]);
                     
                     // Reload order data
@@ -402,47 +402,49 @@ class OrderDetail extends Component
                     'status' => 'confirmed',
                     'label' => 'Pesanan Dikonfirmasi',
                     'date' => $this->order->confirmed_at,
-                    'completed' => in_array($this->order->status, ['confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered']),
+                    'completed' => in_array($this->order->status, ['confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered', 'picked_up', 'completed']),
                     'icon' => 'check-circle'
                 ];
             }
         }
 
         // 4. Processing - show if confirmed or beyond
-        if ($this->order->payment && $this->order->payment->isPaid() && in_array($this->order->status, ['confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered'])) {
+        if ($this->order->payment && $this->order->payment->isPaid() && in_array($this->order->status, ['confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered', 'picked_up', 'completed'])) {
             $timeline[] = [
                 'status' => 'processing',
                 'label' => 'Pesanan Diproses',
-                'date' => in_array($this->order->status, ['processing', 'ready_to_ship', 'shipped', 'delivered']) ? $this->order->confirmed_at : null,
-                'completed' => in_array($this->order->status, ['processing', 'ready_to_ship', 'shipped', 'delivered']),
+                'date' => in_array($this->order->status, ['processing', 'ready_to_ship', 'shipped', 'delivered', 'picked_up', 'completed']) ? $this->order->confirmed_at : null,
+                'completed' => in_array($this->order->status, ['processing', 'ready_to_ship', 'shipped', 'delivered', 'picked_up', 'completed']),
                 'icon' => 'cog'
             ];
         }
 
-        // 5. Ready to ship/pickup - show if ready_to_ship or beyond
-        if ($this->order->payment && $this->order->payment->isPaid() && in_array($this->order->status, ['ready_to_ship', 'shipped', 'delivered'])) {
+        // 5. Ready to ship/pickup - show if ready_to_ship or ready_for_pickup or beyond
+        if ($this->order->payment && $this->order->payment->isPaid() && in_array($this->order->status, ['ready_to_ship', 'ready_for_pickup', 'shipped', 'delivered', 'picked_up', 'completed'])) {
             $timeline[] = [
                 'status' => 'ready_to_ship',
                 'label' => $this->order->shipping_type === 'delivery' ? 'Pesanan Siap Diantar' : 'Pesanan Siap Diambil',
-                'date' => $this->order->ready_to_ship_at,
-                'completed' => in_array($this->order->status, ['ready_to_ship', 'shipped', 'delivered']),
+                'date' => $this->order->shipping_type === 'delivery' ? $this->order->ready_to_ship_at : $this->order->ready_for_pickup_at,
+                'completed' => $this->order->shipping_type === 'pickup' ? 
+                    in_array($this->order->status, ['picked_up', 'completed']) : 
+                    in_array($this->order->status, ['shipped', 'delivered', 'completed']),
                 'icon' => $this->order->shipping_type === 'delivery' ? 'package' : 'package-check'
             ];
         }
 
         // 6. Shipped - show if shipped or delivered (only for delivery type)
-        if ($this->order->payment && $this->order->payment->isPaid() && $this->order->shipping_type === 'delivery' && in_array($this->order->status, ['shipped', 'delivered'])) {
+        if ($this->order->payment && $this->order->payment->isPaid() && $this->order->shipping_type === 'delivery' && in_array($this->order->status, ['shipped', 'delivered', 'completed'])) {
             $timeline[] = [
                 'status' => 'shipped',
                 'label' => 'Pesanan Diantar',
                 'date' => $this->order->shipped_at,
-                'completed' => in_array($this->order->status, ['shipped', 'delivered']),
+                'completed' => in_array($this->order->status, ['shipped', 'delivered', 'completed']),
                 'icon' => 'truck'
             ];
         }
 
-        // 7. Picked up - show if picked_up (for pickup orders)
-        if ($this->order->payment && $this->order->payment->isPaid() && $this->order->shipping_type === 'pickup' && in_array($this->order->status, ['picked_up', 'completed'])) {
+        // 7. Picked up - show for pickup orders when ready_for_pickup or beyond
+        if ($this->order->payment && $this->order->payment->isPaid() && $this->order->shipping_type === 'pickup' && in_array($this->order->status, ['ready_for_pickup', 'picked_up', 'completed'])) {
             $pickupProof = $this->order->pickup_image;
             
             $timeline[] = [
@@ -456,8 +458,8 @@ class OrderDetail extends Component
             ];
         }
 
-        // 8. Delivered - show if delivered (for delivery orders)
-        if ($this->order->payment && $this->order->payment->isPaid() && $this->order->shipping_type === 'delivery' && $this->order->status === 'delivered') {
+        // 8. Delivered - show if delivered or completed (for delivery orders)
+        if ($this->order->payment && $this->order->payment->isPaid() && $this->order->shipping_type === 'delivery' && in_array($this->order->status, ['delivered', 'completed'])) {
             $deliveryProof = null;
             if ($this->order->delivery && $this->order->delivery->delivery_photo) {
                 $deliveryProof = $this->order->delivery->delivery_photo;
@@ -467,10 +469,23 @@ class OrderDetail extends Component
                 'status' => 'delivered',
                 'label' => 'Pesanan Sampai Tujuan',
                 'date' => $this->order->delivered_at,
-                'completed' => $this->order->status === 'delivered',
+                'completed' => in_array($this->order->status, ['delivered', 'completed']),
                 'icon' => 'check-circle',
                 'delivery_proof' => $deliveryProof,
-                'show_proof_link' => $this->order->status === 'delivered' && $deliveryProof
+                'show_proof_link' => in_array($this->order->status, ['delivered', 'completed']) && $deliveryProof
+            ];
+        }
+
+        // 9. Completed - show final status for both delivery and pickup orders
+        if ($this->order->payment && $this->order->payment->isPaid() && 
+            (($this->order->shipping_type === 'delivery' && in_array($this->order->status, ['delivered', 'completed'])) ||
+             ($this->order->shipping_type === 'pickup' && in_array($this->order->status, ['picked_up', 'completed'])))) {
+            $timeline[] = [
+                'status' => 'completed',
+                'label' => 'Pesanan Selesai',
+                'date' => $this->order->completed_at ?? $this->order->updated_at,
+                'completed' => in_array($this->order->status, ['picked_up', 'delivered', 'completed']),
+                'icon' => 'check-circle'
             ];
         }
 

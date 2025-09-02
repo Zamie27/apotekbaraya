@@ -89,6 +89,39 @@ class OrderDetail extends Component
     {
         $timeline = [];
 
+        // Handle cancelled orders first
+        if ($this->order->status === 'cancelled') {
+            // 1. Order created - always show
+            $timeline[] = [
+                'label' => 'Pesanan Dibuat',
+                'completed' => true,
+                'date' => $this->order->created_at,
+                'icon' => 'shopping-cart'
+            ];
+
+            // 2. Payment status - show if payment exists and was paid
+            if ($this->order->payment && $this->order->payment->status === 'paid') {
+                $timeline[] = [
+                    'label' => 'Pembayaran Berhasil',
+                    'completed' => true,
+                    'date' => $this->order->payment->paid_at,
+                    'icon' => 'credit-card'
+                ];
+            }
+
+            // 3. Cancelled status
+            $timeline[] = [
+                'label' => 'Dibatalkan',
+                'completed' => true,
+                'date' => $this->order->cancelled_at ?? $this->order->updated_at,
+                'icon' => 'x-circle',
+                'is_cancelled' => true
+            ];
+
+            return $timeline;
+        }
+
+        // Normal flow for non-cancelled orders
         // 1. Order placed
         $timeline[] = [
             'label' => 'Pesanan Dibuat',
@@ -138,7 +171,7 @@ class OrderDetail extends Component
         }
 
         // 6. Processing
-        if (in_array($this->order->status, ['processing', 'shipped', 'delivered'])) {
+        if (in_array($this->order->status, ['processing', 'ready_to_ship', 'ready_for_pickup', 'shipped', 'delivered', 'picked_up', 'completed'])) {
             $timeline[] = [
                 'label' => 'Diproses',
                 'completed' => true,
@@ -147,7 +180,17 @@ class OrderDetail extends Component
             ];
         }
 
-        // 7. Shipped
+        // 7. Ready to ship/pickup
+        if (in_array($this->order->status, ['ready_to_ship', 'ready_for_pickup', 'shipped', 'delivered', 'picked_up', 'completed'])) {
+            $timeline[] = [
+                'label' => $this->order->shipping_type === 'delivery' ? 'Siap Diantar' : 'Siap Diambil',
+                'completed' => true,
+                'date' => $this->order->shipping_type === 'delivery' ? $this->order->ready_to_ship_at : $this->order->ready_for_pickup_at,
+                'icon' => $this->order->shipping_type === 'delivery' ? 'package' : 'package-check'
+            ];
+        }
+
+        // 8. Shipped
         if ($this->order->shipping_type === 'delivery' && in_array($this->order->status, ['shipped', 'delivered'])) {
             $timeline[] = [
                 'label' => 'Dikirim',
@@ -157,23 +200,23 @@ class OrderDetail extends Component
             ];
         }
 
-        // 8. Delivered/Completed
-        if ($this->order->status === 'delivered') {
+        // 9. Picked up (for pickup orders)
+        if ($this->order->shipping_type === 'pickup' && in_array($this->order->status, ['picked_up', 'completed'])) {
             $timeline[] = [
-                'label' => $this->order->shipping_type === 'pickup' ? 'Diambil' : 'Diterima',
+                'label' => 'Diambil',
                 'completed' => true,
-                'date' => $this->order->delivered_at,
+                'date' => $this->order->picked_up_at,
                 'icon' => 'check'
             ];
         }
 
-        // Cancelled (replaces all other steps if cancelled)
-        if ($this->order->status === 'cancelled') {
+        // 10. Delivered/Completed
+        if ($this->order->status === 'delivered' || $this->order->status === 'completed') {
             $timeline[] = [
-                'label' => 'Dibatalkan',
+                'label' => $this->order->shipping_type === 'pickup' ? 'Selesai' : 'Diterima',
                 'completed' => true,
-                'date' => $this->order->cancelled_at,
-                'icon' => 'x-circle'
+                'date' => $this->order->shipping_type === 'pickup' ? $this->order->completed_at : $this->order->delivered_at,
+                'icon' => 'check'
             ];
         }
 
@@ -186,7 +229,17 @@ class OrderDetail extends Component
     public function refreshOrder()
     {
         $this->loadOrder();
+        // Only dispatch order-updated event, no notification here
+        // Notification will be handled by the component that triggered the action
         $this->dispatch('order-updated');
+    }
+    
+    /**
+     * Handle order updated event from OrderStatusActions component.
+     */
+    public function handleOrderUpdate()
+    {
+        $this->loadOrder();
     }
 
     /**

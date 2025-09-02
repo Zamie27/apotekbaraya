@@ -93,8 +93,11 @@ class Orders extends Component
             'confirmed' => 'Dikonfirmasi',
             'processing' => 'Diproses',
             'ready_to_ship' => 'Siap Diantar',
+            'ready_for_pickup' => 'Siap Diambil',
             'shipped' => 'Dikirim',
             'delivered' => 'Diterima',
+            'picked_up' => 'Diambil',
+            'completed' => 'Selesai',
             'cancelled' => 'Dibatalkan'
         ];
     }
@@ -119,8 +122,11 @@ class Orders extends Component
             'confirmed' => 'badge-info',
             'processing' => 'badge-primary',
             'ready_to_ship' => 'badge-accent',
+            'ready_for_pickup' => 'badge-accent',
             'shipped' => 'badge-secondary',
             'delivered' => 'badge-success',
+            'picked_up' => 'badge-success',
+            'completed' => 'badge-success',
             'cancelled' => 'badge-error',
             default => 'badge-neutral'
         };
@@ -138,8 +144,11 @@ class Orders extends Component
             'confirmed' => 'Dikonfirmasi',
             'processing' => 'Diproses',
             'ready_to_ship' => 'Siap Diantar',
+            'ready_for_pickup' => 'Siap Diambil',
             'shipped' => 'Dikirim',
             'delivered' => 'Diterima',
+            'picked_up' => 'Diambil',
+            'completed' => 'Selesai',
             'cancelled' => 'Dibatalkan',
             default => ucfirst($status)
         };

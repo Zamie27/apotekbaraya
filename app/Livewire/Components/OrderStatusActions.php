@@ -18,8 +18,10 @@ class OrderStatusActions extends Component
     public string $actionType = '';
     public string $confirmationNote = '';
     public string $cancelReason = '';
+    public string $cancellationReason = '';
     public $receiptImage;
     public $pickupImage;
+    public $deliveryImage;
     public $selectedCourierId;
 
     /**
@@ -29,22 +31,40 @@ class OrderStatusActions extends Component
     {
         $rules = [
             'confirmationNote' => 'nullable|string|max:500',
-            'cancellationReason' => 'required_if:actionType,cancel|string|max:500',
         ];
+
+        // Add validation rules based on action type
+        if ($this->actionType === 'cancel') {
+            $rules['cancellationReason'] = 'required|string|max:500';
+        }
 
         // Add receipt image validation when action type is ready_to_ship
         if ($this->actionType === 'ready_to_ship') {
             $rules['receiptImage'] = 'required|image|mimes:jpeg,png,jpg|max:2048';
-            $rules['selectedCourierId'] = 'required|exists:users,user_id';
-        } elseif ($this->actionType === 'confirm' && $this->order->status === 'processing') {
+            // Only require courier selection for delivery orders
+            if (isset($this->order) && $this->order && isset($this->order->shipping_type) && $this->order->shipping_type === 'delivery') {
+                $rules['selectedCourierId'] = 'required|exists:users,user_id';
+            }
+        } elseif ($this->actionType === 'confirm' && isset($this->order) && $this->order && isset($this->order->status) && $this->order->status === 'processing') {
             // For processing status (ready_to_ship), receipt image is required
             $rules['receiptImage'] = 'required|image|mimes:jpeg,png,jpg|max:2048';
         }
-        
+
         // Pickup image is required for pickup confirmation
         if ($this->actionType === 'pickup') {
             $rules['pickupImage'] = 'required|image|mimes:jpeg,png,jpg|max:2048';
         }
+
+        // Delivery image is required for delivery confirmation
+        if ($this->actionType === 'deliver') {
+            $rules['deliveryImage'] = 'required|image|mimes:jpeg,png,jpg|max:2048';
+        }
+
+        // Cancellation reason is required for delivery cancellation
+        if ($this->actionType === 'cancel_delivery') {
+            $rules['cancellationReason'] = 'required|string|min:10|max:500';
+        }
+
         // For waiting_confirmation status, no receipt image required
 
         return $rules;
@@ -58,6 +78,12 @@ class OrderStatusActions extends Component
         'pickupImage.required' => 'Foto bukti pengambilan harus diupload.',
         'pickupImage.image' => 'File harus berupa gambar.',
         'pickupImage.max' => 'Ukuran file maksimal 2MB.',
+        'deliveryImage.required' => 'Foto bukti pengiriman harus diupload.',
+        'deliveryImage.image' => 'File harus berupa gambar.',
+        'deliveryImage.max' => 'Ukuran file maksimal 2MB.',
+        'cancellationReason.required' => 'Alasan pembatalan harus diisi.',
+        'cancellationReason.min' => 'Alasan pembatalan minimal 10 karakter.',
+        'cancellationReason.max' => 'Alasan pembatalan maksimal 500 karakter.',
         'selectedCourierId.required_if' => 'Kurir harus dipilih untuk pesanan yang akan diantar.',
         'selectedCourierId.exists' => 'Kurir yang dipilih tidak valid.'
     ];
@@ -67,8 +93,14 @@ class OrderStatusActions extends Component
      */
     public function mount(Order $order, string $userRole = 'apoteker')
     {
-        $this->order = $order;
+        // Ensure order is properly loaded with relationships
+        $this->order = $order->load(['items.product', 'user', 'delivery']);
         $this->userRole = $userRole;
+
+        // Validate that order exists and has required data
+        if (!$this->order || !$this->order->exists) {
+            throw new \Exception('Order data is invalid or missing');
+        }
     }
 
     /**
@@ -77,18 +109,20 @@ class OrderStatusActions extends Component
     public function openActionModal($actionType)
     {
         $this->actionType = $actionType;
-        
+
         // For waiting_confirmation status, show modal for both confirm and cancel actions
         // Only ready_to_ship status requires special handling (upload receipt + select courier)
-        
+
         $this->showModal = true;
         $this->resetValidation();
-        
+
         // Reset form fields
         $this->confirmationNote = '';
         $this->cancelReason = '';
+        $this->cancellationReason = '';
         $this->receiptImage = null;
         $this->pickupImage = null;
+        $this->deliveryImage = null;
     }
 
     /**
@@ -127,6 +161,15 @@ class OrderStatusActions extends Component
     }
 
     /**
+     * Reset loading state to ensure loading animation stops
+     */
+    public function resetLoadingState()
+    {
+        // Force Livewire to reset loading state by dispatching a browser event
+        $this->dispatch('reset-loading-state');
+    }
+
+    /**
      * Close action modal.
      */
     public function closeModal()
@@ -135,9 +178,12 @@ class OrderStatusActions extends Component
         $this->actionType = '';
         $this->confirmationNote = '';
         $this->cancelReason = '';
+        $this->cancellationReason = '';
         $this->receiptImage = null;
         $this->pickupImage = null;
+        $this->deliveryImage = null;
         $this->resetValidation();
+        $this->resetLoadingState();
     }
 
     /**
@@ -145,34 +191,94 @@ class OrderStatusActions extends Component
      */
     public function confirmOrder()
     {
-        $this->validate([
-            'confirmationNote' => 'nullable|string|max:500',
-            'receiptImage' => 'nullable|image|max:2048'
-        ]);
+        try {
+            // Check if order exists
+            if (!isset($this->order) || !$this->order) {
+                $this->dispatch('show-notification', [
+                    'type' => 'error',
+                    'message' => 'Data pesanan tidak ditemukan!',
+                    'autoHide' => true,
+                    'delay' => 4000
+                ]);
+                return;
+            }
 
-        if (!$this->order->canBeConfirmed()) {
-            session()->flash('error', 'Pesanan tidak dapat dikonfirmasi!');
-            return;
-        }
+            $this->validate([
+                'confirmationNote' => 'nullable|string|max:500',
+                'receiptImage' => 'nullable|image|max:2048'
+            ]);
 
-        // Handle receipt image upload
-        $receiptPath = null;
-        if ($this->receiptImage) {
-            $receiptPath = $this->receiptImage->store('receipts', 'public');
-        }
+            if (!$this->order->canBeConfirmed()) {
+                $this->dispatch('show-notification', [
+                    'type' => 'error',
+                    'message' => 'Pesanan tidak dapat dikonfirmasi!',
+                    'autoHide' => true,
+                    'delay' => 4000
+                ]);
+                return;
+            }
 
-        $success = $this->order->confirmOrder(Auth::id(), $this->confirmationNote);
-        
-        if ($receiptPath) {
-            $this->order->update(['receipt_image' => $receiptPath]);
-        }
+            // Handle receipt image upload
+            $receiptPath = null;
+            if ($this->receiptImage && $this->receiptImage->isValid()) {
+                try {
+                    $receiptPath = $this->receiptImage->store('receipts', 'public');
+                } catch (\Exception $uploadError) {
+                    \Log::error('Error uploading receipt image in confirmOrder: ' . $uploadError->getMessage());
+                    $this->dispatch('show-notification', [
+                        'type' => 'error',
+                        'message' => 'Gagal mengupload struk. Silakan coba lagi.',
+                        'autoHide' => true,
+                        'delay' => 4000
+                    ]);
+                    return;
+                }
+            }
 
-        if ($success) {
-            session()->flash('success', 'Pesanan berhasil dikonfirmasi!');
+            $success = $this->order->confirmOrder(Auth::id(), $this->confirmationNote);
+
+            if ($receiptPath) {
+                $this->order->update(['receipt_image' => $receiptPath]);
+            }
+
+            if ($success) {
+                $this->closeModal();
+                $this->dispatch('orderUpdated');
+                $this->dispatch('show-notification', [
+                    'type' => 'success',
+                    'message' => 'Pesanan berhasil dikonfirmasi!',
+                    'autoHide' => true,
+                    'delay' => 4000
+                ]);
+                // Auto refresh halaman setelah 1  detik
+                $this->dispatch('auto-refresh-page', ['delay' => 1000]);
+            } else {
+                $this->dispatch('show-notification', [
+                    'type' => 'error',
+                    'message' => 'Gagal mengkonfirmasi pesanan!',
+                    'autoHide' => true,
+                    'delay' => 4000
+                ]);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors - don't close modal, let user fix validation errors
+            $errors = $e->validator->errors()->all();
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => implode(' ', $errors),
+                'autoHide' => true,
+                'delay' => 5000
+            ]);
+        } catch (\Exception $e) {
+            // Handle other errors - close modal and show error
             $this->closeModal();
-            $this->dispatch('orderUpdated');
-        } else {
-            session()->flash('error', 'Gagal mengkonfirmasi pesanan!');
+            \Log::error('Error in confirmOrder: ' . $e->getMessage());
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => 'Terjadi kesalahan sistem. Silakan coba lagi.',
+                'autoHide' => true,
+                'delay' => 4000
+            ]);
         }
     }
 
@@ -183,6 +289,12 @@ class OrderStatusActions extends Component
      */
     public function cancelOrder()
     {
+        // Check if order exists
+        if (!isset($this->order) || !$this->order) {
+            session()->flash('error', 'Data pesanan tidak ditemukan!');
+            return;
+        }
+
         $this->validate([
             'cancelReason' => 'required|string|max:500'
         ]);
@@ -198,8 +310,24 @@ class OrderStatusActions extends Component
             session()->flash('success', 'Pesanan berhasil dibatalkan!');
             $this->closeModal();
             $this->dispatch('orderUpdated');
+            $this->dispatch('show-notification', [
+                'type' => 'success',
+                'message' => 'Pesanan berhasil dibatalkan!',
+                'autoHide' => true,
+                'delay' => 4000
+            ]);
+            // Auto refresh halaman setelah 1  detik
+            $this->dispatch('auto-refresh-page', ['delay' => 1000]);
+            // Auto refresh halaman setelah 1  detik
+            $this->dispatch('auto-refresh-page', ['delay' => 1000]);
         } else {
             session()->flash('error', 'Gagal membatalkan pesanan!');
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => 'Gagal membatalkan pesanan!',
+                'autoHide' => true,
+                'delay' => 4000
+            ]);
         }
     }
 
@@ -208,6 +336,12 @@ class OrderStatusActions extends Component
      */
     public function markAsProcessing()
     {
+        // Check if order exists
+        if (!isset($this->order) || !$this->order) {
+            session()->flash('error', 'Data pesanan tidak ditemukan!');
+            return;
+        }
+
         if (!$this->order->canBeProcessed()) {
             session()->flash('error', 'Pesanan tidak dapat diproses!');
             return;
@@ -219,8 +353,22 @@ class OrderStatusActions extends Component
             session()->flash('success', 'Pesanan berhasil diubah ke status diproses!');
             $this->closeModal();
             $this->dispatch('orderUpdated');
+            $this->dispatch('show-notification', [
+                'type' => 'success',
+                'message' => 'Pesanan berhasil diubah ke status diproses!',
+                'autoHide' => true,
+                'delay' => 4000
+            ]);
+            // Auto refresh halaman setelah 1  detik
+            $this->dispatch('auto-refresh-page', ['delay' => 1000]);
         } else {
             session()->flash('error', 'Gagal mengubah status pesanan!');
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => 'Gagal mengubah status pesanan!',
+                'autoHide' => true,
+                'delay' => 4000
+            ]);
         }
     }
 
@@ -229,37 +377,105 @@ class OrderStatusActions extends Component
      */
     public function markAsReadyToShip()
     {
-        $this->validate([
-            'receiptImage' => 'required|image|max:2048',
-            'selectedCourierId' => 'required|exists:users,user_id'
-        ]);
+        try {
+            // Check if order exists
+            if (!isset($this->order) || !$this->order) {
+                $this->dispatch('show-notification', [
+                    'type' => 'error',
+                    'message' => 'Data pesanan tidak ditemukan!',
+                    'autoHide' => true,
+                    'delay' => 4000
+                ]);
+                return;
+            }
 
-        if (!$this->order->canBeReadyToShip()) {
-            session()->flash('error', 'Pesanan tidak dapat diubah ke status siap diantar!');
-            return;
-        }
+            // Validate input using the rules method
+            $this->validate();
 
-        // Validate that selected user is actually a courier
-        $courier = User::where('user_id', $this->selectedCourierId)->first();
-        if (!$courier || !$courier->isKurir()) {
-            session()->flash('error', 'Pengguna yang dipilih bukan kurir!');
-            return;
-        }
+            // Check if order can be marked as ready to ship
+            if (!$this->order->canBeReadyToShip()) {
+                $this->dispatch('show-notification', [
+                    'type' => 'error',
+                    'message' => 'Pesanan tidak dapat diubah ke status siap diantar!',
+                    'autoHide' => true,
+                    'delay' => 4000
+                ]);
+                return;
+            }
 
-        // Handle receipt image upload
-        $receiptPath = null;
-        if ($this->receiptImage) {
-            $receiptPath = $this->receiptImage->store('receipts', 'public');
-        }
+            // Validate that selected user is actually a courier (only for delivery orders)
+            if (isset($this->order->shipping_type) && $this->order->shipping_type === 'delivery') {
+                $courier = User::where('user_id', $this->selectedCourierId)->first();
+                if (!$courier || !$courier->isKurir()) {
+                    $this->dispatch('show-notification', [
+                        'type' => 'error',
+                        'message' => 'Pengguna yang dipilih bukan kurir!',
+                        'autoHide' => true,
+                        'delay' => 4000
+                    ]);
+                    return;
+                }
+            }
 
-        $success = $this->order->markAsReadyToShip($receiptPath, $this->selectedCourierId);
+            // Handle receipt image upload
+            $receiptPath = null;
+            if ($this->receiptImage && $this->receiptImage->isValid()) {
+                try {
+                    $receiptPath = $this->receiptImage->store('receipts', 'public');
+                } catch (\Exception $uploadError) {
+                    \Log::error('Error uploading receipt image: ' . $uploadError->getMessage());
+                    $this->dispatch('show-notification', [
+                        'type' => 'error',
+                        'message' => 'Gagal mengupload struk. Silakan coba lagi.',
+                        'autoHide' => true,
+                        'delay' => 4000
+                    ]);
+                    return;
+                }
+            }
 
-        if ($success) {
-            session()->flash('success', 'Pesanan berhasil ditandai siap diantar dan kurir telah ditugaskan!');
+            // Mark order as ready to ship
+            $courierId = $this->order->shipping_type === 'delivery' ? $this->selectedCourierId : null;
+            $success = $this->order->markAsReadyToShip($receiptPath, $courierId);
+
+            if ($success) {
+                $this->closeModal();
+                $this->dispatch('orderUpdated');
+                $this->dispatch('show-notification', [
+                    'type' => 'success',
+                    'message' => 'Pesanan berhasil ditandai siap diantar dan kurir telah ditugaskan!',
+                    'autoHide' => true,
+                    'delay' => 4000
+                ]);
+                // Auto refresh halaman setelah 1 detik
+                $this->dispatch('auto-refresh-page', ['delay' => 1000]);
+            } else {
+                $this->dispatch('show-notification', [
+                    'type' => 'error',
+                    'message' => 'Gagal mengubah status pesanan!',
+                    'autoHide' => true,
+                    'delay' => 4000
+                ]);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors - don't close modal, let user fix validation errors
+            $errors = $e->validator->errors()->all();
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => implode(' ', $errors),
+                'autoHide' => true,
+                'delay' => 5000
+            ]);
+        } catch (\Exception $e) {
+            // Handle other errors - close modal and show error
             $this->closeModal();
-            $this->dispatch('orderUpdated');
-        } else {
-            session()->flash('error', 'Gagal mengubah status pesanan!');
+            \Log::error('Error in markAsReadyToShip: ' . $e->getMessage());
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => 'Terjadi kesalahan sistem. Silakan coba lagi.',
+                'autoHide' => true,
+                'delay' => 4000
+            ]);
         }
     }
 
@@ -268,6 +484,12 @@ class OrderStatusActions extends Component
      */
     public function markAsShipped()
     {
+        // Check if order exists
+        if (!isset($this->order) || !$this->order) {
+            session()->flash('error', 'Data pesanan tidak ditemukan!');
+            return;
+        }
+
         if (!$this->order->canBeShipped()) {
             session()->flash('error', 'Pesanan tidak dapat dikirim!');
             return;
@@ -286,8 +508,22 @@ class OrderStatusActions extends Component
             session()->flash('success', 'Pesanan berhasil dikirim!');
             $this->closeModal();
             $this->dispatch('orderUpdated');
+            $this->dispatch('show-notification', [
+                'type' => 'success',
+                'message' => 'Pesanan berhasil dikirim!',
+                'autoHide' => true,
+                'delay' => 4000
+            ]);
+            // Auto refresh halaman setelah 1  detik
+            $this->dispatch('auto-refresh-page', ['delay' => 1000]);
         } else {
             session()->flash('error', 'Gagal mengubah status pesanan!');
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => 'Gagal mengubah status pesanan!',
+                'autoHide' => true,
+                'delay' => 4000
+            ]);
         }
     }
 
@@ -296,6 +532,12 @@ class OrderStatusActions extends Component
      */
     public function markAsPickedUp()
     {
+        // Check if order exists
+        if (!isset($this->order) || !$this->order) {
+            session()->flash('error', 'Data pesanan tidak ditemukan!');
+            return;
+        }
+
         $this->validate([
             'pickupImage' => 'required|image|max:2048'
         ]);
@@ -307,8 +549,19 @@ class OrderStatusActions extends Component
 
         // Handle pickup image upload
         $pickupPath = null;
-        if ($this->pickupImage) {
-            $pickupPath = $this->pickupImage->store('pickups', 'public');
+        if ($this->pickupImage && $this->pickupImage->isValid()) {
+            try {
+                $pickupPath = $this->pickupImage->store('pickups', 'public');
+            } catch (\Exception $uploadError) {
+                \Log::error('Error uploading pickup image: ' . $uploadError->getMessage());
+                $this->dispatch('show-notification', [
+                    'type' => 'error',
+                    'message' => 'Gagal mengupload foto bukti pengambilan. Silakan coba lagi.',
+                    'autoHide' => true,
+                    'delay' => 4000
+                ]);
+                return;
+            }
         }
 
         $success = $this->order->markAsPickedUp($pickupPath);
@@ -317,8 +570,22 @@ class OrderStatusActions extends Component
             session()->flash('success', 'Pesanan berhasil dikonfirmasi diambil!');
             $this->closeModal();
             $this->dispatch('orderUpdated');
+            $this->dispatch('show-notification', [
+                'type' => 'success',
+                'message' => 'Pesanan berhasil dikonfirmasi diambil!',
+                'autoHide' => true,
+                'delay' => 4000
+            ]);
+            // Auto refresh halaman setelah 1  detik
+            $this->dispatch('auto-refresh-page', ['delay' => 1000]);
         } else {
             session()->flash('error', 'Gagal mengkonfirmasi pengambilan pesanan!');
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => 'Gagal mengkonfirmasi pengambilan pesanan!',
+                'autoHide' => true,
+                'delay' => 4000
+            ]);
         }
     }
 
@@ -327,22 +594,70 @@ class OrderStatusActions extends Component
      */
     public function markAsDelivered()
     {
-        $this->validate([
-            'deliveryImage' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
-
         try {
+            // Check if order exists
+            if (!isset($this->order) || !$this->order) {
+                $this->dispatch('show-notification', [
+                    'type' => 'error',
+                    'message' => 'Data pesanan tidak ditemukan!',
+                    'autoHide' => true,
+                    'delay' => 4000
+                ]);
+                return;
+            }
+
+            // Validate input using the rules method
+            $this->validate();
             // Store delivery image
-            $imagePath = $this->deliveryImage->store('delivery-images', 'public');
-            
+            $imagePath = null;
+            if ($this->deliveryImage && $this->deliveryImage->isValid()) {
+                try {
+                    $imagePath = $this->deliveryImage->store('delivery-images', 'public');
+                } catch (\Exception $uploadError) {
+                    \Log::error('Error uploading delivery image: ' . $uploadError->getMessage());
+                    $this->dispatch('show-notification', [
+                        'type' => 'error',
+                        'message' => 'Gagal mengupload foto bukti pengiriman. Silakan coba lagi.',
+                        'autoHide' => true,
+                        'delay' => 4000
+                    ]);
+                    return;
+                }
+            }
+
             // Mark order as delivered
             $this->order->markAsDelivered($imagePath);
-            
+
             session()->flash('success', 'Pesanan berhasil diselesaikan!');
             $this->closeModal();
             $this->dispatch('orderUpdated');
+            $this->dispatch('show-notification', [
+                'type' => 'success',
+                'message' => 'Pesanan berhasil diselesaikan!',
+                'autoHide' => true,
+                'delay' => 4000
+            ]);
+            // Auto refresh halaman setelah 1  detik
+            $this->dispatch('auto-refresh-page', ['delay' => 1000]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors
+            $this->closeModal();
+            $errors = $e->validator->errors()->all();
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => implode(' ', $errors),
+                'autoHide' => true,
+                'delay' => 5000
+            ]);
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal menyelesaikan pesanan: ' . $e->getMessage());
+            $this->closeModal();
+            \Log::error('Error in markAsDelivered: ' . $e->getMessage());
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => 'Terjadi kesalahan sistem. Silakan coba lagi.',
+                'autoHide' => true,
+                'delay' => 4000
+            ]);
         }
     }
 
@@ -351,22 +666,56 @@ class OrderStatusActions extends Component
      */
     public function cancelOrderByDelivery()
     {
-        $this->validate([
-            'cancellationReason' => 'required|string|min:10|max:500',
-        ]);
-
         try {
+            // Check if order exists
+            if (!isset($this->order) || !$this->order) {
+                $this->dispatch('show-notification', [
+                    'type' => 'error',
+                    'message' => 'Data pesanan tidak ditemukan!',
+                    'autoHide' => true,
+                    'delay' => 4000
+                ]);
+                return;
+            }
+
+            // Validate input using the rules method
+            $this->validate();
             // Cancel order with reason and user info
             $this->order->cancelOrder(
                 $this->cancellationReason,
                 auth()->user()->name . ' (Kurir)'
             );
-            
+
             session()->flash('success', 'Pesanan berhasil dibatalkan!');
             $this->closeModal();
             $this->dispatch('orderUpdated');
+            $this->dispatch('show-notification', [
+                'type' => 'success',
+                'message' => 'Pesanan berhasil dibatalkan!',
+                'autoHide' => true,
+                'delay' => 4000
+            ]);
+            // Auto refresh halaman setelah 1  detik
+            $this->dispatch('auto-refresh-page', ['delay' => 1000]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors
+            $this->closeModal();
+            $errors = $e->validator->errors()->all();
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => implode(' ', $errors),
+                'autoHide' => true,
+                'delay' => 5000
+            ]);
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal membatalkan pesanan: ' . $e->getMessage());
+            $this->closeModal();
+            \Log::error('Error in cancelOrderByDelivery: ' . $e->getMessage());
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => 'Terjadi kesalahan sistem. Silakan coba lagi.',
+                'autoHide' => true,
+                'delay' => 4000
+            ]);
         }
     }
 
@@ -468,7 +817,7 @@ class OrderStatusActions extends Component
      */
     public function getStatusBadgeColor($status)
     {
-        return match($status) {
+        return match ($status) {
             'pending' => 'badge-warning',
             'waiting_payment' => 'badge-warning',
             'waiting_confirmation' => 'badge-info',
@@ -487,7 +836,7 @@ class OrderStatusActions extends Component
      */
     public function getStatusLabel($status)
     {
-        return match($status) {
+        return match ($status) {
             'pending' => 'Pesanan Dibuat',
             'waiting_payment' => 'Menunggu Pembayaran',
             'waiting_confirmation' => 'Menunggu Konfirmasi',
