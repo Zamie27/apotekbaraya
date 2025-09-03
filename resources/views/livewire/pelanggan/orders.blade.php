@@ -1,10 +1,10 @@
 <div class="orders-page">
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <div class="max-w-6xl mx-auto">
             <!-- Header -->
-            <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">Pesanan Saya</h1>
-                <div class="breadcrumbs text-sm">
+            <div class="mb-6 sm:mb-8">
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Pesanan Saya</h1>
+                <div class="breadcrumbs text-xs sm:text-sm">
                     <ul>
                         <li><a href="{{ route('home') }}" class="text-blue-600 hover:text-blue-800">Home</a></li>
                         <li class="text-gray-500">Pesanan</li>
@@ -31,27 +31,27 @@
             @endif
 
             <!-- Filters -->
-            <div class="card bg-base-100 shadow-lg mb-6">
-                <div class="card-body">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="card bg-base-100 shadow-lg mb-4 sm:mb-6">
+                <div class="card-body p-4 sm:p-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <!-- Search -->
                         <div class="form-control">
-                            <label class="label">
-                                <span class="label-text">Cari Pesanan</span>
+                            <label class="label py-1">
+                                <span class="label-text text-sm">Cari Pesanan</span>
                             </label>
                             <input
                                 type="text"
                                 wire:model.live.debounce.300ms="search"
                                 placeholder="Nomor pesanan atau nama produk..."
-                                class="input input-bordered" />
+                                class="input input-bordered input-sm sm:input-md text-sm" />
                         </div>
 
                         <!-- Status Filter -->
                         <div class="form-control">
-                            <label class="label">
-                                <span class="label-text">Filter Status</span>
+                            <label class="label py-1">
+                                <span class="label-text text-sm">Filter Status</span>
                             </label>
-                            <select wire:model.live="statusFilter" class="select select-bordered">
+                            <select wire:model.live="statusFilter" class="select select-bordered select-sm sm:select-md text-sm">
                                 @foreach ($statusOptions as $value => $label)
                                 <option value="{{ $value }}">{{ $label }}</option>
                                 @endforeach
@@ -63,20 +63,20 @@
 
             <!-- Orders List -->
             @if ($orders->count() > 0)
-            <div class="space-y-6">
+            <div class="space-y-4 sm:space-y-6">
                 @foreach ($orders as $order)
                 <div class="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                    <div class="card-body">
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="card-body p-4 sm:p-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                             <!-- Main Order Info -->
-                            <div class="lg:col-span-2 space-y-4">
+                            <div class="lg:col-span-2 space-y-3 sm:space-y-4">
                                 <!-- Order Header -->
-                                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                                <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start sm:gap-4">
                                     <div>
-                                        <h3 class="text-xl font-semibold text-gray-800">{{ $order->order_number }}</h3>
-                                        <p class="text-sm text-gray-600 mt-1">{{ $order->created_at->format('d M Y, H:i') }}</p>
-                                        <div class="flex items-center gap-2 mt-3">
-                                            <span class="badge {{ $order->status_badge_color }} gap-2 font-medium">
+                                        <h3 class="text-lg sm:text-xl font-semibold text-gray-800">{{ $order->order_number }}</h3>
+                                        <p class="text-xs sm:text-sm text-gray-600 mt-1">{{ $order->created_at->format('d M Y, H:i') }}</p>
+                                        <div class="flex flex-wrap items-center gap-2 mt-2 sm:mt-3">
+                                            <span class="badge {{ $order->status_badge_color }} gap-1 sm:gap-2 font-medium text-xs sm:text-sm">
                                                 @if($order->status === 'pending')
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -121,23 +121,23 @@
                                 </div>
 
                                 <!-- Order Items -->
-                                <div class="bg-gray-50 rounded-lg p-4">
-                                    <h4 class="font-medium text-gray-800 mb-3">Produk Pesanan</h4>
-                                    <div class="space-y-3">
+                                <div class="bg-gray-50 rounded-lg p-3 sm:p-4">
+                                    <h4 class="font-medium text-gray-800 mb-2 sm:mb-3 text-sm sm:text-base">Produk Pesanan</h4>
+                                    <div class="space-y-2 sm:space-y-3">
                                         @foreach ($order->items->take(3) as $item)
-                                        <div class="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-2 border-b border-gray-200 last:border-b-0 gap-1 sm:gap-0">
                                             <div class="flex-1">
-                                                <h5 class="font-medium text-gray-800">{{ $item->product->name }}</h5>
-                                                <p class="text-sm text-gray-600">{{ $item->qty }}x @ {{ $item->formatted_price }}</p>
+                                                <h5 class="font-medium text-gray-800 text-sm sm:text-base">{{ $item->product->name }}</h5>
+                                                <p class="text-xs sm:text-sm text-gray-600">{{ $item->qty }}x @ {{ $item->formatted_price }}</p>
                                             </div>
-                                            <div class="text-right">
-                                                <p class="font-medium text-gray-800">{{ $item->formatted_total }}</p>
+                                            <div class="text-left sm:text-right">
+                                                <p class="font-medium text-gray-800 text-sm sm:text-base">{{ $item->formatted_total }}</p>
                                             </div>
                                         </div>
                                         @endforeach
 
                                         @if ($order->items->count() > 3)
-                                        <p class="text-sm text-gray-500 text-center py-2 italic">
+                                        <p class="text-xs sm:text-sm text-gray-500 text-center py-2 italic">
                                             +{{ $order->items->count() - 3 }} produk lainnya
                                         </p>
                                         @endif
@@ -146,11 +146,11 @@
                             </div>
 
                             <!-- Order Summary & Actions -->
-                            <div class="space-y-4">
+                            <div class="space-y-3 sm:space-y-4">
                                 <!-- Order Summary -->
-                                <div class="bg-base-200 rounded-lg p-4">
-                                    <h4 class="font-semibold text-gray-800 mb-3">Ringkasan Pesanan</h4>
-                                    <div class="space-y-2 text-sm">
+                                <div class="bg-base-200 rounded-lg p-3 sm:p-4">
+                                    <h4 class="font-semibold text-gray-800 mb-2 sm:mb-3 text-sm sm:text-base">Ringkasan Pesanan</h4>
+                                    <div class="space-y-1 sm:space-y-2 text-xs sm:text-sm">
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Subtotal</span>
                                             <span class="font-medium">{{ $order->formatted_subtotal }}</span>
@@ -167,8 +167,8 @@
                                             <span class="font-medium">-{{ $order->formatted_discount }}</span>
                                         </div>
                                         @endif
-                                        <div class="divider my-2"></div>
-                                        <div class="flex justify-between font-bold text-lg">
+                                        <div class="divider my-1 sm:my-2"></div>
+                                        <div class="flex justify-between font-bold text-base sm:text-lg">
                                             <span>Total</span>
                                             <span class="text-primary">{{ $order->formatted_total }}</span>
                                         </div>
@@ -177,7 +177,7 @@
 
                                 <!-- Order Actions -->
                                 <div class="space-y-2">
-                                    <a href="{{ route('pelanggan.orders.show', $order->order_id) }}" class="btn btn-outline btn-sm w-full">
+                                    <a href="{{ route('pelanggan.orders.show', $order->order_id) }}" class="btn btn-outline btn-xs sm:btn-sm w-full text-xs sm:text-sm">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -188,9 +188,9 @@
                                     @if ($order->canBeCancelled())
                                     <button
                                         wire:click="openCancelModal('{{ $order->order_id }}')"
-                                        class="btn btn-error btn-sm w-full"
+                                        class="btn btn-error btn-xs sm:btn-sm w-full text-xs sm:text-sm"
                                         type="button">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                         </svg>
                                         Batalkan Pesanan
@@ -200,9 +200,9 @@
                                     @if ($order->status === 'shipped')
                                     <button
                                         wire:click="confirmDelivery({{ $order->order_id }})"
-                                        class="btn btn-success btn-sm w-full"
+                                        class="btn btn-success btn-xs sm:btn-sm w-full text-xs sm:text-sm"
                                         onclick="return confirm('Konfirmasi bahwa pesanan sudah diterima?')">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                         </svg>
                                         Terima Pesanan
@@ -210,7 +210,7 @@
                                     @endif
 
                                     @if ($order->isCompleted())
-                                    <button class="btn btn-primary btn-sm w-full">
+                                    <button class="btn btn-primary btn-xs sm:btn-sm w-full text-xs sm:text-sm">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 3H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17M17 13v4a2 2 0 01-2 2H9a2 2 0 01-2-2v-4m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
                                         </svg>
@@ -226,24 +226,24 @@
             </div>
 
             <!-- Pagination -->
-            <div class="mt-6">
+            <div class="mt-6 sm:mt-8">
                 {{ $orders->links() }}
             </div>
             @else
             <!-- Empty State -->
             <div class="card bg-base-100 shadow-lg">
-                <div class="card-body text-center py-16">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="card-body text-center py-8 sm:py-16 px-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 sm:h-24 sm:w-24 mx-auto text-gray-400 mb-4 sm:mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
-                    <h3 class="text-xl font-semibold text-gray-600 mb-2">
+                    <h3 class="text-lg sm:text-xl font-semibold text-gray-600 mb-2">
                         @if ($statusFilter !== 'all' || !empty($search))
                         Tidak ada pesanan ditemukan
                         @else
                         Belum ada pesanan
                         @endif
                     </h3>
-                    <p class="text-gray-500 mb-6">
+                    <p class="text-sm sm:text-base text-gray-500 mb-4 sm:mb-6 max-w-md mx-auto">
                         @if ($statusFilter !== 'all' || !empty($search))
                         Coba ubah filter atau kata kunci pencarian
                         @else
@@ -252,11 +252,11 @@
                     </p>
 
                     @if ($statusFilter !== 'all' || !empty($search))
-                    <button wire:click="$set('statusFilter', 'all'); $set('search', '')" class="btn btn-outline">
+                    <button wire:click="$set('statusFilter', 'all'); $set('search', '')" class="btn btn-outline btn-sm sm:btn-md">
                         Reset Filter
                     </button>
                     @else
-                    <a href="{{ route('home') }}" class="btn btn-success">
+                    <a href="{{ route('home') }}" class="btn btn-success btn-sm sm:btn-md">
                         Mulai Belanja
                     </a>
                     @endif
@@ -268,16 +268,16 @@
         <!-- Cancel Order Modal -->
         @if ($showCancelModal)
         <div class="modal modal-open" x-data="{ cancelReason: @entangle('cancelReason'), cancelReasonOther: @entangle('cancelReasonOther') }">
-            <div class="modal-box">
-                <h3 class="font-bold text-lg mb-4">Batalkan Pesanan</h3>
-                <p class="mb-4">Mengapa Anda ingin membatalkan pesanan ini?</p>
+            <div class="modal-box w-11/12 max-w-md">
+                <h3 class="font-bold text-base sm:text-lg mb-3 sm:mb-4">Batalkan Pesanan</h3>
+                <p class="mb-3 sm:mb-4 text-sm sm:text-base">Mengapa Anda ingin membatalkan pesanan ini?</p>
 
-                <form wire:submit="cancelOrder" class="space-y-4">
+                <form wire:submit="cancelOrder" class="space-y-3 sm:space-y-4">
                     <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">Pilih alasan pembatalan:</span>
+                        <label class="label py-1">
+                            <span class="label-text text-sm">Pilih alasan pembatalan:</span>
                         </label>
-                        <select class="select select-bordered w-full @error('cancelReason') select-error @enderror" x-model="cancelReason" wire:model="cancelReason">
+                        <select class="select select-bordered select-sm sm:select-md w-full text-sm @error('cancelReason') select-error @enderror" x-model="cancelReason" wire:model="cancelReason">
                             <option value="">Pilih alasan...</option>
                             <option value="salah_pesan">Salah membuat pesanan</option>
                             <option value="ganti_barang">Ingin mengganti barang</option>
@@ -287,39 +287,39 @@
                             <option value="lainnya">Lainnya</option>
                         </select>
                         @error('cancelReason')
-                        <label class="label">
-                            <span class="label-text-alt text-error">{{ $message }}</span>
+                        <label class="label py-1">
+                            <span class="label-text-alt text-error text-xs">{{ $message }}</span>
                         </label>
                         @enderror
                     </div>
 
                     <div class="form-control" x-show="cancelReason === 'lainnya'">
-                        <label class="label">
-                            <span class="label-text">Jelaskan alasan lainnya:</span>
+                        <label class="label py-1">
+                            <span class="label-text text-sm">Jelaskan alasan lainnya:</span>
                         </label>
                         <textarea
-                            class="textarea textarea-bordered @error('cancelReasonOther') textarea-error @enderror"
+                            class="textarea textarea-bordered textarea-sm sm:textarea-md text-sm @error('cancelReasonOther') textarea-error @enderror"
                             placeholder="Masukkan alasan pembatalan..."
                             rows="3"
                             x-model="cancelReasonOther"
                             wire:model="cancelReasonOther"></textarea>
                         @error('cancelReasonOther')
-                        <label class="label">
-                            <span class="label-text-alt text-error">{{ $message }}</span>
+                        <label class="label py-1">
+                            <span class="label-text-alt text-error text-xs">{{ $message }}</span>
                         </label>
                         @enderror
                     </div>
 
-                    <div class="modal-action">
+                    <div class="modal-action gap-2">
                         <button
                             wire:click="closeCancelModal"
-                            class="btn btn-ghost"
+                            class="btn btn-ghost btn-sm sm:btn-md text-sm"
                             type="button">
                             Batal
                         </button>
                         <button
                             type="submit"
-                            class="btn btn-error"
+                            class="btn btn-error btn-sm sm:btn-md text-sm"
                             x-bind:disabled="!cancelReason || (cancelReason === 'lainnya' && (!cancelReasonOther || cancelReasonOther.length < 3))">
                             Ya, Batalkan Pesanan
                         </button>

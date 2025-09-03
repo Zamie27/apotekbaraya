@@ -66,7 +66,7 @@
             </div>
 
             @if(count($results) > 0)
-            <div class="container flex flex-wrap justify-center gap-8 mx-auto">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4 mb-6 sm:mb-8 mx-auto">
                 @foreach($results as $product)
                 <div class="card w-64 bg-base-100 shadow-xl group hover:shadow-2xl transition overflow-hidden">
                     <figure class="relative">
@@ -108,19 +108,21 @@
                         </div>
                         @endif
                     </figure>
-                    <div class="card-body p-4">
-                        <a href="/produk/{{ $product->product_id }}" class="card-title text-base font-bold truncate hover:text-success" title="{{ $product->name }}">
+                    <div class="card-body p-2 sm:p-3 md:p-4">
+                        <a href="/produk/{{ $product->product_id }}" class="card-title text-xs sm:text-sm md:text-base font-bold truncate hover:text-success line-clamp-2" title="{{ $product->name }}">
                             {{ $product->name }}
                         </a>
 
                         {{-- Price Display --}}
-                        <div class="space-y-1">
+                        <div class="space-y-0.5 sm:space-y-1">
                             @if($product->is_on_discount)
                                 {{-- Discount Price Layout --}}
-                                <div class="flex items-center gap-2">
-                                    <p class="text-sm text-gray-400 line-through">{{ $product->formatted_price }}</p>
-                                    <p class="text-base font-semibold text-success">{{ $product->formatted_final_price }}</p>
-                                    <span class="text-sm text-gray-500">/ {{ $product->unit }}</span>
+                                <div class="flex flex-col gap-0.5 sm:gap-1">
+                                    <div class="flex items-center gap-1 sm:gap-2">
+                                        <p class="text-xs text-gray-400 line-through">{{ $product->formatted_price }}</p>
+                                        <p class="text-xs sm:text-sm font-semibold text-success">{{ $product->formatted_final_price }}</p>
+                                    </div>
+                                    <span class="text-xs text-gray-500">/ {{ $product->unit }}</span>
                                 </div>
                                 {{-- Savings Info --}}
                                 <div class="flex items-center gap-1">
@@ -128,19 +130,19 @@
                                 </div>
                             @else
                                 {{-- Regular Price Layout --}}
-                                <div class="flex items-center gap-2">
-                                    <p class="text-base font-semibold text-gray-600">{{ $product->formatted_price }}</p>
-                                    <span class="text-sm text-gray-500">/ {{ $product->unit }}</span>
+                                <div class="flex flex-col gap-0.5">
+                                    <p class="text-xs sm:text-sm font-semibold text-gray-600">{{ $product->formatted_price }}</p>
+                                    <span class="text-xs text-gray-500">/ {{ $product->unit }}</span>
                                 </div>
                             @endif
                         </div>
 
                         {{-- Stock Status --}}
-                        <div class="flex items-center justify-between mt-2">
+                        <div class="flex items-center justify-between mt-1">
                             <span class="text-xs {{ $product->is_available ? 'text-success' : 'text-error' }}">
-                                {{ $product->is_available ? 'Tersedia' : 'Stok Habis' }}
+                                {{ $product->is_available ? 'Tersedia' : 'Habis' }}
                             </span>
-                            <span class="text-xs text-gray-500">Stok: {{ $product->stock }}</span>
+                            <span class="text-xs text-gray-500">{{ $product->stock }}</span>
                         </div>
                     </div>
                 </div>
@@ -178,7 +180,7 @@
             <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Produk Populer</h2>
 
             @if($popularProducts && count($popularProducts) > 0)
-            <div class="container flex flex-wrap justify-center gap-8 mx-auto">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4 mb-6 sm:mb-8 mx-auto">
                 @foreach($popularProducts as $product)
                 <div class="card w-64 bg-base-100 shadow-xl group hover:shadow-2xl transition overflow-hidden">
                     <figure class="relative">
@@ -225,19 +227,21 @@
                         </div>
                         @endif
                     </figure>
-                    <div class="card-body p-4">
-                        <a href="/produk/{{ $product->product_id }}" class="card-title text-base font-bold truncate hover:text-success" title="{{ $product->name }}">
+                    <div class="card-body p-2 sm:p-3 md:p-4">
+                        <a href="/produk/{{ $product->product_id }}" class="card-title text-xs sm:text-sm md:text-base font-bold truncate hover:text-success line-clamp-2" title="{{ $product->name }}">
                             {{ $product->name }}
                         </a>
 
                         {{-- Price Display --}}
-                        <div class="space-y-1">
+                        <div class="space-y-0.5 sm:space-y-1">
                             @if($product->is_on_discount)
                                 {{-- Discount Price Layout --}}
-                                <div class="flex items-center gap-2">
-                                    <p class="text-sm text-gray-400 line-through">{{ $product->formatted_price }}</p>
-                                    <p class="text-base font-semibold text-success">{{ $product->formatted_final_price }}</p>
-                                    <span class="text-sm text-gray-500">/ {{ $product->unit }}</span>
+                                <div class="flex flex-col gap-0.5 sm:gap-1">
+                                    <div class="flex items-center gap-1 sm:gap-2">
+                                        <p class="text-xs text-gray-400 line-through">{{ $product->formatted_price }}</p>
+                                        <p class="text-xs sm:text-sm font-semibold text-success">{{ $product->formatted_final_price }}</p>
+                                    </div>
+                                    <span class="text-xs text-gray-500">/ {{ $product->unit }}</span>
                                 </div>
                                 {{-- Savings Info --}}
                                 <div class="flex items-center gap-1">
@@ -245,19 +249,19 @@
                                 </div>
                             @else
                                 {{-- Regular Price Layout --}}
-                                <div class="flex items-center gap-2">
-                                    <p class="text-base font-semibold text-gray-600">{{ $product->formatted_price }}</p>
-                                    <span class="text-sm text-gray-500">/ {{ $product->unit }}</span>
+                                <div class="flex flex-col gap-0.5">
+                                    <p class="text-xs sm:text-sm font-semibold text-gray-600">{{ $product->formatted_price }}</p>
+                                    <span class="text-xs text-gray-500">/ {{ $product->unit }}</span>
                                 </div>
                             @endif
                         </div>
 
                         {{-- Stock Status --}}
-                        <div class="flex items-center justify-between mt-2">
+                        <div class="flex items-center justify-between mt-1">
                             <span class="text-xs {{ $product->is_available ? 'text-success' : 'text-error' }}">
-                                {{ $product->is_available ? 'Tersedia' : 'Stok Habis' }}
+                                {{ $product->is_available ? 'Tersedia' : 'Habis' }}
                             </span>
-                            <span class="text-xs text-gray-500">Stok: {{ $product->stock }}</span>
+                            <span class="text-xs text-gray-500">{{ $product->stock }}</span>
                         </div>
                     </div>
                 </div>

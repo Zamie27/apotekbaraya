@@ -1,17 +1,17 @@
-<div class="container mx-auto px-4 py-8">
+<div class="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
     <div class="max-w-4xl mx-auto">
         <!-- Header -->
-        <div class="mb-8">
-            <div class="flex items-center gap-4 mb-4">
-                <a href="{{ route('pelanggan.orders') }}" class="btn btn-ghost btn-sm">
+        <div class="mb-6 sm:mb-8">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4">
+                <a href="{{ route('pelanggan.orders') }}" class="btn btn-ghost btn-sm text-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                     Kembali
                 </a>
-                <h1 class="text-3xl font-bold text-gray-800">Detail Pesanan</h1>
+                <h1 class="text-xl sm:text-3xl font-bold text-gray-800">Detail Pesanan</h1>
             </div>
-            <div class="breadcrumbs text-sm">
+            <div class="breadcrumbs text-xs sm:text-sm">
                 <ul>
                     <li><a href="{{ route('home') }}" class="text-blue-600 hover:text-blue-800">Home</a></li>
                     <li><a href="{{ route('pelanggan.orders') }}" class="text-blue-600 hover:text-blue-800">Pesanan</a></li>
@@ -47,19 +47,19 @@
             </div>
         @endif
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             <!-- Main Content -->
-            <div class="lg:col-span-2 space-y-6">
+            <div class="lg:col-span-2 space-y-4 sm:space-y-6">
                 <!-- Order Info -->
                 <div class="card bg-base-100 shadow-lg">
-                    <div class="card-body">
-                        <div class="flex justify-between items-start mb-4">
+                    <div class="card-body p-4 sm:p-6">
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4 mb-4">
                             <div>
-                                <h2 class="text-xl font-semibold">{{ $order->order_number }}</h2>
-                                <p class="text-gray-600">{{ $order->created_at->format('d M Y, H:i') }}</p>
+                                <h2 class="text-lg sm:text-xl font-semibold">{{ $order->order_number }}</h2>
+                                <p class="text-sm sm:text-base text-gray-600">{{ $order->created_at->format('d M Y, H:i') }}</p>
                             </div>
-                            <div class="text-right">
-                                <span class="badge {{ $order->status_badge_color }} badge-lg">{{ $order->status_label }}</span>
+                            <div class="">
+                                <span class="badge {{ $order->status_badge_color }} badge-md sm:badge-lg text-xs sm:text-sm">{{ $order->status_label }}</span>
                             </div>
                         </div>
 
@@ -69,12 +69,13 @@
                             @if ($order->payment && $order->payment->status === 'pending' && !$order->isPaymentExpired())
                                 <button 
                                     wire:click="continuePayment" 
-                                    class="btn btn-primary btn-sm"
+                                    class="btn btn-primary btn-sm text-xs sm:text-sm"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 0h10a2 2 0 002-2v-3a2 2 0 00-2-2H9a2 2 0 00-2 2v3a2 2 0 002 2z" />
                                     </svg>
-                                    Bayar Pesanan
+                                    <span class="hidden sm:inline">Bayar Pesanan</span>
+                                    <span class="sm:hidden">Bayar</span>
                                 </button>
                             @endif
                             
@@ -84,13 +85,14 @@
                                     wire:click="checkPaymentStatus" 
                                     wire:loading.attr="disabled"
                                     wire:target="checkPaymentStatus"
-                                    class="btn btn-info btn-sm"
+                                    class="btn btn-info btn-sm text-xs sm:text-sm"
                                 >
                                     <span wire:loading.remove wire:target="checkPaymentStatus">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                         </svg>
-                                        Cek Status Pembayaran
+                                        <span class="hidden sm:inline">Cek Status Pembayaran</span>
+                                        <span class="sm:hidden">Cek Status</span>
                                     </span>
                                     <span wire:loading wire:target="checkPaymentStatus" class="loading loading-spinner loading-xs mr-1"></span>
                                     <span wire:loading wire:target="checkPaymentStatus">Mengecek...</span>
@@ -103,12 +105,13 @@
                             @if ($order->canBeCancelled())
                                 <button 
                                     onclick="cancel_order_modal.showModal()" 
-                                    class="btn btn-error btn-sm"
+                                    class="btn btn-error btn-sm text-xs sm:text-sm"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
-                                    Batalkan Pesanan
+                                    <span class="hidden sm:inline">Batalkan Pesanan</span>
+                                    <span class="sm:hidden">Batal</span>
                                 </button>
                             @endif
                             
@@ -116,23 +119,25 @@
                             @if ($order->status === 'shipped')
                                 <button 
                                     wire:click="confirmDelivery" 
-                                    class="btn btn-success btn-sm"
+                                    class="btn btn-success btn-sm text-xs sm:text-sm"
                                     onclick="return confirm('Konfirmasi bahwa pesanan sudah diterima?')"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                     </svg>
-                                    Terima Pesanan
+                                    <span class="hidden sm:inline">Terima Pesanan</span>
+                                    <span class="sm:hidden">Terima</span>
                                 </button>
                             @endif
                             
                             {{-- Reorder Button --}}
                             @if ($order->isCompleted())
-                                <button class="btn btn-primary btn-sm">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <button class="btn btn-primary btn-sm text-xs sm:text-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
                                     </svg>
-                                    Beli Lagi
+                                    <span class="hidden sm:inline">Beli Lagi</span>
+                                    <span class="sm:hidden">Beli Lagi</span>
                                 </button>
                             @endif
                         </div>
@@ -141,41 +146,41 @@
 
                 <!-- Order Timeline -->
                 <div class="card bg-base-100 shadow-lg">
-                    <div class="card-body">
-                        <h3 class="text-lg font-semibold mb-4">Status Pesanan</h3>
-                        <div class="space-y-4">
+                    <div class="card-body p-4 sm:p-6">
+                        <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Status Pesanan</h3>
+                        <div class="space-y-3 sm:space-y-4">
                             @foreach ($timeline as $step)
-                                <div class="flex items-start gap-4">
+                                <div class="flex items-start gap-2 sm:gap-4">
                                     <div class="flex-shrink-0">
                                         @if (isset($step['is_cancelled']) && $step['is_cancelled'])
                                             {{-- Cancelled status with red X icon --}}
-                                            <div class="w-8 h-8 bg-error rounded-full flex items-center justify-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <div class="w-6 h-6 sm:w-8 sm:h-8 bg-error rounded-full flex items-center justify-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                                 </svg>
                                             </div>
                                         @elseif ($step['completed'])
                                             {{-- Completed status with green check --}}
-                                            <div class="w-8 h-8 bg-success rounded-full flex items-center justify-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <div class="w-6 h-6 sm:w-8 sm:h-8 bg-success rounded-full flex items-center justify-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                                 </svg>
                                             </div>
                                         @else
                                             {{-- Pending status with gray clock --}}
-                                            <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <div class="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
                                             </div>
                                         @endif
                                     </div>
-                                    <div class="flex-1">
-                                        <h4 class="font-medium {{ isset($step['is_cancelled']) && $step['is_cancelled'] ? 'text-error' : ($step['completed'] ? 'text-success' : 'text-gray-600') }}">
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="font-medium text-sm sm:text-base {{ isset($step['is_cancelled']) && $step['is_cancelled'] ? 'text-error' : ($step['completed'] ? 'text-success' : 'text-gray-600') }}">
                                             {{ $step['label'] }}
                                         </h4>
                                         @if ($step['date'])
-                                            <p class="text-sm text-gray-500">{{ $step['date']->format('d M Y, H:i') }}</p>
+                                            <p class="text-xs sm:text-sm text-gray-500">{{ $step['date']->format('d M Y, H:i') }}</p>
                                         @endif
                                         
                                         {{-- Show delivery proof link if available --}}
@@ -183,24 +188,26 @@
                             <button 
                                 type="button"
                                 wire:click="showDeliveryProof('{{ $step['delivery_proof'] }}')"
-                                class="text-blue-600 hover:text-blue-800 text-sm font-medium mt-1 flex items-center gap-1"
+                                class="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium mt-1 flex items-center gap-1"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                                 @if($order->shipping_type === 'pickup')
-                                    Lihat Bukti Pengambilan
+                                    <span class="hidden sm:inline">Lihat Bukti Pengambilan</span>
+                                    <span class="sm:hidden">Lihat Bukti</span>
                                 @else
-                                    Lihat Bukti Pengiriman
+                                    <span class="hidden sm:inline">Lihat Bukti Pengiriman</span>
+                                    <span class="sm:hidden">Lihat Bukti</span>
                                 @endif
                             </button>
                         @endif
                                         
                                         {{-- Show cancel reason if this is a cancelled step --}}
                                         @if (isset($step['is_cancelled']) && $step['is_cancelled'] && isset($step['cancel_reason']) && $step['cancel_reason'])
-                                            <div class="mt-2 p-3 bg-error/10 border border-error/20 rounded-lg">
-                                                <p class="text-sm font-medium text-error mb-1">Alasan Pembatalan:</p>
-                                                <p class="text-sm text-gray-700">{{ $step['cancel_reason'] }}</p>
+                                            <div class="mt-2 p-2 sm:p-3 bg-error/10 border border-error/20 rounded-lg">
+                                                <p class="text-xs sm:text-sm font-medium text-error mb-1">Alasan Pembatalan:</p>
+                                                <p class="text-xs sm:text-sm text-gray-700">{{ $step['cancel_reason'] }}</p>
                                             </div>
                                         @endif
                                     </div>
@@ -212,20 +219,33 @@
 
                 <!-- Order Items -->
                 <div class="card bg-base-100 shadow-lg">
-                    <div class="card-body">
-                        <h3 class="text-lg font-semibold mb-4">Produk Pesanan</h3>
-                        <div class="space-y-4">
+                    <div class="card-body p-4 sm:p-6">
+                        <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Produk Pesanan</h3>
+                        <div class="space-y-3 sm:space-y-4">
                             @foreach ($order->items as $item)
-                                <div class="flex justify-between items-center py-3 border-b border-gray-100 last:border-b-0">
-                                    <div class="flex-1">
-                                        <h4 class="font-medium">{{ $item->product->name }}</h4>
-                                        <p class="text-sm text-gray-600">{{ $item->qty }}x @ {{ $item->formatted_price }}</p>
-                                        @if ($item->product->description)
-                                            <p class="text-xs text-gray-500 mt-1">{{ Str::limit($item->product->description, 100) }}</p>
+                                <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex-shrink-0">
+                                        @if ($item->product->image)
+                                            <img src="{{ Storage::url($item->product->image) }}" alt="{{ $item->product->name }}" class="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg">
+                                        @else
+                                            <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                                                </svg>
+                                            </div>
                                         @endif
                                     </div>
-                                    <div class="text-right">
-                                        <p class="font-medium">{{ $item->formatted_total }}</p>
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="font-medium text-sm sm:text-base text-gray-800">{{ $item->product->name }}</h4>
+                                        <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-1">
+                                            <p class="text-xs sm:text-sm text-gray-600">{{ $item->qty }}x @ {{ $item->formatted_price }}</p>
+                                        </div>
+                                        @if ($item->product->description)
+                                            <p class="text-xs sm:text-sm text-gray-500 mt-1 line-clamp-2">{{ Str::limit($item->product->description, 80) }}</p>
+                                        @endif
+                                    </div>
+                                    <div class="text-right flex-shrink-0">
+                                        <p class="font-medium text-sm sm:text-base text-gray-800">{{ $item->formatted_total }}</p>
                                     </div>
                                 </div>
                             @endforeach
@@ -235,30 +255,30 @@
             </div>
 
             <!-- Sidebar -->
-            <div class="space-y-6">
+            <div class="space-y-4 sm:space-y-6">
                 <!-- Order Summary -->
                 <div class="card bg-base-100 shadow-lg">
-                    <div class="card-body">
-                        <h3 class="text-lg font-semibold mb-4">Ringkasan Pesanan</h3>
+                    <div class="card-body p-4 sm:p-6">
+                        <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Ringkasan Pesanan</h3>
                         <div class="space-y-2">
                             <div class="flex justify-between">
-                                <span>Subtotal</span>
-                                <span>{{ $order->formatted_subtotal }}</span>
+                                <span class="text-sm sm:text-base">Subtotal</span>
+                                <span class="text-sm sm:text-base">{{ $order->formatted_subtotal }}</span>
                             </div>
                             @if ($order->delivery_fee > 0)
                                 <div class="flex justify-between">
-                                    <span>Biaya Pengiriman</span>
-                                    <span>{{ $order->formatted_delivery_fee }}</span>
+                                    <span class="text-sm sm:text-base">Biaya Pengiriman</span>
+                                    <span class="text-sm sm:text-base">{{ $order->formatted_delivery_fee }}</span>
                                 </div>
                             @endif
                             @if ($order->discount_amount > 0)
                                 <div class="flex justify-between text-success">
-                                    <span>Diskon</span>
-                                    <span>-{{ $order->formatted_discount }}</span>
+                                    <span class="text-sm sm:text-base">Diskon</span>
+                                    <span class="text-sm sm:text-base">-{{ $order->formatted_discount }}</span>
                                 </div>
                             @endif
                             <div class="divider my-2"></div>
-                            <div class="flex justify-between font-bold text-lg">
+                            <div class="flex justify-between font-bold text-base sm:text-lg">
                                 <span>Total</span>
                                 <span>{{ $order->formatted_total }}</span>
                             </div>
@@ -268,27 +288,27 @@
 
                 <!-- Shipping Info -->
                 <div class="card bg-base-100 shadow-lg">
-                    <div class="card-body">
-                        <h3 class="text-lg font-semibold mb-4">Informasi Pengiriman</h3>
+                    <div class="card-body p-4 sm:p-6">
+                        <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Informasi Pengiriman</h3>
                         <div class="space-y-3">
                             <div>
-                                <span class="text-sm text-gray-600">Metode:</span>
-                                <p class="font-medium">{{ $order->shipping_type_label }}</p>
+                                <span class="text-xs sm:text-sm text-gray-600">Metode:</span>
+                                <p class="font-medium text-sm sm:text-base">{{ $order->shipping_type_label }}</p>
                             </div>
                             <div>
-                                <span class="text-sm text-gray-600">Alamat:</span>
-                                <p class="font-medium">{{ $shippingAddress }}</p>
+                                <span class="text-xs sm:text-sm text-gray-600">Alamat:</span>
+                                <p class="font-medium text-sm sm:text-base break-words">{{ $shippingAddress }}</p>
                             </div>
                             @if ($order->delivery && $order->delivery->courier)
                                 <div>
-                                    <span class="text-sm text-gray-600">Kurir:</span>
-                                    <p class="font-medium">{{ $order->delivery->courier->name }}</p>
+                                    <span class="text-xs sm:text-sm text-gray-600">Kurir:</span>
+                                    <p class="font-medium text-sm sm:text-base">{{ $order->delivery->courier->name }}</p>
                                 </div>
                             @endif
                             @if ($order->notes)
                                 <div>
-                                    <span class="text-sm text-gray-600">Catatan:</span>
-                                    <p class="font-medium">{{ $order->notes }}</p>
+                                    <span class="text-xs sm:text-sm text-gray-600">Catatan:</span>
+                                    <p class="font-medium text-sm sm:text-base break-words">{{ $order->notes }}</p>
                                 </div>
                             @endif
                         </div>
@@ -298,38 +318,38 @@
                 <!-- Payment Info -->
                 @if ($order->payment)
                     <div class="card bg-base-100 shadow-lg">
-                        <div class="card-body">
-                            <h3 class="text-lg font-semibold mb-4">Informasi Pembayaran</h3>
+                        <div class="card-body p-4 sm:p-6">
+                            <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Informasi Pembayaran</h3>
                             <div class="space-y-3">
                                 <div>
-                                    <span class="text-sm text-gray-600">Metode:</span>
-                                    <p class="font-medium">{{ $order->payment->payment_method_label }}</p>
+                                    <span class="text-xs sm:text-sm text-gray-600">Metode:</span>
+                                    <p class="font-medium text-sm sm:text-base">{{ $order->payment->payment_method_label }}</p>
                                 </div>
                                 <div>
-                                    <span class="text-sm text-gray-600">Status:</span>
-                                    <span class="badge {{ $order->payment->status_badge_color }}">{{ $order->payment->payment_status_label }}</span>
+                                    <span class="text-xs sm:text-sm text-gray-600">Status:</span>
+                                    <span class="badge badge-sm sm:badge-md {{ $order->payment->status_badge_color }}"><span class="text-xs sm:text-sm">{{ $order->payment->payment_status_label }}</span></span>
                                 </div>
                                 <div>
-                                    <span class="text-sm text-gray-600">Jumlah:</span>
-                                    <p class="font-medium">{{ $order->payment->formatted_amount }}</p>
+                                    <span class="text-xs sm:text-sm text-gray-600">Jumlah:</span>
+                                    <p class="font-medium text-sm sm:text-base">{{ $order->payment->formatted_amount }}</p>
                                 </div>
                                 
                                 {{-- Payment Reference --}}
                                 @if ($order->payment->transaction_id)
                                     <div>
-                                        <span class="text-sm text-gray-600">ID Transaksi:</span>
-                                        <p class="font-medium font-mono text-sm">{{ $order->payment->transaction_id }}</p>
+                                        <span class="text-xs sm:text-sm text-gray-600">ID Transaksi:</span>
+                                        <p class="font-medium font-mono text-xs sm:text-sm break-all">{{ $order->payment->transaction_id }}</p>
                                     </div>
                                 @endif
                                 
                                 {{-- Payment Expiry --}}
                                 @if ($order->payment->status === 'pending' && $order->payment_expired_at)
                                     <div>
-                                        <span class="text-sm text-gray-600">Batas Waktu:</span>
+                                        <span class="text-xs sm:text-sm text-gray-600">Batas Waktu:</span>
                                         @if ($order->isPaymentExpired())
-                                            <p class="font-medium text-red-600">Kedaluwarsa pada {{ $order->payment_expired_at->format('d M Y, H:i') }}</p>
+                                            <p class="font-medium text-red-600 text-sm sm:text-base">Kedaluwarsa pada {{ $order->payment_expired_at->format('d M Y, H:i') }}</p>
                                         @else
-                                            <p class="font-medium text-orange-600">{{ $order->payment_expired_at->format('d M Y, H:i') }}</p>
+                                            <p class="font-medium text-orange-600 text-sm sm:text-base">{{ $order->payment_expired_at->format('d M Y, H:i') }}</p>
                                             <p class="text-xs text-gray-500">Sisa waktu: {{ $order->payment_expired_at->diffForHumans() }}</p>
                                         @endif
                                     </div>
@@ -338,16 +358,16 @@
                                 {{-- Payment Date --}}
                                 @if ($order->payment->paid_at)
                                     <div>
-                                        <span class="text-sm text-gray-600">Dibayar:</span>
-                                        <p class="font-medium">{{ $order->payment->paid_at->format('d M Y, H:i') }}</p>
+                                        <span class="text-xs sm:text-sm text-gray-600">Dibayar:</span>
+                                        <p class="font-medium text-sm sm:text-base">{{ $order->payment->paid_at->format('d M Y, H:i') }}</p>
                                     </div>
                                 @endif
                                 
                                 {{-- Payment Instructions --}}
                                 @if ($order->payment->status === 'pending' && $order->payment_instructions && !$order->isPaymentExpired())
-                                    <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                        <h4 class="text-sm font-semibold text-blue-800 mb-2">Instruksi Pembayaran:</h4>
-                                        <div class="text-sm text-blue-700 space-y-1">
+                                    <div class="mt-4 p-2 sm:p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                        <h4 class="text-xs sm:text-sm font-semibold text-blue-800 mb-2">Instruksi Pembayaran:</h4>
+                                        <div class="text-xs sm:text-sm text-blue-700 space-y-1">
                                             @foreach ($order->payment_instructions as $instruction)
                                                 <p>• {{ $instruction }}</p>
                                             @endforeach
@@ -380,16 +400,16 @@
 
     {{-- Cancel Order Modal --}}
     <dialog id="cancel_order_modal" class="modal" x-data="{ isSubmitting: false, cancelReason: '', cancelReasonOther: '' }">
-        <div class="modal-box">
-            <h3 class="font-bold text-lg mb-4">Batalkan Pesanan</h3>
-            <p class="mb-4">Mengapa Anda ingin membatalkan pesanan ini?</p>
+        <div class="modal-box w-11/12 max-w-md sm:max-w-lg">
+            <h3 class="font-bold text-base sm:text-lg mb-3 sm:mb-4">Batalkan Pesanan</h3>
+            <p class="mb-3 sm:mb-4 text-sm sm:text-base">Mengapa Anda ingin membatalkan pesanan ini?</p>
             
-            <form wire:submit="confirmCancelOrder" class="space-y-4" x-on:submit="isSubmitting = true">
+            <form wire:submit="confirmCancelOrder" class="space-y-3 sm:space-y-4" x-on:submit="isSubmitting = true">
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text">Pilih alasan pembatalan:</span>
+                        <span class="label-text text-xs sm:text-sm">Pilih alasan pembatalan:</span>
                     </label>
-                    <select class="select select-bordered w-full" x-model="cancelReason" wire:model="cancelReason">
+                    <select class="select select-bordered select-sm sm:select-md w-full text-sm" x-model="cancelReason" wire:model="cancelReason">
                         <option value="">Pilih alasan...</option>
                         <option value="salah_pesan">Salah membuat pesanan</option>
                         <option value="ganti_barang">Ingin mengganti barang</option>
@@ -402,10 +422,10 @@
                 
                 <div class="form-control" x-show="cancelReason === 'lainnya'">
                     <label class="label">
-                        <span class="label-text">Jelaskan alasan lainnya:</span>
+                        <span class="label-text text-xs sm:text-sm">Jelaskan alasan lainnya:</span>
                     </label>
                     <textarea 
-                        class="textarea textarea-bordered" 
+                        class="textarea textarea-bordered textarea-sm sm:textarea-md text-sm" 
                         placeholder="Masukkan alasan pembatalan..."
                         rows="3"
                         x-model="cancelReasonOther"
@@ -413,22 +433,22 @@
                     ></textarea>
                 </div>
                 
-                <div class="modal-action">
+                <div class="modal-action gap-2">
                     <button 
                         type="button" 
-                        class="btn btn-ghost" 
+                        class="btn btn-ghost btn-sm sm:btn-md" 
                         onclick="cancel_order_modal.close()"
                     >
                         Batal
                     </button>
                     <button 
                          type="submit" 
-                         class="btn btn-error" 
+                         class="btn btn-error btn-sm sm:btn-md" 
                          x-bind:disabled="!cancelReason || (cancelReason === 'lainnya' && (!cancelReasonOther || cancelReasonOther.length < 3)) || isSubmitting"
                          x-bind:class="{ 'loading': isSubmitting }"
                      >
-                         <span x-show="!isSubmitting">Ya, Batalkan Pesanan</span>
-                         <span x-show="isSubmitting">Membatalkan...</span>
+                         <span x-show="!isSubmitting" class="text-xs sm:text-sm">Ya, Batalkan Pesanan</span>
+                         <span x-show="isSubmitting" class="text-xs sm:text-sm">Membatalkan...</span>
                      </button>
                 </div>
             </form>

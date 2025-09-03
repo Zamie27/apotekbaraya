@@ -12,29 +12,29 @@
     </div>
     @endif
 
-    <div class="container mx-auto my-10 px-4 md:flex md:gap-10 items-start">
+    <div class="container mx-auto my-6 sm:my-10 px-3 sm:px-4 md:flex md:gap-10 items-start">
         <!-- Gambar Produk dengan ukuran fix -->
-        <div class="md:w-auto w-full flex justify-center mb-6 md:mb-0">
+        <div class="md:w-auto w-full flex justify-center mb-4 sm:mb-6 md:mb-0">
             <div class="relative">
                 <img
                     src="{{ $product->primary_image_url }}"
                     alt="{{ $product->name }}"
-                    class="rounded-box object-cover w-[400px] h-[400px] shadow-md bg-gray-100" />
+                    class="rounded-box object-cover w-full max-w-[300px] h-[300px] sm:w-[350px] sm:h-[350px] md:w-[400px] md:h-[400px] shadow-md bg-gray-100" />
 
                 {{-- Product Badges --}}
-                <div class="absolute top-4 left-4">
-                    <span class="badge badge-success">{{ $product->category->name }}</span>
+                <div class="absolute top-2 sm:top-4 left-2 sm:left-4">
+                    <span class="badge badge-success badge-sm sm:badge-md">{{ $product->category->name }}</span>
                 </div>
 
                 @if($product->requires_prescription)
-                <div class="absolute top-4 right-4">
-                    <span class="badge badge-warning">Resep Dokter</span>
+                <div class="absolute top-2 sm:top-4 right-2 sm:right-4">
+                    <span class="badge badge-warning badge-sm sm:badge-md">Resep Dokter</span>
                 </div>
                 @endif
 
                 @if($product->is_on_discount)
-                <div class="absolute top-12 right-4">
-                    <span class="badge badge-error">-{{ $product->discount_percentage }}%</span>
+                <div class="absolute top-8 sm:top-12 right-2 sm:right-4">
+                    <span class="badge badge-error badge-sm sm:badge-md">-{{ $product->discount_percentage }}%</span>
                 </div>
                 @endif
             </div>
@@ -42,46 +42,46 @@
 
         <!-- Deskripsi Produk -->
         <div class="flex-1 w-full">
-            <div class="text-sm text-gray-500 mb-4">
+            <div class="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
                 <a href="/" class="hover:underline">Home</a> &raquo;
                 <a href="/" class="hover:underline">Produk</a> &raquo;
                 <span class="text-gray-700">{{ $product->name }}</span>
             </div>
 
-            <h1 class="text-3xl font-bold text-green-600 mb-2">{{ $product->name }}</h1>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-green-600 mb-2">{{ $product->name }}</h1>
 
             {{-- Price Display --}}
-            <div class="flex items-center gap-3 mb-4">
+            <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 flex-wrap">
                 @if($product->is_on_discount)
-                <p class="text-lg text-gray-400 line-through">{{ $product->formatted_price }}</p>
-                <p class="text-2xl font-bold text-success">{{ $product->formatted_final_price }}</p>
+                <p class="text-sm sm:text-lg text-gray-400 line-through">{{ $product->formatted_price }}</p>
+                <p class="text-lg sm:text-2xl font-bold text-success">{{ $product->formatted_final_price }}</p>
                 @else
-                <p class="text-2xl font-bold text-gray-700">{{ $product->formatted_price }}</p>
+                <p class="text-lg sm:text-2xl font-bold text-gray-700">{{ $product->formatted_price }}</p>
                 @endif
-                <span class="text-lg text-gray-500">/ {{ $product->unit }}</span>
+                <span class="text-sm sm:text-lg text-gray-500">/ {{ $product->unit }}</span>
             </div>
 
             {{-- Stock Status --}}
-            <div class="flex items-center gap-4 mb-4">
-                <span class="text-sm {{ $product->is_available ? 'text-success' : 'text-error' }} font-medium">
+            <div class="flex items-center gap-2 sm:gap-4 mb-3 sm:mb-4 flex-wrap">
+                <span class="text-xs sm:text-sm {{ $product->is_available ? 'text-success' : 'text-error' }} font-medium">
                     {{ $product->is_available ? '✓ Tersedia' : '✗ Stok Habis' }}
                 </span>
-                <span class="text-sm text-gray-500">Stok: {{ $product->stock }} {{ $product->unit }}</span>
+                <span class="text-xs sm:text-sm text-gray-500">Stok: {{ $product->stock }} {{ $product->unit }}</span>
             </div>
 
-            <p class="text-gray-600 mb-6">
+            <p class="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
                 {{ $product->description ?: 'Deskripsi produk akan segera tersedia.' }}
             </p>
 
             {{-- Specifications --}}
             @if($product->specifications)
-            <div class="mb-6">
-                <h3 class="font-semibold text-gray-800 mb-2">Spesifikasi:</h3>
-                <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="mb-4 sm:mb-6">
+                <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-2">Spesifikasi:</h3>
+                <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
                     @foreach($product->specifications as $key => $value)
                     <div class="flex justify-between py-1 border-b border-gray-200 last:border-b-0">
-                        <span class="text-gray-600 capitalize">{{ str_replace('_', ' ', $key) }}:</span>
-                        <span class="text-gray-800 font-medium">{{ $value }}</span>
+                        <span class="text-xs sm:text-sm text-gray-600 capitalize">{{ str_replace('_', ' ', $key) }}:</span>
+                        <span class="text-xs sm:text-sm text-gray-800 font-medium">{{ $value }}</span>
                     </div>
                     @endforeach
                 </div>
@@ -90,34 +90,34 @@
 
             {{-- Quantity and Add to Cart --}}
             @if($product->is_available)
-            <div class="flex items-center gap-4 mb-6">
-                <div class="flex border rounded-box overflow-hidden">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <div class="flex border rounded-box overflow-hidden w-fit">
                     <button
                         wire:click="decreaseQuantity"
-                        class="px-3 py-1 bg-gray-100 hover:bg-gray-200 {{ $quantity <= 1 ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        class="px-2 sm:px-3 py-1 bg-gray-100 hover:bg-gray-200 {{ $quantity <= 1 ? 'opacity-50 cursor-not-allowed' : '' }}"
                         {{ $quantity <= 1 ? 'disabled' : '' }}>
                         -
                     </button>
-                    <span class="px-4 py-1 bg-white min-w-[50px] text-center">{{ $quantity }}</span>
+                    <span class="px-3 sm:px-4 py-1 bg-white min-w-[40px] sm:min-w-[50px] text-center text-sm sm:text-base">{{ $quantity }}</span>
                     <button
                         wire:click="increaseQuantity"
-                        class="px-3 py-1 bg-gray-100 hover:bg-gray-200 {{ $quantity >= $product->stock ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        class="px-2 sm:px-3 py-1 bg-gray-100 hover:bg-gray-200 {{ $quantity >= $product->stock ? 'opacity-50 cursor-not-allowed' : '' }}"
                         {{ $quantity >= $product->stock ? 'disabled' : '' }}>
                         +
                     </button>
                 </div>
                 <button
                     wire:click="addToCart"
-                    class="btn btn-success uppercase"
+                    class="btn btn-success btn-sm sm:btn-md uppercase flex-1 sm:flex-none"
                     wire:loading.attr="disabled"
                     wire:loading.class="loading">
-                    <span wire:loading.remove>Tambah ke Keranjang</span>
-                    <span wire:loading>Menambahkan...</span>
+                    <span wire:loading.remove class="text-xs sm:text-sm">Tambah ke Keranjang</span>
+                    <span wire:loading class="text-xs sm:text-sm">Menambahkan...</span>
                 </button>
             </div>
             @else
-            <div class="mb-6">
-                <button class="btn btn-disabled uppercase" disabled>
+            <div class="mb-4 sm:mb-6">
+                <button class="btn btn-disabled btn-sm sm:btn-md uppercase w-full sm:w-auto" disabled>
                     Stok Habis
                 </button>
             </div>
@@ -125,17 +125,17 @@
 
             {{-- Prescription Warning --}}
             @if($product->requires_prescription)
-            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-box shadow-sm mb-6">
-                <h2 class="font-bold text-yellow-600 mb-2">⚠️ Perhatian</h2>
-                <p class="text-yellow-700">
+            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-3 sm:p-4 rounded-box shadow-sm mb-4 sm:mb-6">
+                <h2 class="text-sm sm:text-base font-bold text-yellow-600 mb-2">⚠️ Perhatian</h2>
+                <p class="text-xs sm:text-sm text-yellow-700">
                     Produk ini memerlukan resep dokter. Pastikan Anda memiliki resep yang valid sebelum melakukan pemesanan.
                 </p>
             </div>
             @endif
 
-            <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-box shadow-sm">
-                <h2 class="font-bold text-green-600 mb-2">Kenapa belanja di Apotek Baraya?</h2>
-                <ul class="list-disc list-inside text-gray-700">
+            <div class="bg-green-50 border-l-4 border-green-500 p-3 sm:p-4 rounded-box shadow-sm">
+                <h2 class="text-sm sm:text-base font-bold text-green-600 mb-2">Kenapa belanja di Apotek Baraya?</h2>
+                <ul class="list-disc list-inside text-xs sm:text-sm text-gray-700 space-y-1">
                     <li>Pengiriman cepat dan aman</li>
                     <li>Produk asli dan terjamin kualitasnya</li>
                     <li>Bisa COD di area tertentu</li>
