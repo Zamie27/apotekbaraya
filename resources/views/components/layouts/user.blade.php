@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/src/img/logo.png">
     <title>{{ $title ?? 'Apotek Baraya' }}</title>
     <!-- vite -->
@@ -19,52 +20,31 @@
 
 <body class="min-h-screen bg-base-200">
     <nav class="sticky top-0 z-50 bg-gray-100 shadow-lg">
-        <div class="container mx-auto px-2 sm:px-4">
-            <div class="navbar min-h-14 sm:min-h-16">
-                <!-- Mobile Menu Button -->
+        <div class="container mx-auto px-3 sm:px-6">
+            <div class="navbar min-h-16 sm:min-h-20">
+                <!-- Logo Section -->
                 <div class="navbar-start">
-                    <div class="dropdown lg:hidden">
-                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm sm:btn-md">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
-                            </svg>
-                        </div>
-                        <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-                            <li><a href="/" class="text-sm">Beranda</a></li>
-                            <li><a href="/kategori" class="text-sm">Kategori</a></li>
-                            @auth
-                            <li><a href="{{ route('cart') }}" class="text-sm">Keranjang</a></li>
-                            <li><a href="{{ route('pelanggan.orders') }}" class="text-sm">Pesanan Saya</a></li>
-                            <li><a href="/profile" class="text-sm">Profil</a></li>
-                            <li><a href="/settings" class="text-sm">Pengaturan</a></li>
-                            <li><a href="/logout" class="text-red-600 text-sm">Keluar</a></li>
-                            @else
-                            <li><a href="/login" class="text-sm">Login</a></li>
-                            <li><a href="/register" class="text-sm">Registrasi</a></li>
-                            @endauth
-                        </ul>
-                    </div>
-                    
-                    <!-- Logo Section -->
-                    <div class="flex items-center gap-1 sm:gap-2 ml-1 sm:ml-0">
-                        <img src="/src/img/logo.png" alt="Logo" class="w-6 h-6 sm:w-8 sm:h-8">
-                        <a class="text-sm sm:text-lg lg:text-xl font-bold text-green-500" href="/">Apotek Baraya</a>
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <img src="/src/img/logo.png" alt="Logo" class="w-8 h-8 sm:w-10 sm:h-10">
+                        <a class="text-lg sm:text-xl lg:text-2xl font-bold text-green-500" href="/">Apotek Baraya</a>
                     </div>
                 </div>
 
                 <!-- Center - Search (Hidden on mobile, shown in dropdown) -->
                 <div class="navbar-center hidden lg:flex">
-                    @livewire('navbar-search')
+                    <div class="form-control w-full max-w-xs xl:max-w-sm">
+                        @livewire('navbar-search')
+                    </div>
                 </div>
 
                 <!-- Right Section -->
                 <div class="navbar-end">
-                    <div class="flex items-center gap-1 sm:gap-2">
+                    <div class="flex items-center gap-2 sm:gap-3">
                         @auth
                         <!-- Mobile Search Button -->
                         <div class="dropdown dropdown-end lg:hidden">
-                            <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm sm:btn-md">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-md sm:btn-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
@@ -74,22 +54,22 @@
                         </div>
 
                         <!-- Notification Bell (hidden on mobile) -->
-                        <button class="btn btn-ghost btn-circle btn-sm sm:btn-md hidden sm:flex">
-                            <x-icons.bell class="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
+                        <button class="btn btn-ghost btn-circle btn-md sm:btn-lg hidden sm:flex">
+                            <x-icons.bell class="h-5 w-5 sm:h-6 sm:w-6 text-gray-700" />
                         </button>
 
                         <!-- Cart Icon with Counter -->
-                        <a href="{{ route('cart') }}" class="btn btn-ghost btn-circle btn-sm sm:btn-md relative">
-                            <x-icons.shopping-cart class="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
-                            <span id="cart-counter" class="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center hidden">
+                        <a href="{{ route('cart') }}" class="btn btn-ghost btn-circle btn-md sm:btn-lg relative">
+                            <x-icons.shopping-cart class="h-5 w-5 sm:h-6 sm:w-6 text-gray-700" />
+                            <span id="cart-counter" class="absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 bg-red-500 text-white text-xs rounded-full h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center hidden">
                                 0
                             </span>
                         </a>
 
                         <!-- Profile Dropdown (for logged in users) -->
                         <div class="dropdown dropdown-end">
-                            <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm sm:btn-md avatar">
-                                <div class="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full ring-success ring-offset-base-100 ring-1 sm:ring-2 ring-offset-1 sm:ring-offset-2">
+                            <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-md sm:btn-lg avatar">
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full ring-success ring-offset-base-100 ring-2 sm:ring-2 ring-offset-2">
                                     <img alt="Profile Picture" src="{{ auth()->user()->getAvatarUrl() }}" />
                                 </div>
                             </div>
@@ -103,8 +83,8 @@
                         @else
                         <!-- Mobile Search Button for guests -->
                         <div class="dropdown dropdown-end lg:hidden">
-                            <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm sm:btn-md">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-md sm:btn-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
@@ -114,9 +94,9 @@
                         </div>
 
                         <!-- Login/Register Buttons (for guests) -->
-                        <div class="flex gap-1 sm:gap-2">
-                            <a class="btn btn-success btn-xs sm:btn-sm text-xs sm:text-sm px-2 sm:px-3" href="/register">Registrasi</a>
-                            <a class="btn btn-outline btn-success btn-xs sm:btn-sm text-xs sm:text-sm px-2 sm:px-3" href="/login">Login</a>
+                        <div class="flex gap-2 sm:gap-3">
+                            <a class="btn btn-success btn-sm sm:btn-md text-sm sm:text-base px-3 sm:px-4" href="/register">Registrasi</a>
+                            <a class="btn btn-outline btn-success btn-sm sm:btn-md text-sm sm:text-base px-3 sm:px-4" href="/login">Login</a>
                         </div>
                         @endauth
                     </div>
