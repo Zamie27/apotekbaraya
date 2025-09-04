@@ -143,61 +143,30 @@ class Orders extends Component
             return;
         }
 
-        try {
-            // Cancel transaction in Midtrans first if order has payment
-            if ($order->payment && $order->payment->snap_token) {
-                $midtransService = new \App\Services\MidtransService();
-                $cancelResult = $midtransService->cancelTransaction($order->order_number);
-                
-                if (!$cancelResult['success']) {
-                    \Log::warning('Failed to cancel Midtrans transaction, proceeding with local cancellation', [
-                        'order_id' => $order->order_id,
-                        'order_number' => $order->order_number,
-                        'midtrans_error' => $cancelResult['message'] ?? 'Unknown error'
-                    ]);
-                }
-            }
+        // Prepare cancel reason based on selection
+        $finalCancelReason = $this->cancelReason;
+        if ($this->cancelReason === 'lainnya') {
+            $finalCancelReason = $this->cancelReasonOther;
+        } else {
+            // Convert reason code to readable text
+            $reasonLabels = [
+                'salah_pesan' => 'Salah membuat pesanan',
+                'ganti_barang' => 'Ingin mengganti barang',
+                'ganti_alamat' => 'Ingin mengganti alamat pengiriman',
+                'tidak_jadi' => 'Tidak jadi membeli',
+                'masalah_pembayaran' => 'Masalah dengan pembayaran'
+            ];
+            $finalCancelReason = $reasonLabels[$this->cancelReason] ?? $this->cancelReason;
+        }
 
-            // Prepare cancel reason based on selection
-            $finalCancelReason = $this->cancelReason;
-            if ($this->cancelReason === 'lainnya') {
-                $finalCancelReason = $this->cancelReasonOther;
-            } else {
-                // Convert reason code to readable text
-                $reasonLabels = [
-                    'salah_pesan' => 'Salah membuat pesanan',
-                    'ganti_barang' => 'Ingin mengganti barang',
-                    'ganti_alamat' => 'Ingin mengganti alamat pengiriman',
-                    'tidak_jadi' => 'Tidak jadi membeli',
-                    'masalah_pembayaran' => 'Masalah dengan pembayaran'
-                ];
-                $finalCancelReason = $reasonLabels[$this->cancelReason] ?? $this->cancelReason;
-            }
+        // Use the model's cancelOrder method for consistency
+        $success = $order->cancelOrder($finalCancelReason, Auth::id());
 
-            // Update order status to cancelled
-            $order->update([
-                'status' => 'cancelled',
-                'cancelled_at' => now(),
-                'cancelled_by' => Auth::id(),
-                'cancel_reason' => $finalCancelReason
-            ]);
-
-            // Update payment status if exists
-            if ($order->payment) {
-                $order->payment->update([
-                    'status' => 'cancelled',
-                    'cancelled_at' => now()
-                ]);
-            }
-
-            session()->flash('success', 'Pesanan dan pembayaran berhasil dibatalkan!');
+        if ($success) {
+            session()->flash('success', 'Pesanan berhasil dibatalkan!');
             $this->closeCancelModal();
-        } catch (\Exception $e) {
-            \Log::error('Error cancelling order', [
-                'order_id' => $order->order_id,
-                'error' => $e->getMessage()
-            ]);
-            session()->flash('error', 'Terjadi kesalahan saat membatalkan pesanan.');
+        } else {
+            session()->flash('error', 'Gagal membatalkan pesanan. Silakan coba lagi.');
             $this->closeCancelModal();
         }
     }

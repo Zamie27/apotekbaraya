@@ -8,9 +8,9 @@
     </div>
 
     <!-- Search Section -->
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-6 sm:px-4 py-8">
         <!-- Search Input -->
-        <div class="max-w-2xl mx-auto mb-8">
+        <div class="max-w-2xl mx-auto mb-8 px-2 sm:px-0">
             <div class="relative">
                 <input
                     type="text"
@@ -68,48 +68,48 @@
             @if(count($results) > 0)
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4 mb-6 sm:mb-8 mx-auto">
                 @foreach($results as $product)
-                <div class="card w-64 bg-base-100 shadow-xl group hover:shadow-2xl transition overflow-hidden">
-                    <figure class="relative">
+                <div class="card w-full bg-base-100 shadow-xl group hover:shadow-2xl transition overflow-hidden">
+                    <figure class="relative pt-2">
                         <a href="/produk/{{ $product->product_id }}">
-                            <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-64" />
+                            <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-40 sm:h-48 lg:h-64" />
                         </a>
 
                         <div class="absolute left-0 right-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
                             @if(auth()->check())
                                 <livewire:add-to-cart-button 
                                     :product-id="$product->product_id" 
-                                    button-text="TAMBAH KE KERANJANG" 
-                                    button-class="btn btn-success w-full font-bold rounded-none"
-                                    :key="'search-popular-cart-'.$product->product_id" 
+                                    button-text="TAMBAH" 
+                                    button-class="btn btn-success w-full font-bold rounded-none text-xs sm:text-sm"
+                                    :key="'search-cart-'.$product->product_id" 
                                 />
                             @else
-                                <a href="/login" class="btn btn-success w-full font-bold rounded-none">
-                                    TAMBAH KE KERANJANG
+                                <a href="/login" class="btn btn-success w-full font-bold rounded-none text-xs sm:text-sm">
+                                    TAMBAH
                                 </a>
                             @endif
                         </div>
 
                         {{-- Category Badge --}}
-                        <div class="absolute top-2 left-2">
-                            <span class="badge badge-success badge-sm">{{ $product->category->name }}</span>
+                        <div class="absolute top-1 sm:top-2 left-1 sm:left-2">
+                            <span class="badge badge-success badge-xs sm:badge-sm text-xs">{{ $product->category->name }}</span>
                         </div>
 
                         {{-- Prescription Required Badge --}}
                         @if($product->requires_prescription)
-                        <div class="absolute top-2 right-2">
-                            <span class="badge badge-warning badge-sm">Resep Dokter</span>
+                        <div class="absolute top-1 sm:top-2 right-1 sm:right-2">
+                            <span class="badge badge-warning badge-xs sm:badge-sm text-xs">Resep Dokter</span>
                         </div>
                         @endif
 
                         {{-- Discount Badge --}}
                         @if($product->is_on_discount)
-                        <div class="absolute top-8 right-2">
-                            <span class="badge badge-error badge-sm">-{{ $product->discount_percentage }}%</span>
+                        <div class="absolute top-6 sm:top-8 right-1 sm:right-2">
+                            <span class="badge badge-error badge-xs sm:badge-sm text-xs">-{{ $product->discount_percentage }}%</span>
                         </div>
                         @endif
                     </figure>
-                    <div class="card-body p-2 sm:p-3 md:p-4">
-                        <a href="/produk/{{ $product->product_id }}" class="card-title text-xs sm:text-sm md:text-base font-bold truncate hover:text-success line-clamp-2" title="{{ $product->name }}">
+                    <div class="card-body p-1.5 sm:p-2 md:p-3 lg:p-4">
+                        <a href="/produk/{{ $product->product_id }}" class="card-title text-xs sm:text-sm md:text-base font-bold line-clamp-2 hover:text-success" title="{{ $product->name }}">
                             {{ $product->name }}
                         </a>
 
@@ -142,7 +142,6 @@
                             <span class="text-xs {{ $product->is_available ? 'text-success' : 'text-error' }}">
                                 {{ $product->is_available ? 'Tersedia' : 'Habis' }}
                             </span>
-                            <span class="text-xs text-gray-500">{{ $product->stock }}</span>
                         </div>
                     </div>
                 </div>
@@ -182,53 +181,53 @@
             @if($popularProducts && count($popularProducts) > 0)
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4 mb-6 sm:mb-8 mx-auto">
                 @foreach($popularProducts as $product)
-                <div class="card w-64 bg-base-100 shadow-xl group hover:shadow-2xl transition overflow-hidden">
-                    <figure class="relative">
+                <div class="card w-full bg-base-100 shadow-xl group hover:shadow-2xl transition overflow-hidden">
+                    <figure class="relative pt-2">
                         <a href="/produk/{{ $product->product_id }}">
-                            <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-64" />
+                            <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-40 sm:h-48 lg:h-64" />
                         </a>
 
                         <div class="absolute left-0 right-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
                             @if(auth()->check())
                                 <livewire:add-to-cart-button 
                                     :product-id="$product->product_id" 
-                                    button-text="TAMBAH KE KERANJANG" 
-                                    button-class="btn btn-success w-full font-bold rounded-none"
+                                    button-text="TAMBAH" 
+                                    button-class="btn btn-success w-full font-bold rounded-none text-xs sm:text-sm"
                                     :key="'search-cart-'.$product->product_id" 
                                 />
                             @else
-                                <a href="/login" class="btn btn-success w-full font-bold rounded-none">
-                                    TAMBAH KE KERANJANG
+                                <a href="/login" class="btn btn-success w-full font-bold rounded-none text-xs sm:text-sm">
+                                    TAMBAH
                                 </a>
                             @endif
                         </div>
 
                         {{-- Popular Badge --}}
-                        <div class="absolute top-2 left-2">
-                            <span class="badge badge-warning badge-sm">Populer</span>
+                        <div class="absolute top-1 sm:top-2 left-1 sm:left-2">
+                            <span class="badge badge-warning badge-xs sm:badge-sm text-xs">Populer</span>
                         </div>
 
                         {{-- Category Badge --}}
-                        <div class="absolute top-8 left-2">
-                            <span class="badge badge-success badge-sm">{{ $product->category->name }}</span>
+                        <div class="absolute top-6 sm:top-8 left-1 sm:left-2">
+                            <span class="badge badge-success badge-xs sm:badge-sm text-xs">{{ $product->category->name }}</span>
                         </div>
 
                         {{-- Prescription Required Badge --}}
                         @if($product->requires_prescription)
-                        <div class="absolute top-2 right-2">
-                            <span class="badge badge-warning badge-sm">Resep Dokter</span>
+                        <div class="absolute top-1 sm:top-2 right-1 sm:right-2">
+                            <span class="badge badge-warning badge-xs sm:badge-sm text-xs">Resep Dokter</span>
                         </div>
                         @endif
 
                         {{-- Discount Badge --}}
                         @if($product->is_on_discount)
-                        <div class="absolute top-8 right-2">
-                            <span class="badge badge-error badge-sm">-{{ $product->discount_percentage }}%</span>
+                        <div class="absolute top-6 sm:top-8 right-1 sm:right-2">
+                            <span class="badge badge-error badge-xs sm:badge-sm text-xs">-{{ $product->discount_percentage }}%</span>
                         </div>
                         @endif
                     </figure>
-                    <div class="card-body p-2 sm:p-3 md:p-4">
-                        <a href="/produk/{{ $product->product_id }}" class="card-title text-xs sm:text-sm md:text-base font-bold truncate hover:text-success line-clamp-2" title="{{ $product->name }}">
+                    <div class="card-body p-1.5 sm:p-2 md:p-3 lg:p-4">
+                        <a href="/produk/{{ $product->product_id }}" class="card-title text-xs sm:text-sm md:text-base font-bold line-clamp-2 hover:text-success" title="{{ $product->name }}">
                             {{ $product->name }}
                         </a>
 
@@ -261,7 +260,6 @@
                             <span class="text-xs {{ $product->is_available ? 'text-success' : 'text-error' }}">
                                 {{ $product->is_available ? 'Tersedia' : 'Habis' }}
                             </span>
-                            <span class="text-xs text-gray-500">{{ $product->stock }}</span>
                         </div>
                     </div>
                 </div>

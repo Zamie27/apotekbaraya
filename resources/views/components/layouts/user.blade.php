@@ -31,7 +31,7 @@
                 </div>
 
                 <!-- Center - Search (Hidden on mobile, shown in dropdown) -->
-                <div class="navbar-center hidden lg:flex">
+                <div class="navbar-center hidden lg:flex justify-center">
                     <div class="form-control w-full max-w-xs xl:max-w-sm">
                         @livewire('navbar-search')
                     </div>

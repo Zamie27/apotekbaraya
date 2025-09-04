@@ -37,6 +37,7 @@ class OrderDetail extends Component
      */
     public function loadOrder()
     {
+        // Force fresh query from database, bypass any caching
         $this->order = Order::where('order_id', $this->orderId)
             ->where('user_id', Auth::id())
             ->with([
@@ -50,10 +51,24 @@ class OrderDetail extends Component
         if (!$this->order) {
             abort(404, 'Pesanan tidak ditemukan');
         }
+        
+        // Force refresh the model to ensure fresh attributes
+        $this->order->refresh();
+    }
+    
+    /**
+     * Force refresh component data.
+     */
+    public function refreshComponent()
+    {
+        $this->order = null;
+        $this->loadOrder();
+        $this->dispatch('$refresh');
     }
 
     /**
      * Cancel order (if allowed) - old method kept for compatibility
+     * @deprecated Use confirmCancelOrder() instead for proper cancellation with reason
      */
     public function cancelOrder()
     {
@@ -62,9 +77,15 @@ class OrderDetail extends Component
             return;
         }
 
-        $this->order->update(['status' => 'cancelled']);
-        $this->loadOrder(); // Refresh order data
-        session()->flash('success', 'Pesanan berhasil dibatalkan!');
+        // Use the model's cancelOrder method for consistency
+        $success = $this->order->cancelOrder('Dibatalkan oleh pelanggan', Auth::id());
+        
+        if ($success) {
+            $this->loadOrder(); // Refresh order data
+            session()->flash('success', 'Pesanan berhasil dibatalkan!');
+        } else {
+            session()->flash('error', 'Gagal membatalkan pesanan!');
+        }
     }
 
     /**
@@ -98,55 +119,43 @@ class OrderDetail extends Component
             default => 'Dibatalkan oleh pelanggan'
         };
 
-        try {
-            // Cancel transaction in Midtrans first if order has payment
-            if ($this->order->payment && $this->order->payment->snap_token) {
-                $midtransService = new \App\Services\MidtransService();
-                $cancelResult = $midtransService->cancelTransaction($this->order->order_number);
-                
-                if (!$cancelResult['success']) {
-                    \Log::warning('Failed to cancel Midtrans transaction, proceeding with local cancellation', [
-                        'order_id' => $this->order->order_id,
-                        'order_number' => $this->order->order_number,
-                        'midtrans_error' => $cancelResult['message'] ?? 'Unknown error'
-                    ]);
-                }
-            }
+        // Use the model's cancelOrder method for consistency
+        $success = $this->order->cancelOrder($reasonText, Auth::id());
 
-            // Update order status to cancelled
-            $this->order->update([
-                'status' => 'cancelled',
-                'cancelled_at' => now(),
-                'cancelled_by' => Auth::id(),
-                'cancel_reason' => $reasonText
-            ]);
-
-            // Update payment status if exists
-            if ($this->order->payment) {
-                $this->order->payment->update([
-                    'status' => 'cancelled',
-                    'cancelled_at' => now()
-                ]);
-            }
-
+        if ($success) {
             // Reset form
             $this->cancelReason = '';
             $this->cancelReasonOther = '';
 
+            // Log before refresh
+            \Log::info('Order cancellation successful, refreshing data', [
+                'order_id' => $this->order->order_id,
+                'old_status' => $this->order->status
+            ]);
+
+            // Small delay to ensure database transaction is committed
+            usleep(100000); // 0.1 second
+            
+            // Force refresh order data from database
+            $this->refreshComponent();
+            
+            // Log after refresh
+            \Log::info('Order data refreshed after cancellation', [
+                'order_id' => $this->order->order_id,
+                'new_status' => $this->order->status,
+                'cancelled_at' => $this->order->cancelled_at,
+                'status_label' => $this->order->status_label,
+                'badge_color' => $this->order->status_badge_color
+            ]);
+            
+            // Show success message
+            session()->flash('success', 'Pesanan berhasil dibatalkan!');
+            
             // Dispatch browser event to close modal
             $this->dispatch('order-cancelled');
             
-            session()->flash('success', 'Pesanan dan pembayaran berhasil dibatalkan!');
-            
-            // Redirect after a short delay to allow modal to close
-            $this->redirect(route('pelanggan.orders'), navigate: true);
-        } catch (\Exception $e) {
-            \Log::error('Error cancelling order', [
-                'order_id' => $this->order->order_id,
-                'error' => $e->getMessage()
-            ]);
-            
-            session()->flash('error', 'Terjadi kesalahan saat membatalkan pesanan.');
+        } else {
+            session()->flash('error', 'Gagal membatalkan pesanan. Silakan coba lagi.');
         }
     }
 

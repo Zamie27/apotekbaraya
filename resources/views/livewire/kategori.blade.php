@@ -127,42 +127,43 @@
     {{-- Products Grid --}}
     <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8">
         @forelse($products as $product)
-        <div class="card bg-base-100 shadow-xl group hover:shadow-2xl transition overflow-hidden">
-            <figure class="relative">
+        <div class="card w-full bg-base-100 shadow-xl group hover:shadow-2xl transition overflow-hidden">
+            <figure class="relative pt-2">
                 <a href="/produk/{{ $product->product_id }}">
-                    <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-32 sm:h-40 md:h-48 lg:h-64" />
+                    <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-40 sm:h-48 lg:h-64" />
                 </a>
 
                 <div class="absolute left-0 right-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
                     @if($isAuthenticated)
-                    <livewire:add-to-cart-button
-                        :product-id="$product->product_id"
-                        button-text="TAMBAH KE KERANJANG"
-                        button-class="btn btn-success w-full font-bold rounded-none text-xs sm:text-sm"
-                        :key="'kategori-cart-'.$product->product_id" />
+                        <livewire:add-to-cart-button 
+                            :product-id="$product->product_id" 
+                            button-text="TAMBAH" 
+                            button-class="btn btn-success w-full font-bold rounded-none text-xs sm:text-sm"
+                            :key="'kategori-cart-'.$product->product_id" 
+                        />
                     @else
-                    <a href="/login" class="btn btn-success w-full font-bold rounded-none text-xs sm:text-sm">
-                        TAMBAH KE KERANJANG
-                    </a>
+                        <a href="/login" class="btn btn-success w-full font-bold rounded-none text-xs sm:text-sm">
+                            TAMBAH
+                        </a>
                     @endif
                 </div>
 
                 {{-- Category Badge --}}
                 <div class="absolute top-1 sm:top-2 left-1 sm:left-2">
-                    <span class="badge badge-success badge-xs sm:badge-sm">{{ $product->category->name }}</span>
+                    <span class="badge badge-success badge-xs sm:badge-sm text-xs">{{ $product->category->name }}</span>
                 </div>
 
                 {{-- Prescription Required Badge --}}
                 @if($product->requires_prescription)
                 <div class="absolute top-1 sm:top-2 right-1 sm:right-2">
-                    <span class="badge badge-warning badge-xs sm:badge-sm">Resep Dokter</span>
+                    <span class="badge badge-warning badge-xs sm:badge-sm text-xs">Resep Dokter</span>
                 </div>
                 @endif
 
                 {{-- Discount Badge --}}
                 @if($product->is_on_discount)
                 <div class="absolute top-6 sm:top-8 right-1 sm:right-2">
-                    <span class="badge badge-error badge-xs sm:badge-sm">-{{ $product->discount_percentage }}%</span>
+                    <span class="badge badge-error badge-xs sm:badge-sm text-xs">-{{ $product->discount_percentage }}%</span>
                 </div>
                 @endif
             </figure>
@@ -200,7 +201,6 @@
                     <span class="text-xs {{ $product->is_available ? 'text-success' : 'text-error' }}">
                         {{ $product->is_available ? 'Tersedia' : 'Habis' }}
                     </span>
-                    <span class="text-xs text-gray-500">{{ $product->stock }}</span>
                 </div>
             </div>
         </div>

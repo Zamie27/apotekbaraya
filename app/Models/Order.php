@@ -343,13 +343,14 @@ class Order extends Model
                         'current_status' => $currentStatus
                     ]);
                     
-                    // If transaction is already expired or settled, it's acceptable to proceed
-                    if (in_array($currentStatus, ['expire', 'settlement', 'capture'])) {
-                        \Log::info('Transaction already in final state, proceeding with local cancellation', [
-                            'order_id' => $this->order_id,
-                            'current_status' => $currentStatus
-                        ]);
-                    }
+                    // Always proceed with local cancellation regardless of Midtrans status
+                    // This handles cases where transaction doesn't exist in Midtrans (404)
+                    // or is in any other state that prevents cancellation
+                    \Log::info('Proceeding with local cancellation despite Midtrans failure', [
+                        'order_id' => $this->order_id,
+                        'current_status' => $currentStatus,
+                        'reason' => 'Midtrans cancellation failed but local cancellation should proceed'
+                    ]);
                 }
             }
 

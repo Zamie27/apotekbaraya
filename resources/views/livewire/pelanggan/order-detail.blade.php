@@ -399,7 +399,7 @@
     </div>
 
     {{-- Cancel Order Modal --}}
-    <dialog id="cancel_order_modal" class="modal" x-data="{ isSubmitting: false, cancelReason: '', cancelReasonOther: '' }">
+    <dialog id="cancel_order_modal" class="modal" x-data="{ isSubmitting: false }">
         <div class="modal-box w-11/12 max-w-md sm:max-w-lg">
             <h3 class="font-bold text-base sm:text-lg mb-3 sm:mb-4">Batalkan Pesanan</h3>
             <p class="mb-3 sm:mb-4 text-sm sm:text-base">Mengapa Anda ingin membatalkan pesanan ini?</p>
@@ -409,7 +409,7 @@
                     <label class="label">
                         <span class="label-text text-xs sm:text-sm">Pilih alasan pembatalan:</span>
                     </label>
-                    <select class="select select-bordered select-sm sm:select-md w-full text-sm" x-model="cancelReason" wire:model="cancelReason">
+                    <select class="select select-bordered select-sm sm:select-md w-full text-sm" wire:model="cancelReason">
                         <option value="">Pilih alasan...</option>
                         <option value="salah_pesan">Salah membuat pesanan</option>
                         <option value="ganti_barang">Ingin mengganti barang</option>
@@ -420,7 +420,7 @@
                     </select>
                 </div>
                 
-                <div class="form-control" x-show="cancelReason === 'lainnya'">
+                <div class="form-control" x-show="$wire.cancelReason === 'lainnya'">
                     <label class="label">
                         <span class="label-text text-xs sm:text-sm">Jelaskan alasan lainnya:</span>
                     </label>
@@ -428,7 +428,6 @@
                         class="textarea textarea-bordered textarea-sm sm:textarea-md text-sm" 
                         placeholder="Masukkan alasan pembatalan..."
                         rows="3"
-                        x-model="cancelReasonOther"
                         wire:model="cancelReasonOther"
                     ></textarea>
                 </div>
@@ -444,7 +443,7 @@
                     <button 
                          type="submit" 
                          class="btn btn-error btn-sm sm:btn-md" 
-                         x-bind:disabled="!cancelReason || (cancelReason === 'lainnya' && (!cancelReasonOther || cancelReasonOther.length < 3)) || isSubmitting"
+                         x-bind:disabled="isSubmitting || !$wire.cancelReason || ($wire.cancelReason === 'lainnya' && (!$wire.cancelReasonOther || $wire.cancelReasonOther.trim().length < 3))"
                          x-bind:class="{ 'loading': isSubmitting }"
                      >
                          <span x-show="!isSubmitting" class="text-xs sm:text-sm">Ya, Batalkan Pesanan</span>
@@ -512,15 +511,34 @@
 @script
 <script>
     // Auto-refresh payment status every 30 seconds for pending payments
-    if ($wire.order && $wire.order.payment && $wire.order.payment.status === 'pending') {
-        setInterval(() => {
-            $wire.checkPaymentStatus();
-        }, 30000);
+    function initPaymentStatusCheck() {
+        try {
+            if ($wire.order && 
+                $wire.order.payment && 
+                $wire.order.payment.status === 'pending' && 
+                $wire.order.status !== 'cancelled') {
+                setInterval(() => {
+                    if ($wire.order && $wire.order.status !== 'cancelled') {
+                        $wire.checkPaymentStatus();
+                    }
+                }, 30000);
+            }
+        } catch (error) {
+            console.log('Payment status check initialization skipped:', error.message);
+        }
     }
+    
+    // Initialize payment check when component is ready
+    document.addEventListener('livewire:initialized', () => {
+        initPaymentStatusCheck();
+    });
     
     // Listen for order cancellation success
     window.addEventListener('order-cancelled', () => {
-        document.getElementById('cancel_order_modal').close();
+        const modal = document.getElementById('cancel_order_modal');
+        if (modal) {
+            modal.close();
+        }
     });
 </script>
 @endscript

@@ -89,7 +89,7 @@
     <div class="container grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 lg:gap-6 mx-auto my-3 sm:my-5 px-1 sm:px-2 md:px-4">
         @forelse($products as $product)
         <div class="card w-full bg-base-100 shadow-xl group hover:shadow-2xl transition overflow-hidden">
-            <figure class="relative">
+            <figure class="relative pt-2">
                 <a href="/produk/{{ $product->product_id }}">
                     <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-40 sm:h-48 lg:h-64" />
                 </a>
@@ -162,7 +162,6 @@
                     <span class="text-xs {{ $product->is_available ? 'text-success' : 'text-error' }}">
                         {{ $product->is_available ? 'Tersedia' : 'Habis' }}
                     </span>
-                    <span class="text-xs text-gray-500">{{ $product->stock }}</span>
                 </div>
             </div>
         </div>

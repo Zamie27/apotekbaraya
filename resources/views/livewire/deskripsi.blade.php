@@ -66,7 +66,7 @@
                 <span class="text-xs sm:text-sm {{ $product->is_available ? 'text-success' : 'text-error' }} font-medium">
                     {{ $product->is_available ? '✓ Tersedia' : '✗ Stok Habis' }}
                 </span>
-                <span class="text-xs sm:text-sm text-gray-500">Stok: {{ $product->stock }} {{ $product->unit }}</span>
+                <span class="text-xs sm:text-sm text-gray-500">Satuan: {{ $product->unit }}</span>
             </div>
 
             <p class="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
@@ -108,7 +108,7 @@
                 </div>
                 <button
                     wire:click="addToCart"
-                    class="btn btn-success btn-sm sm:btn-md uppercase flex-1 sm:flex-none"
+                    class="btn btn-success btn-md sm:btn-lg py-3 sm:py-2 uppercase flex-1 sm:flex-none"
                     wire:loading.attr="disabled"
                     wire:loading.class="loading">
                     <span wire:loading.remove class="text-xs sm:text-sm">Tambah ke Keranjang</span>
@@ -117,7 +117,7 @@
             </div>
             @else
             <div class="mb-4 sm:mb-6">
-                <button class="btn btn-disabled btn-sm sm:btn-md uppercase w-full sm:w-auto" disabled>
+                <button class="btn btn-disabled btn-md sm:btn-lg py-3 sm:py-2 uppercase w-full sm:w-auto" disabled>
                     Stok Habis
                 </button>
             </div>
