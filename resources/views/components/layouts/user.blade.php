@@ -231,6 +231,14 @@
                 updateCartCounter();
             });
         });
+        
+        // Listen for auto refresh event from OrderStatusActions component
+        Livewire.on('auto-refresh-page', (data) => {
+            const delay = data[0]?.delay || 2000; // Default 2 seconds
+            setTimeout(() => {
+                window.location.reload();
+            }, delay);
+        });
     </script>
 
     <!-- Confirmation Modal -->

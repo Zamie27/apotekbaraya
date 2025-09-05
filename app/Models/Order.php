@@ -123,6 +123,14 @@ class Order extends Model
     }
 
     /**
+     * Get the courier who failed the delivery.
+     */
+    public function failedByCourier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'failed_by_courier_id', 'user_id');
+    }
+
+    /**
      * Scope for filtering orders by status.
      */
     public function scopeByStatus($query, $status)
@@ -385,17 +393,44 @@ class Order extends Model
      */
     public function confirmOrder(int $confirmedBy, ?string $note = null): bool
     {
-        if (!$this->canBeConfirmed()) {
+        try {
+            if (!$this->canBeConfirmed()) {
+                \Log::warning('Order cannot be confirmed', [
+                    'order_id' => $this->order_id,
+                    'current_status' => $this->status,
+                    'confirmed_by' => $confirmedBy
+                ]);
+                return false;
+            }
+
+            $updateData = [
+                'status' => 'confirmed',
+                'confirmed_at' => now()
+            ];
+            
+            // Only add confirmation_note if it's provided
+            if ($note !== null && $note !== '') {
+                $updateData['confirmation_note'] = $note;
+            }
+
+            $this->update($updateData);
+
+            \Log::info('Order confirmed successfully', [
+                'order_id' => $this->order_id,
+                'confirmed_by' => $confirmedBy,
+                'confirmation_note' => $note
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            \Log::error('Error confirming order', [
+                'order_id' => $this->order_id,
+                'confirmed_by' => $confirmedBy,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return false;
         }
-
-        $this->update([
-            'status' => 'confirmed',
-            'confirmed_at' => now(),
-            'confirmation_note' => $note
-        ]);
-
-        return true;
     }
 
     /**
@@ -403,16 +438,35 @@ class Order extends Model
      */
     public function markAsProcessing(): bool
     {
-        if ($this->status !== 'confirmed') {
+        try {
+            if ($this->status !== 'confirmed') {
+                \Log::warning('Order cannot be marked as processing', [
+                    'order_id' => $this->order_id,
+                    'current_status' => $this->status,
+                    'required_status' => 'confirmed'
+                ]);
+                return false;
+            }
+
+            $this->update([
+                'status' => 'processing',
+                'processing_at' => now()
+            ]);
+
+            \Log::info('Order marked as processing successfully', [
+                'order_id' => $this->order_id,
+                'processing_at' => now()
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            \Log::error('Error marking order as processing', [
+                'order_id' => $this->order_id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return false;
         }
-
-        $this->update([
-            'status' => 'processing',
-            'processing_at' => now()
-        ]);
-
-        return true;
     }
 
     /**
@@ -593,6 +647,14 @@ class Order extends Model
     }
 
     /**
+     * Check if order is failed.
+     */
+    public function isFailed(): bool
+    {
+        return $this->status === 'failed';
+    }
+
+    /**
      * Get order status workflow steps.
      */
     public function getStatusWorkflowAttribute(): array
@@ -724,6 +786,21 @@ class Order extends Model
                 'completed' => true,
                 'current' => true,
                 'date' => $this->cancelled_at
+            ];
+        }
+
+        // Add failed step if order is failed
+        if ($this->isFailed()) {
+            $steps[] = [
+                'status' => 'failed',
+                'label' => 'Gagal Diantar',
+                'description' => 'Pengiriman gagal: ' . ($this->failed_reason ?? 'Tidak ada keterangan'),
+                'completed' => true,
+                'current' => true,
+                'date' => $this->failed_at,
+                'failed_reason' => $this->failed_reason,
+                'failed_by_courier' => $this->failedByCourier ? $this->failedByCourier->name : null,
+                'failed_by_courier_phone' => $this->failedByCourier ? $this->failedByCourier->phone : null
             ];
         }
 

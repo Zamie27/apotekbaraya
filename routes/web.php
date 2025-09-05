@@ -112,6 +112,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/kurir/dashboard', KurirDashboard::class)->name('kurir.dashboard');
         Route::get('/kurir/profile', KurirProfile::class)->name('kurir.profile');
         Route::get('/kurir/deliveries', \App\Livewire\Kurir\Deliveries::class)->name('kurir.deliveries');
+        Route::get('/kurir/deliveries/{deliveryId}', \App\Livewire\Kurir\DeliveryDetail::class)->name('kurir.deliveries.detail');
         // Add more kurir routes here
         // Route::get('/kurir/routes', KurirRoutes::class);
     });

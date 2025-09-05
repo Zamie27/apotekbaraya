@@ -57,7 +57,7 @@ class Orders extends Component
     public function getOrdersProperty()
     {
         $query = Order::where('user_id', Auth::id())
-            ->with(['items.product', 'payment'])
+            ->with(['items.product', 'payment', 'failedByCourier'])
             ->orderBy('created_at', 'desc');
 
         // Apply status filter
@@ -92,7 +92,8 @@ class Orders extends Component
             'processing' => 'Diproses',
             'shipped' => 'Dikirim',
             'delivered' => 'Selesai',
-            'cancelled' => 'Dibatalkan'
+            'cancelled' => 'Dibatalkan',
+            'failed' => 'Gagal Diantar'
         ];
     }
 

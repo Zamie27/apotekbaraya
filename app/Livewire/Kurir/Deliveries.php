@@ -23,7 +23,6 @@ class Deliveries extends Component
     // Modal properties
     public $selectedDelivery = null;
     public $showUpdateModal = false;
-    public $showDetailModal = false;
     public $deliveryPhoto;
     public $deliveryNotes = '';
     public $newStatus = '';
@@ -78,24 +77,7 @@ class Deliveries extends Component
         $this->resetPage();
     }
 
-    /**
-     * Show delivery detail modal.
-     */
-    public function showDeliveryDetail($deliveryId)
-    {
-        $this->selectedDelivery = Delivery::with([
-                'order', 
-                'order.user', 
-                'order.items', 
-                'order.items.product',
-                'order.payment',
-                'order.payment.paymentMethod'
-            ])
-            ->where('courier_id', Auth::id())
-            ->findOrFail($deliveryId);
-        
-        $this->showDetailModal = true;
-    }
+
 
     /**
      * Show update delivery modal.
@@ -229,6 +211,9 @@ class Deliveries extends Component
 
             session()->flash('success', 'Status pesanan berhasil diperbarui.');
             $this->closeModal();
+            
+            // Auto refresh halaman setelah 1 detik
+            $this->dispatch('auto-refresh-page', ['delay' => 1000]);
 
         } catch (\Exception $e) {
             session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -269,8 +254,12 @@ class Deliveries extends Component
                 break;
                 
             case 'failed':
-                // Keep order status as shipped but mark delivery as failed
-                // Admin/Apoteker can decide next action
+                $order->update([
+                    'status' => 'failed',
+                    'failed_at' => now(),
+                    'failed_reason' => $this->deliveryNotes ?: 'Pengiriman gagal',
+                    'failed_by_courier_id' => Auth::id()
+                ]);
                 break;
         }
     }
@@ -281,7 +270,6 @@ class Deliveries extends Component
     public function closeModal()
     {
         $this->showUpdateModal = false;
-        $this->showDetailModal = false;
         $this->selectedDelivery = null;
         $this->deliveryPhoto = null;
         $this->deliveryNotes = '';

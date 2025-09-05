@@ -17,6 +17,8 @@ class OrderDetail extends Component
     use WithFileUploads;
     public $orderId;
     public $order;
+    public $showCancelModal = false;
+    public $selectedOrderId;
     public $cancelReason = '';
     public $cancelReasonOther = '';
     
@@ -44,7 +46,8 @@ class OrderDetail extends Component
                 'items.product',
                 'payment',
                 'delivery.courier',
-                'user'
+                'user',
+                'failedByCourier'
             ])
             ->first();
 
@@ -67,96 +70,103 @@ class OrderDetail extends Component
     }
 
     /**
-     * Cancel order (if allowed) - old method kept for compatibility
-     * @deprecated Use confirmCancelOrder() instead for proper cancellation with reason
+     * Open cancel modal for specific order
+     * 
+     * @return void
      */
-    public function cancelOrder()
+    public function openCancelModal()
     {
-        if (!$this->order->canBeCancelled()) {
-            session()->flash('error', 'Pesanan tidak dapat dibatalkan!');
+        // Check if order exists and can be cancelled
+        if (!$this->order || !$this->order->canBeCancelled()) {
+            session()->flash('error', 'Pesanan tidak dapat dibatalkan.');
             return;
         }
 
-        // Use the model's cancelOrder method for consistency
-        $success = $this->order->cancelOrder('Dibatalkan oleh pelanggan', Auth::id());
-        
-        if ($success) {
-            $this->loadOrder(); // Refresh order data
-            session()->flash('success', 'Pesanan berhasil dibatalkan!');
-        } else {
-            session()->flash('error', 'Gagal membatalkan pesanan!');
-        }
+        $this->selectedOrderId = $this->order->id;
+        $this->showCancelModal = true;
+        $this->reset(['cancelReason', 'cancelReasonOther']);
     }
 
     /**
-     * Confirm order cancellation
+     * Process order cancellation
+     * 
+     * @return void
      */
-    public function confirmCancelOrder()
+    public function cancelOrder()
     {
         // Validate cancel reason
         $this->validate([
             'cancelReason' => 'required|string',
-            'cancelReasonOther' => 'required_if:cancelReason,lainnya|min:3'
+            'cancelReasonOther' => 'required_if:cancelReason,lainnya|string|min:3|max:255'
         ], [
             'cancelReason.required' => 'Alasan pembatalan harus dipilih.',
             'cancelReasonOther.required_if' => 'Alasan lainnya harus diisi.',
-            'cancelReasonOther.min' => 'Alasan lainnya minimal 3 karakter.'
+            'cancelReasonOther.min' => 'Alasan lainnya minimal 3 karakter.',
+            'cancelReasonOther.max' => 'Alasan lainnya maksimal 255 karakter.'
         ]);
 
-        if (!$this->order->canBeCancelled()) {
-            session()->flash('error', 'Pesanan tidak dapat dibatalkan!');
-            return;
-        }
+        try {
+            // Prepare cancel reason text
+            $cancelReasonText = $this->cancelReason === 'lainnya' 
+                ? $this->cancelReasonOther 
+                : $this->getCancelReasonText($this->cancelReason);
 
-        // Prepare cancel reason text
-        $reasonText = match($this->cancelReason) {
+            // Cancel the order
+            $this->order->cancelOrder($cancelReasonText, auth()->id());
+
+            // Log the cancellation
+            Log::info('Order cancelled by customer', [
+                'order_id' => $this->order->id,
+                'customer_id' => auth()->id(),
+                'reason' => $cancelReasonText
+            ]);
+
+            // Close modal and reset
+            $this->closeCancelModal();
+
+            // Refresh order data
+            $this->loadOrder();
+
+            session()->flash('success', 'Pesanan berhasil dibatalkan.');
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to cancel order', [
+                'order_id' => $this->order->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            session()->flash('error', 'Terjadi kesalahan saat membatalkan pesanan.');
+        }
+    }
+
+    /**
+     * Close cancel modal
+     * 
+     * @return void
+     */
+    public function closeCancelModal()
+    {
+        $this->showCancelModal = false;
+        $this->selectedOrderId = null;
+        $this->reset(['cancelReason', 'cancelReasonOther']);
+    }
+
+    /**
+     * Get cancel reason text based on reason code
+     * 
+     * @param string $reason
+     * @return string
+     */
+    private function getCancelReasonText($reason)
+    {
+        return match($reason) {
             'salah_pesan' => 'Salah membuat pesanan',
             'ganti_barang' => 'Ingin mengganti barang',
             'ganti_alamat' => 'Ingin mengganti alamat pengiriman',
             'tidak_jadi' => 'Tidak jadi membeli',
             'masalah_pembayaran' => 'Masalah dengan pembayaran',
-            'lainnya' => $this->cancelReasonOther,
             default => 'Dibatalkan oleh pelanggan'
         };
-
-        // Use the model's cancelOrder method for consistency
-        $success = $this->order->cancelOrder($reasonText, Auth::id());
-
-        if ($success) {
-            // Reset form
-            $this->cancelReason = '';
-            $this->cancelReasonOther = '';
-
-            // Log before refresh
-            \Log::info('Order cancellation successful, refreshing data', [
-                'order_id' => $this->order->order_id,
-                'old_status' => $this->order->status
-            ]);
-
-            // Small delay to ensure database transaction is committed
-            usleep(100000); // 0.1 second
-            
-            // Force refresh order data from database
-            $this->refreshComponent();
-            
-            // Log after refresh
-            \Log::info('Order data refreshed after cancellation', [
-                'order_id' => $this->order->order_id,
-                'new_status' => $this->order->status,
-                'cancelled_at' => $this->order->cancelled_at,
-                'status_label' => $this->order->status_label,
-                'badge_color' => $this->order->status_badge_color
-            ]);
-            
-            // Show success message
-            session()->flash('success', 'Pesanan berhasil dibatalkan!');
-            
-            // Dispatch browser event to close modal
-            $this->dispatch('order-cancelled');
-            
-        } else {
-            session()->flash('error', 'Gagal membatalkan pesanan. Silakan coba lagi.');
-        }
     }
 
     /**
@@ -343,7 +353,7 @@ class OrderDetail extends Component
     {
         $timeline = [];
 
-        // Check if order is cancelled first
+        // Check if order is cancelled or failed first
         if ($this->order->status === 'cancelled') {
             // Order created
             $timeline[] = [
@@ -363,6 +373,66 @@ class OrderDetail extends Component
                 'icon' => 'x-circle',
                 'is_cancelled' => true,
                 'cancel_reason' => $this->order->cancel_reason
+            ];
+
+            return $timeline;
+        }
+
+        // Check if order is failed
+        if ($this->order->status === 'failed') {
+            // Order created
+            $timeline[] = [
+                'status' => 'created',
+                'label' => 'Pesanan Dibuat',
+                'date' => $this->order->created_at,
+                'completed' => true,
+                'icon' => 'shopping-cart'
+            ];
+
+            // Payment status
+            if ($this->order->payment && $this->order->payment->isPaid()) {
+                $timeline[] = [
+                    'status' => 'payment_completed',
+                    'label' => 'Pembayaran Berhasil',
+                    'date' => $this->order->payment->paid_at,
+                    'completed' => true,
+                    'icon' => 'credit-card'
+                ];
+            }
+
+            // Order confirmed
+            if ($this->order->confirmed_at) {
+                $timeline[] = [
+                    'status' => 'confirmed',
+                    'label' => 'Pesanan Dikonfirmasi',
+                    'date' => $this->order->confirmed_at,
+                    'completed' => true,
+                    'icon' => 'check-circle'
+                ];
+            }
+
+            // Processing
+            if ($this->order->processing_at) {
+                $timeline[] = [
+                    'status' => 'processing',
+                    'label' => 'Pesanan Diproses',
+                    'date' => $this->order->processing_at,
+                    'completed' => true,
+                    'icon' => 'cog'
+                ];
+            }
+
+            // Failed status
+            $timeline[] = [
+                'status' => 'failed',
+                'label' => 'Gagal Diantar',
+                'date' => $this->order->failed_at,
+                'completed' => true,
+                'icon' => 'x-circle',
+                'is_failed' => true,
+                'failed_reason' => $this->order->failed_reason,
+                'failed_by_courier' => $this->order->failedByCourier ? $this->order->failedByCourier->name : null,
+                'failed_by_courier_phone' => $this->order->failedByCourier ? $this->order->failedByCourier->phone : null
             ];
 
             return $timeline;
@@ -411,19 +481,19 @@ class OrderDetail extends Component
                     'status' => 'confirmed',
                     'label' => 'Pesanan Dikonfirmasi',
                     'date' => $this->order->confirmed_at,
-                    'completed' => in_array($this->order->status, ['confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered', 'picked_up', 'completed']),
+                    'completed' => in_array($this->order->status, ['confirmed', 'processing', 'ready_to_ship', 'ready_for_pickup', 'shipped', 'delivered', 'picked_up', 'completed']),
                     'icon' => 'check-circle'
                 ];
             }
         }
 
         // 4. Processing - show if confirmed or beyond
-        if ($this->order->payment && $this->order->payment->isPaid() && in_array($this->order->status, ['confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered', 'picked_up', 'completed'])) {
+        if ($this->order->payment && $this->order->payment->isPaid() && in_array($this->order->status, ['confirmed', 'processing', 'ready_to_ship', 'ready_for_pickup', 'shipped', 'delivered', 'picked_up', 'completed'])) {
             $timeline[] = [
                 'status' => 'processing',
                 'label' => 'Pesanan Diproses',
-                'date' => in_array($this->order->status, ['processing', 'ready_to_ship', 'shipped', 'delivered', 'picked_up', 'completed']) ? $this->order->confirmed_at : null,
-                'completed' => in_array($this->order->status, ['processing', 'ready_to_ship', 'shipped', 'delivered', 'picked_up', 'completed']),
+                'date' => in_array($this->order->status, ['processing', 'ready_to_ship', 'ready_for_pickup', 'shipped', 'delivered', 'picked_up', 'completed']) ? $this->order->processing_at : null,
+                'completed' => in_array($this->order->status, ['processing', 'ready_to_ship', 'ready_for_pickup', 'shipped', 'delivered', 'picked_up', 'completed']),
                 'icon' => 'cog'
             ];
         }
@@ -435,7 +505,7 @@ class OrderDetail extends Component
                 'label' => $this->order->shipping_type === 'delivery' ? 'Pesanan Siap Diantar' : 'Pesanan Siap Diambil',
                 'date' => $this->order->shipping_type === 'delivery' ? $this->order->ready_to_ship_at : $this->order->ready_for_pickup_at,
                 'completed' => $this->order->shipping_type === 'pickup' ? 
-                    in_array($this->order->status, ['picked_up', 'completed']) : 
+                    in_array($this->order->status, ['ready_for_pickup', 'picked_up', 'completed']) : 
                     in_array($this->order->status, ['shipped', 'delivered', 'completed']),
                 'icon' => $this->order->shipping_type === 'delivery' ? 'package' : 'package-check'
             ];

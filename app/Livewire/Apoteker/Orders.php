@@ -150,6 +150,7 @@ class Orders extends Component
             'picked_up' => 'Diambil',
             'completed' => 'Selesai',
             'cancelled' => 'Dibatalkan',
+            'failed' => 'Gagal Diantar',
             default => ucfirst($status)
         };
     }

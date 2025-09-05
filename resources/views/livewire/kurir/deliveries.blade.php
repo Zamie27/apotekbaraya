@@ -103,14 +103,14 @@
                             <td>
                                 <div class="flex gap-2">
                                     <!-- Detail Button -->
-                                    <button wire:click="showDeliveryDetail({{ $delivery->delivery_id }})"
-                                            class="btn btn-sm btn-outline btn-info">
+                                    <a href="{{ route('kurir.deliveries.detail', $delivery->delivery_id) }}"
+                                       class="btn btn-sm btn-outline btn-info">
                                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                                                   d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                         </svg>
                                         Detail
-                                    </button>
+                                    </a>
                                     
                                     <!-- Action Buttons based on Status -->
                                     @if($delivery->delivery_status === 'ready_to_ship')
@@ -197,7 +197,7 @@
     @if($showUpdateModal && $selectedDelivery)
     <div class="modal modal-open">
         <div class="modal-box max-w-2xl">
-            <h3 class="font-bold text-lg mb-4">
+            <h3 class="font-bold text-2xl text-gray-900 mb-6">
                 @if($newStatus === 'delivered')
                     Konfirmasi Penyelesaian Pesanan
                 @elseif($newStatus === 'picked_up')
@@ -210,28 +210,44 @@
             </h3>
             
             <!-- Delivery Info -->
-            <div class="bg-gray-50 p-4 rounded-lg mb-4">
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <span class="font-medium">No. Pesanan:</span>
-                        <span class="ml-2">{{ $selectedDelivery->order->order_number }}</span>
-                    </div>
-                    <div>
-                        <span class="font-medium">Pelanggan:</span>
-                        <span class="ml-2">{{ $selectedDelivery->order->user->name }}</span>
-                    </div>
-                    <div class="col-span-2">
-                        <span class="font-medium">Alamat:</span>
-                        <div class="ml-2 mt-1">
-                            @if(is_array($selectedDelivery->delivery_address))
-                                {{ $selectedDelivery->delivery_address['street'] ?? '' }}<br>
-                                {{ $selectedDelivery->delivery_address['village'] ?? '' }}, 
-                                {{ $selectedDelivery->delivery_address['district'] ?? '' }}<br>
-                                {{ $selectedDelivery->delivery_address['city'] ?? '' }}, 
-                                {{ $selectedDelivery->delivery_address['province'] ?? '' }}
-                            @else
-                                {{ $selectedDelivery->delivery_address }}
-                            @endif
+            <div class="card bg-blue-50 border border-blue-200 mb-6">
+                <div class="card-body p-6">
+                    <h4 class="font-semibold text-lg text-gray-900 mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Informasi Pengiriman
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">No. Pesanan:</span>
+                                <span class="font-semibold text-gray-900">{{ $selectedDelivery->order->order_number }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Pelanggan:</span>
+                                <span class="font-semibold text-gray-900">{{ $selectedDelivery->order->user->name }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Total Pesanan:</span>
+                                <span class="font-bold text-lg text-primary">{{ $selectedDelivery->order->formatted_total }}</span>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <span class="text-gray-600">Alamat Pengiriman:</span>
+                                <div class="font-medium text-gray-700 mt-1">
+                                    @if(is_array($selectedDelivery->delivery_address))
+                                        {{ $selectedDelivery->delivery_address['street'] ?? '' }}<br>
+                                        {{ $selectedDelivery->delivery_address['village'] ?? '' }}, 
+                                        {{ $selectedDelivery->delivery_address['district'] ?? '' }}<br>
+                                        {{ $selectedDelivery->delivery_address['city'] ?? '' }}, 
+                                        {{ $selectedDelivery->delivery_address['province'] ?? '' }}
+                                    @else
+                                        {{ $selectedDelivery->delivery_address }}
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -240,34 +256,34 @@
             <form wire:submit="updateDelivery">
                 <!-- Status Info -->
                 @if($newStatus === 'delivered')
-                    <div class="alert alert-success mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <div class="alert alert-success mb-6 border-l-4 border-success bg-success/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5 text-success" fill="none" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span>Konfirmasi bahwa pesanan telah berhasil diterima oleh pelanggan</span>
+                        <span class="text-success-content font-medium">Konfirmasi bahwa pesanan telah berhasil diterima oleh pelanggan</span>
                     </div>
                 @elseif($newStatus === 'picked_up')
-                    <div class="alert alert-success mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <div class="alert alert-success mb-6 border-l-4 border-success bg-success/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5 text-success" fill="none" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span>Konfirmasi bahwa pesanan telah berhasil diambil oleh pelanggan</span>
+                        <span class="text-success-content font-medium">Konfirmasi bahwa pesanan telah berhasil diambil oleh pelanggan</span>
                     </div>
                 @elseif($newStatus === 'failed')
-                    <div class="alert alert-error mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <div class="alert alert-warning mb-6 border-l-4 border-warning bg-warning/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5 text-warning" fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                         </svg>
-                        <span>Konfirmasi pembatalan pesanan dengan alasan yang jelas</span>
+                        <span class="text-warning-content font-medium">Pesanan akan dibatalkan dan tidak dapat dikembalikan. Pastikan alasan pembatalan sudah benar.</span>
                     </div>
                 @endif
 
                 <!-- Status Selection -->
-                <div class="form-control mb-4">
+                <div class="form-control mb-6">
                     <label class="label">
-                        <span class="label-text font-medium">Status Pengiriman *</span>
+                        <span class="label-text font-semibold text-gray-900">Status Pengiriman *</span>
                     </label>
-                    <select wire:model="newStatus" class="select select-bordered w-full">
+                    <select wire:model="newStatus" class="select select-bordered w-full focus:border-primary">
                         <option value="">Pilih Status</option>
                         @if($selectedDelivery->delivery_status === 'ready_to_ship')
                             @if($selectedDelivery->order->shipping_type === 'pickup')
@@ -280,13 +296,13 @@
                             <option value="failed">Batalkan Pesanan</option>
                         @endif
                     </select>
-                    @error('newStatus') <span class="text-error text-sm">{{ $message }}</span> @enderror
+                    @error('newStatus') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
                 </div>
 
                 <!-- Photo Upload -->
-                <div class="form-control mb-4">
+                <div class="form-control mb-6">
                     <label class="label">
-                        <span class="label-text font-medium">
+                        <span class="label-text font-semibold text-gray-900">
                             @if($newStatus === 'delivered')
                                 Foto Bukti Penyerahan *
                             @elseif($newStatus === 'picked_up')
@@ -304,9 +320,9 @@
                         </span>
                     </label>
                     <input type="file" wire:model="deliveryPhoto" accept="image/*" 
-                           class="file-input file-input-bordered w-full">
+                           class="file-input file-input-bordered w-full focus:border-primary">
                     <div class="label">
-                        <span class="label-text-alt">
+                        <span class="label-text-alt text-gray-600">
                             @if($newStatus === 'delivered')
                                 Upload foto saat pesanan diterima pelanggan (wajib, max 2MB)
                             @elseif($newStatus === 'picked_up')
@@ -322,12 +338,12 @@
                             @endif
                         </span>
                     </div>
-                    @error('deliveryPhoto') <span class="text-error text-sm">{{ $message }}</span> @enderror
+                    @error('deliveryPhoto') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
                     
                     @if($deliveryPhoto)
-                        <div class="mt-2">
+                        <div class="mt-3">
                             <img src="{{ $deliveryPhoto->temporaryUrl() }}" 
-                                 class="w-32 h-32 object-cover rounded-lg border">
+                                 class="w-32 h-32 object-cover rounded-lg border border-gray-200 shadow-sm">
                         </div>
                     @endif
                 </div>
@@ -335,7 +351,7 @@
                 <!-- Notes -->
                 <div class="form-control mb-6">
                     <label class="label">
-                        <span class="label-text font-medium">
+                        <span class="label-text font-semibold text-gray-900">
                             @if($newStatus === 'failed')
                                 Alasan Pembatalan *
                             @else
@@ -344,39 +360,62 @@
                         </span>
                     </label>
                     <textarea wire:model="deliveryNotes" 
-                              class="textarea textarea-bordered h-24" 
+                              class="textarea textarea-bordered h-24 focus:border-primary" 
                               placeholder="@if($newStatus === 'failed')Jelaskan alasan pembatalan pesanan...@elseTambahkan catatan untuk pesanan ini (opsional)...@endif"></textarea>
-                    @error('deliveryNotes') <span class="text-error text-sm">{{ $message }}</span> @enderror
+                    @error('deliveryNotes') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
                 </div>
 
                 <!-- Actions -->
                 <div class="modal-action">
-                    <button type="button" wire:click="closeModal" class="btn btn-ghost">Batal</button>
-                    <button type="submit" class="btn {{ $newStatus === 'delivered' ? 'btn-success' : ($newStatus === 'picked_up' ? 'btn-success' : ($newStatus === 'failed' ? 'btn-error' : 'btn-primary')) }}">
+                    <button type="button" wire:click="closeModal" class="btn btn-ghost">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Batal
+                    </button>
+                    <button 
+                        type="submit" 
+                        class="btn {{ $newStatus === 'delivered' ? 'btn-success' : ($newStatus === 'picked_up' ? 'btn-success' : ($newStatus === 'failed' ? 'btn-error' : 'btn-primary')) }}"
+                        wire:loading.attr="disabled"
+                    >
+                        <!-- Loading Spinner -->
+                        <span wire:loading wire:target="updateDelivery" class="loading loading-spinner loading-sm mr-2"></span>
+                        
                         <span wire:loading.remove wire:target="updateDelivery">
                             @if($newStatus === 'delivered')
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                 </svg>
                                 Konfirmasi Selesai
                             @elseif($newStatus === 'picked_up')
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                 </svg>
                                 Konfirmasi Diambil
                             @elseif($newStatus === 'failed')
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                                 Konfirmasi Batal
                             @else
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                                 </svg>
                                 Update Status
                             @endif
                         </span>
-                        <span wire:loading wire:target="updateDelivery" class="loading loading-spinner loading-sm"></span>
+                        
+                        <span wire:loading wire:target="updateDelivery">
+                            @if($newStatus === 'delivered')
+                                Mengkonfirmasi Selesai...
+                            @elseif($newStatus === 'picked_up')
+                                Mengkonfirmasi Diambil...
+                            @elseif($newStatus === 'failed')
+                                Mengkonfirmasi Batal...
+                            @else
+                                Memperbarui Status...
+                            @endif
+                        </span>
                     </button>
                 </div>
             </form>
@@ -384,197 +423,5 @@
     </div>
     @endif
 
-    <!-- Delivery Detail Modal -->
-    @if($showDetailModal && $selectedDelivery)
-    <div class="modal modal-open">
-        <div class="modal-box max-w-4xl">
-            <h3 class="font-bold text-lg mb-4">Detail Pengiriman</h3>
-            
-            <!-- Order Info -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <!-- Left Column: Order Details -->
-                <div class="space-y-4">
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h4 class="font-semibold text-md mb-3">Informasi Pesanan</h4>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="font-medium">No. Pesanan:</span>
-                                <span>{{ $selectedDelivery->order->order_number }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="font-medium">Tanggal Pesanan:</span>
-                                <span>{{ $selectedDelivery->order->created_at->format('d/m/Y H:i') }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="font-medium">Status Pesanan:</span>
-                                <span class="badge badge-info">{{ ucfirst($selectedDelivery->order->status) }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="font-medium">Total Pesanan:</span>
-                                <span class="font-semibold">Rp {{ number_format($selectedDelivery->order->total_amount, 0, ',', '.') }}</span>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Customer Info -->
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h4 class="font-semibold text-md mb-3">Informasi Pelanggan</h4>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="font-medium">Nama:</span>
-                                <span>{{ $selectedDelivery->order->user->name }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="font-medium">Email:</span>
-                                <span>{{ $selectedDelivery->order->user->email }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="font-medium">Telepon:</span>
-                                <span>{{ $selectedDelivery->order->user->phone ?? '-' }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Column: Delivery Details -->
-                <div class="space-y-4">
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h4 class="font-semibold text-md mb-3">Informasi Pengiriman</h4>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="font-medium">Status:</span>
-                                <span class="badge badge-info">{{ $selectedDelivery->delivery_status_label }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="font-medium">Tipe Pengiriman:</span>
-                                <span>{{ $selectedDelivery->delivery_type_label }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="font-medium">Ongkos Kirim:</span>
-                                <span>{{ $selectedDelivery->formatted_fee }}</span>
-                            </div>
-                            @if($selectedDelivery->estimated_delivery)
-                            <div class="flex justify-between">
-                                <span class="font-medium">Estimasi:</span>
-                                <span>{{ $selectedDelivery->estimated_delivery->format('d/m/Y H:i') }}</span>
-                            </div>
-                            @endif
-                            @if($selectedDelivery->delivered_at)
-                            <div class="flex justify-between">
-                                <span class="font-medium">Diterima:</span>
-                                <span>{{ $selectedDelivery->delivered_at->format('d/m/Y H:i') }}</span>
-                            </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- Delivery Address -->
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h4 class="font-semibold text-md mb-3">Alamat Pengiriman</h4>
-                        <div class="text-sm">
-                            @if(is_array($selectedDelivery->delivery_address))
-                                {{ $selectedDelivery->delivery_address['street'] ?? '' }}<br>
-                                {{ $selectedDelivery->delivery_address['village'] ?? '' }}, 
-                                {{ $selectedDelivery->delivery_address['district'] ?? '' }}<br>
-                                {{ $selectedDelivery->delivery_address['city'] ?? '' }}, 
-                                {{ $selectedDelivery->delivery_address['province'] ?? '' }}
-                            @else
-                                {{ $selectedDelivery->delivery_address }}
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Order Items -->
-            <div class="mb-6">
-                <h4 class="font-semibold text-md mb-3">Daftar Produk</h4>
-                <div class="overflow-x-auto">
-                    <table class="table table-zebra w-full">
-                        <thead>
-                            <tr>
-                                <th>Produk</th>
-                                <th>Harga</th>
-                                <th>Qty</th>
-                                <th>Subtotal</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($selectedDelivery->order->items as $item)
-                            <tr>
-                                <td>
-                                    <div class="font-medium">{{ $item->product->name }}</div>
-                                    <div class="text-sm text-gray-500">{{ $item->product->category->name ?? 'Tanpa Kategori' }}</div>
-                                </td>
-                                <td>Rp {{ number_format($item->price, 0, ',', '.') }}</td>
-                                <td>{{ $item->quantity }}</td>
-                                <td>Rp {{ number_format($item->price * $item->quantity, 0, ',', '.') }}</td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Payment Info -->
-            @if($selectedDelivery->order->payment)
-            <div class="mb-6">
-                <h4 class="font-semibold text-md mb-3">Informasi Pembayaran</h4>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <div class="grid grid-cols-2 gap-4 text-sm">
-                        <div class="flex justify-between">
-                            <span class="font-medium">Metode:</span>
-                            <span>{{ $selectedDelivery->order->payment->paymentMethod->name ?? 'Manual Transfer' }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="font-medium">Status:</span>
-                            <span class="badge badge-success">{{ ucfirst($selectedDelivery->order->payment->status) }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="font-medium">Jumlah:</span>
-                            <span>Rp {{ number_format($selectedDelivery->order->payment->amount, 0, ',', '.') }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="font-medium">Tanggal:</span>
-                            <span>{{ $selectedDelivery->order->payment->created_at->format('d/m/Y H:i') }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endif
-
-            <!-- Delivery Photo -->
-            @if($selectedDelivery->delivery_photo)
-            <div class="mb-6">
-                <h4 class="font-semibold text-md mb-3">Foto Pengiriman</h4>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <img src="{{ Storage::url($selectedDelivery->delivery_photo) }}" 
-                         class="w-64 h-64 object-cover rounded-lg border" 
-                         alt="Foto Pengiriman">
-                </div>
-            </div>
-            @endif
-
-            <!-- Delivery Notes -->
-            @if($selectedDelivery->delivery_notes)
-            <div class="mb-6">
-                <h4 class="font-semibold text-md mb-3">Catatan Kurir</h4>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-sm">{{ $selectedDelivery->delivery_notes }}</p>
-                </div>
-            </div>
-            @endif
-
-            <!-- Actions -->
-            <div class="modal-action">
-                <button type="button" wire:click="closeModal" class="btn btn-ghost">Tutup</button>
-                @if($selectedDelivery->canBeUpdatedByCourier())
-                    <button wire:click="showUpdateDelivery({{ $selectedDelivery->delivery_id }})" class="btn btn-primary">
-                        Update Status
-                    </button>
-                @endif
-            </div>
-        </div>
-    </div>
-    @endif
 </div>

@@ -35,7 +35,7 @@ class OrderStatusActions extends Component
 
         // Add validation rules based on action type
         if ($this->actionType === 'cancel') {
-            $rules['cancellationReason'] = 'required|string|max:500';
+            $rules['cancelReason'] = 'required|string|max:500';
         }
 
         // Add receipt image validation when action type is ready_to_ship
@@ -71,7 +71,7 @@ class OrderStatusActions extends Component
     }
 
     protected $messages = [
-        'cancelReason.required_if' => 'Alasan pembatalan harus diisi.',
+        'cancelReason.required' => 'Alasan pembatalan harus diisi.',
         'receiptImage.image' => 'File harus berupa gambar.',
         'receiptImage.max' => 'Ukuran file maksimal 2MB.',
         'receiptImage.required_if' => 'Struk pesanan harus diupload untuk menandai pesanan siap diantar.',
@@ -250,7 +250,7 @@ class OrderStatusActions extends Component
                     'autoHide' => true,
                     'delay' => 4000
                 ]);
-                // Auto refresh halaman setelah 1  detik
+                // Auto refresh halaman setelah 1 detik
                 $this->dispatch('auto-refresh-page', ['delay' => 1000]);
             } else {
                 $this->dispatch('show-notification', [
@@ -272,12 +272,28 @@ class OrderStatusActions extends Component
         } catch (\Exception $e) {
             // Handle other errors - close modal and show error
             $this->closeModal();
-            \Log::error('Error in confirmOrder: ' . $e->getMessage());
+            \Log::error('Error in confirmOrder', [
+                'order_id' => $this->order->order_id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Provide more specific error messages
+            $errorMessage = 'Terjadi kesalahan sistem. Silakan coba lagi.';
+            
+            if (str_contains($e->getMessage(), 'confirmation_note')) {
+                $errorMessage = 'Gagal menyimpan catatan konfirmasi. Periksa koneksi database.';
+            } elseif (str_contains($e->getMessage(), 'status')) {
+                $errorMessage = 'Gagal mengubah status pesanan. Periksa status pesanan saat ini.';
+            } elseif (str_contains($e->getMessage(), 'receipt_image')) {
+                $errorMessage = 'Gagal menyimpan gambar struk. Periksa file yang diupload.';
+            }
+
             $this->dispatch('show-notification', [
                 'type' => 'error',
-                'message' => 'Terjadi kesalahan sistem. Silakan coba lagi.',
+                'message' => $errorMessage,
                 'autoHide' => true,
-                'delay' => 4000
+                'delay' => 5000
             ]);
         }
     }
@@ -316,9 +332,7 @@ class OrderStatusActions extends Component
                 'autoHide' => true,
                 'delay' => 4000
             ]);
-            // Auto refresh halaman setelah 1  detik
-            $this->dispatch('auto-refresh-page', ['delay' => 1000]);
-            // Auto refresh halaman setelah 1  detik
+            // Auto refresh halaman setelah 1 detik
             $this->dispatch('auto-refresh-page', ['delay' => 1000]);
         } else {
             session()->flash('error', 'Gagal membatalkan pesanan!');
@@ -336,38 +350,70 @@ class OrderStatusActions extends Component
      */
     public function markAsProcessing()
     {
-        // Check if order exists
-        if (!isset($this->order) || !$this->order) {
-            session()->flash('error', 'Data pesanan tidak ditemukan!');
-            return;
-        }
+        try {
+            // Check if order exists
+            if (!isset($this->order) || !$this->order) {
+                $this->dispatch('show-notification', [
+                    'type' => 'error',
+                    'message' => 'Data pesanan tidak ditemukan!',
+                    'autoHide' => true,
+                    'delay' => 4000
+                ]);
+                return;
+            }
 
-        if (!$this->order->canBeProcessed()) {
-            session()->flash('error', 'Pesanan tidak dapat diproses!');
-            return;
-        }
+            if (!$this->order->canBeProcessed()) {
+                $this->dispatch('show-notification', [
+                    'type' => 'error',
+                    'message' => 'Pesanan tidak dapat diproses! Status saat ini: ' . $this->order->status,
+                    'autoHide' => true,
+                    'delay' => 5000
+                ]);
+                return;
+            }
 
-        $success = $this->order->markAsProcessing();
+            $success = $this->order->markAsProcessing();
 
-        if ($success) {
-            session()->flash('success', 'Pesanan berhasil diubah ke status diproses!');
-            $this->closeModal();
-            $this->dispatch('orderUpdated');
-            $this->dispatch('show-notification', [
-                'type' => 'success',
-                'message' => 'Pesanan berhasil diubah ke status diproses!',
-                'autoHide' => true,
-                'delay' => 4000
+            if ($success) {
+                $this->closeModal();
+                $this->dispatch('orderUpdated');
+                $this->dispatch('show-notification', [
+                    'type' => 'success',
+                    'message' => 'Pesanan berhasil diubah ke status diproses!',
+                    'autoHide' => true,
+                    'delay' => 4000
+                ]);
+                // Auto refresh halaman setelah 1 detik
+                $this->dispatch('auto-refresh-page', ['delay' => 1000]);
+            } else {
+                $this->dispatch('show-notification', [
+                    'type' => 'error',
+                    'message' => 'Gagal mengubah status pesanan! Periksa log untuk detail error.',
+                    'autoHide' => true,
+                    'delay' => 5000
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error in markAsProcessing', [
+                'order_id' => $this->order->order_id ?? 'unknown',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
-            // Auto refresh halaman setelah 1  detik
-            $this->dispatch('auto-refresh-page', ['delay' => 1000]);
-        } else {
-            session()->flash('error', 'Gagal mengubah status pesanan!');
+
+            // Provide more specific error messages
+            $errorMessage = 'Terjadi kesalahan sistem saat memproses pesanan.';
+            
+            if (str_contains($e->getMessage(), 'processing_at')) {
+                $errorMessage = 'Gagal menyimpan waktu proses. Periksa koneksi database.';
+            } elseif (str_contains($e->getMessage(), 'status')) {
+                $errorMessage = 'Gagal mengubah status pesanan. Periksa status pesanan saat ini.';
+            }
+
             $this->dispatch('show-notification', [
                 'type' => 'error',
-                'message' => 'Gagal mengubah status pesanan!',
+                'message' => $errorMessage,
                 'autoHide' => true,
-                'delay' => 4000
+                'delay' => 5000
             ]);
         }
     }
@@ -514,7 +560,7 @@ class OrderStatusActions extends Component
                 'autoHide' => true,
                 'delay' => 4000
             ]);
-            // Auto refresh halaman setelah 1  detik
+            // Auto refresh halaman setelah 1 detik
             $this->dispatch('auto-refresh-page', ['delay' => 1000]);
         } else {
             session()->flash('error', 'Gagal mengubah status pesanan!');
@@ -576,7 +622,7 @@ class OrderStatusActions extends Component
                 'autoHide' => true,
                 'delay' => 4000
             ]);
-            // Auto refresh halaman setelah 1  detik
+            // Auto refresh halaman setelah 1 detik
             $this->dispatch('auto-refresh-page', ['delay' => 1000]);
         } else {
             session()->flash('error', 'Gagal mengkonfirmasi pengambilan pesanan!');
@@ -637,7 +683,7 @@ class OrderStatusActions extends Component
                 'autoHide' => true,
                 'delay' => 4000
             ]);
-            // Auto refresh halaman setelah 1  detik
+            // Auto refresh halaman setelah 1 detik
             $this->dispatch('auto-refresh-page', ['delay' => 1000]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Handle validation errors
@@ -695,7 +741,7 @@ class OrderStatusActions extends Component
                 'autoHide' => true,
                 'delay' => 4000
             ]);
-            // Auto refresh halaman setelah 1  detik
+            // Auto refresh halaman setelah 1 detik
             $this->dispatch('auto-refresh-page', ['delay' => 1000]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Handle validation errors

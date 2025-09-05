@@ -101,6 +101,10 @@
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                                 </svg>
+                                                @elseif($order->status === 'failed')
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                                </svg>
                                                 @endif
                                                 {{ $order->status_label }}
                                             </span>
@@ -117,6 +121,33 @@
                                                 {{ $order->shipping_type_label }}
                                             </span>
                                         </div>
+                                        
+                                        {{-- Failed delivery information --}}
+                                        @if($order->status === 'failed' && ($order->failed_by_courier_id || $order->failed_reason))
+                                        <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                            <div class="flex items-start gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                                </svg>
+                                                <div class="flex-1">
+                                                    <h5 class="text-sm font-medium text-red-800 mb-1">Pengiriman Gagal</h5>
+                                                    @if($order->failed_by_courier_id && $order->failedByCourier)
+                                                    <p class="text-xs text-red-700 mb-1">
+                                                        <span class="font-medium">Kurir:</span> {{ $order->failedByCourier->name }}
+                                                        @if($order->failedByCourier->phone)
+                                                        <span class="text-red-600">({{ $order->failedByCourier->phone }})</span>
+                                                        @endif
+                                                    </p>
+                                                    @endif
+                                                    @if($order->failed_reason)
+                                                    <p class="text-xs text-red-700">
+                                                        <span class="font-medium">Alasan:</span> {{ $order->failed_reason }}
+                                                    </p>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @endif
                                     </div>
                                 </div>
 

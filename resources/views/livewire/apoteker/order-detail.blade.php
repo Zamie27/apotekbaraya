@@ -84,21 +84,21 @@
                                 <div class="flex items-start gap-4">
                                     <div class="flex-shrink-0">
                                         @if ($step['completed'])
-                                            @if ($step['label'] === 'Dibatalkan')
-                                                <!-- Cancelled status with red styling -->
-                                                <div class="w-8 h-8 bg-error rounded-full flex items-center justify-center">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </div>
-                                            @else
-                                                <!-- Normal completed status with green styling -->
-                                                <div class="w-8 h-8 bg-success rounded-full flex items-center justify-center">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                </div>
-                                            @endif
+                                @if (in_array($step['label'], ['Dibatalkan', 'Gagal Diantar']))
+                                    <!-- Cancelled/Failed status with red styling -->
+                                    <div class="w-8 h-8 bg-error rounded-full flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </div>
+                                @else
+                                    <!-- Normal completed status with green styling -->
+                                    <div class="w-8 h-8 bg-success rounded-full flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                @endif
                                         @else
                                             <!-- Pending status with gray styling -->
                                             <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
