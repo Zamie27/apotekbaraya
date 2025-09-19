@@ -93,18 +93,29 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const payButton = document.getElementById('pay-button');
+        let isPaymentInProgress = false;
 
-        // Listen for payment redirect events from Livewire
-        window.addEventListener('payment-redirect', function(event) {
-            console.log('Redirecting to:', event.detail.url);
-            // Add small delay to ensure session flash messages are set
-            setTimeout(function() {
-                window.location.href = event.detail.url;
-            }, 500);
-        });
+        // Function to reset button state
+        function resetPayButton() {
+            payButton.disabled = false;
+            payButton.innerHTML = `
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                Bayar Sekarang
+            `;
+            isPaymentInProgress = false;
+        }
 
         payButton.addEventListener('click', function(e) {
             e.preventDefault();
+
+            // Prevent multiple clicks
+            if (isPaymentInProgress) {
+                return;
+            }
+
+            isPaymentInProgress = true;
 
             // Disable button to prevent double click
             payButton.disabled = true;
@@ -132,9 +143,24 @@
                 },
                 onClose: function() {
                     console.log('Payment popup closed');
+                    // Reset button state when popup is closed
+                    resetPayButton();
+                    // Call Livewire method to handle close
                     @this.call('handlePaymentClose');
                 }
             });
+        });
+    });
+
+    // Listen for Livewire events
+    document.addEventListener('livewire:initialized', () => {
+        // Listen for payment redirect events from Livewire
+        Livewire.on('payment-redirect', (event) => {
+            console.log('Redirecting to:', event.url);
+            // Add small delay to ensure session flash messages are set
+            setTimeout(function() {
+                window.location.href = event.url;
+            }, 500);
         });
     });
 </script>

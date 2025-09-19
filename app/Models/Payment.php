@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\Refund;
 
 class Payment extends Model
 {
@@ -35,7 +38,14 @@ class Payment extends Model
      */
     protected $casts = [
         'amount' => 'decimal:2',
-        'paid_at' => 'datetime'
+        'paid_at' => 'datetime:Y-m-d H:i:s'
+    ];
+
+    /**
+     * The attributes that should be treated as dates.
+     */
+    protected $dates = [
+        'paid_at'
     ];
 
     /**
@@ -60,6 +70,23 @@ class Payment extends Model
     public function paymentMethod(): BelongsTo
     {
         return $this->belongsTo(PaymentMethod::class, 'payment_method_id', 'payment_method_id');
+    }
+
+    /**
+     * Get the refunds for the payment.
+     */
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(Refund::class, 'payment_id', 'payment_id');
+    }
+
+    /**
+     * Get the latest refund for the payment.
+     */
+    public function latestRefund(): HasOne
+    {
+        return $this->hasOne(Refund::class, 'payment_id', 'payment_id')
+                    ->latest('created_at');
     }
 
     /**

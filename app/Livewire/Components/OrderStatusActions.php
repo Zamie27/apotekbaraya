@@ -4,6 +4,7 @@ namespace App\Livewire\Components;
 
 use App\Models\Order;
 use App\Models\User;
+use App\Models\UserLog;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -18,6 +19,7 @@ class OrderStatusActions extends Component
     public string $actionType = '';
     public string $confirmationNote = '';
     public string $cancelReason = '';
+    public string $actionReason = '';
     public string $cancellationReason = '';
     public $receiptImage;
     public $pickupImage;
@@ -120,6 +122,8 @@ class OrderStatusActions extends Component
         $this->confirmationNote = '';
         $this->cancelReason = '';
         $this->cancellationReason = '';
+        $this->actionReason = '';
+        $this->actionReason = '';
         $this->receiptImage = null;
         $this->pickupImage = null;
         $this->deliveryImage = null;
@@ -136,6 +140,9 @@ class OrderStatusActions extends Component
                 break;
             case 'cancel':
                 $this->cancelOrder();
+                break;
+            case 'delete':
+                $this->deleteOrder();
                 break;
             case 'process':
                 $this->markAsProcessing();
@@ -301,46 +308,126 @@ class OrderStatusActions extends Component
 
 
     /**
-     * Cancel order.
+     * Cancel order with reason.
      */
     public function cancelOrder()
     {
-        // Check if order exists
-        if (!isset($this->order) || !$this->order) {
-            session()->flash('error', 'Data pesanan tidak ditemukan!');
-            return;
-        }
-
         $this->validate([
-            'cancelReason' => 'required|string|max:500'
+            'actionReason' => 'required|string|min:10|max:500'
+        ], [
+            'actionReason.required' => 'Alasan pembatalan harus diisi',
+            'actionReason.min' => 'Alasan pembatalan minimal 10 karakter',
+            'actionReason.max' => 'Alasan pembatalan maksimal 500 karakter'
         ]);
 
         if (!$this->order->canBeCancelled()) {
-            session()->flash('error', 'Pesanan tidak dapat dibatalkan!');
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => 'Pesanan tidak dapat dibatalkan pada status ini!',
+                'autoHide' => true,
+                'delay' => 5000
+            ]);
             return;
         }
 
-        $success = $this->order->cancelOrder($this->cancelReason, Auth::id());
+        try {
+            $success = $this->order->cancelOrder(
+                $this->actionReason,
+                auth()->id(),
+                true // Process refund automatically
+            );
 
-        if ($success) {
-            session()->flash('success', 'Pesanan berhasil dibatalkan!');
-            $this->closeModal();
-            $this->dispatch('orderUpdated');
-            $this->dispatch('show-notification', [
-                'type' => 'success',
-                'message' => 'Pesanan berhasil dibatalkan!',
-                'autoHide' => true,
-                'delay' => 4000
+            if ($success) {
+                $this->dispatch('show-notification', [
+                    'type' => 'success',
+                    'message' => 'Pesanan berhasil dibatalkan!',
+                    'autoHide' => true,
+                    'delay' => 5000
+                ]);
+                
+                $this->dispatch('orderUpdated');
+                $this->closeModal();
+            } else {
+                $this->dispatch('show-notification', [
+                    'type' => 'error',
+                    'message' => 'Gagal membatalkan pesanan. Silakan coba lagi.',
+                    'autoHide' => true,
+                    'delay' => 5000
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error cancelling order', [
+                'order_id' => $this->order->order_id,
+                'error' => $e->getMessage()
             ]);
-            // Auto refresh halaman setelah 1 detik
-            $this->dispatch('auto-refresh-page', ['delay' => 1000]);
-        } else {
-            session()->flash('error', 'Gagal membatalkan pesanan!');
+            
             $this->dispatch('show-notification', [
                 'type' => 'error',
-                'message' => 'Gagal membatalkan pesanan!',
+                'message' => 'Terjadi kesalahan saat membatalkan pesanan.',
                 'autoHide' => true,
-                'delay' => 4000
+                'delay' => 5000
+            ]);
+        }
+    }
+
+    /**
+     * Delete order permanently from database.
+     */
+    public function deleteOrder()
+    {
+        $this->validate([
+            'actionReason' => 'required|string|min:10|max:500'
+        ], [
+            'actionReason.required' => 'Alasan penghapusan harus diisi',
+            'actionReason.min' => 'Alasan penghapusan minimal 10 karakter',
+            'actionReason.max' => 'Alasan penghapusan maksimal 500 karakter'
+        ]);
+
+        if (!$this->order->canBeDeleted()) {
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => 'Pesanan tidak dapat dihapus pada status ini! Hanya pesanan dengan status pending, waiting_payment, waiting_confirmation, atau cancelled yang dapat dihapus.',
+                'autoHide' => true,
+                'delay' => 7000
+            ]);
+            return;
+        }
+
+        try {
+            $success = $this->order->deleteOrder(
+                $this->actionReason,
+                auth()->id()
+            );
+
+            if ($success) {
+                $this->dispatch('show-notification', [
+                    'type' => 'success',
+                    'message' => 'Pesanan berhasil dihapus dari sistem!',
+                    'autoHide' => true,
+                    'delay' => 5000
+                ]);
+                
+                // Redirect to order management page since order is deleted
+                return redirect()->route('admin.orders');
+            } else {
+                $this->dispatch('show-notification', [
+                    'type' => 'error',
+                    'message' => 'Gagal menghapus pesanan. Silakan coba lagi.',
+                    'autoHide' => true,
+                    'delay' => 5000
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error deleting order', [
+                'order_id' => $this->order->order_id,
+                'error' => $e->getMessage()
+            ]);
+            
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => 'Terjadi kesalahan saat menghapus pesanan.',
+                'autoHide' => true,
+                'delay' => 5000
             ]);
         }
     }
@@ -485,6 +572,23 @@ class OrderStatusActions extends Component
             $success = $this->order->markAsReadyToShip($receiptPath, $courierId);
 
             if ($success) {
+                // Log activity for courier assignment
+                if ($courierId) {
+                    $courier = User::find($courierId);
+                    UserLog::logDeliveryActivity(
+                        Auth::id(),
+                        'courier_assigned',
+                        "Kurir {$courier->name} ditugaskan untuk mengantar pesanan #{$this->order->order_id}",
+                        [
+                            'order_id' => $this->order->order_id,
+                            'courier_id' => $courierId,
+                            'courier_name' => $courier->name,
+                            'receipt_image' => $receiptPath,
+                            'shipping_type' => $this->order->shipping_type
+                        ]
+                    );
+                }
+
                 $this->closeModal();
                 $this->dispatch('orderUpdated');
                 $this->dispatch('show-notification', [
@@ -547,9 +651,25 @@ class OrderStatusActions extends Component
             // Update delivery status to in_transit if delivery record exists
             if ($this->order->delivery) {
                 $this->order->delivery->update([
-                    'delivery_status' => 'in_transit'
+                    'status' => 'in_transit'
                 ]);
             }
+
+            // Log shipping activity
+            $courierInfo = $this->order->delivery && $this->order->delivery->courier ? 
+                $this->order->delivery->courier->name : 'Tidak diketahui';
+            
+            UserLog::logDeliveryActivity(
+                Auth::id(),
+                'order_shipped',
+                "Pesanan #{$this->order->order_id} telah dikirim oleh kurir {$courierInfo}",
+                [
+                    'order_id' => $this->order->order_id,
+                    'courier_name' => $courierInfo,
+                    'shipping_type' => $this->order->shipping_type,
+                    'delivery_status' => 'in_transit'
+                ]
+            );
 
             session()->flash('success', 'Pesanan berhasil dikirim!');
             $this->closeModal();
@@ -674,6 +794,21 @@ class OrderStatusActions extends Component
             // Mark order as delivered
             $this->order->markAsDelivered($imagePath);
 
+            // Log delivery completion with proof
+            $courierInfo = Auth::user()->name;
+            UserLog::logDeliveryActivity(
+                Auth::id(),
+                'order_delivered',
+                "Pesanan #{$this->order->order_id} telah berhasil diantar oleh kurir {$courierInfo} dengan bukti pengiriman",
+                [
+                    'order_id' => $this->order->order_id,
+                    'courier_name' => $courierInfo,
+                    'delivery_proof' => $imagePath,
+                    'shipping_type' => $this->order->shipping_type,
+                    'delivery_status' => 'delivered'
+                ]
+            );
+
             session()->flash('success', 'Pesanan berhasil diselesaikan!');
             $this->closeModal();
             $this->dispatch('orderUpdated');
@@ -730,6 +865,19 @@ class OrderStatusActions extends Component
             $this->order->cancelOrder(
                 $this->cancellationReason,
                 auth()->user()->name . ' (Kurir)'
+            );
+
+            // Log delivery cancellation
+            UserLog::logDeliveryActivity(
+                Auth::id(),
+                'delivery_cancelled',
+                "Pengiriman pesanan #{$this->order->order_id} dibatalkan oleh kurir " . Auth::user()->name,
+                [
+                    'order_id' => $this->order->order_id,
+                    'courier_name' => Auth::user()->name,
+                    'cancellation_reason' => $this->cancellationReason,
+                    'shipping_type' => $this->order->shipping_type
+                ]
             );
 
             session()->flash('success', 'Pesanan berhasil dibatalkan!');
@@ -852,6 +1000,16 @@ class OrderStatusActions extends Component
                 'label' => 'Batalkan Pesanan',
                 'class' => 'btn-error',
                 'icon' => 'x-circle'
+            ];
+        }
+
+        // Delete order for admin only on specific statuses
+        if ($this->order->canBeDeleted() && in_array($this->userRole, ['admin'])) {
+            $actions[] = [
+                'type' => 'delete',
+                'label' => 'Hapus Pesanan',
+                'class' => 'btn-error',
+                'icon' => 'trash'
             ];
         }
 

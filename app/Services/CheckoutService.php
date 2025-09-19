@@ -237,7 +237,7 @@ class CheckoutService
                 'payment_method_id' => 1, // Default payment method, will be updated by callback
                 'amount' => $summary['total'],
                 'status' => 'pending', // Will be updated by Midtrans callback
-                'paid_at' => null,
+                // Remove paid_at from create, let it default to null
             ]);
 
             // Clear cart

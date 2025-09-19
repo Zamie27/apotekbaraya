@@ -362,4 +362,105 @@ class MidtransService
             ];
         }
     }
+
+    /**
+     * Refund a settled transaction
+     * 
+     * @param string $orderId Order ID or Transaction ID
+     * @param array $params Refund parameters
+     * @return array
+     */
+    public function refundTransaction($orderId, $params = [])
+    {
+        try {
+            // Set Midtrans configuration
+            Config::$serverKey = $this->serverKey;
+            Config::$isProduction = $this->isProduction;
+            Config::$isSanitized = true;
+            Config::$is3ds = true;
+
+            // Default refund parameters
+            $defaultParams = [
+                'refund_key' => 'refund_' . $orderId . '_' . time(),
+                'reason' => 'Customer cancellation request'
+            ];
+
+            // Merge with provided parameters
+            $refundParams = array_merge($defaultParams, $params);
+
+            // Call Midtrans refund API
+            $refundResult = \Midtrans\Transaction::refund($orderId, $refundParams);
+
+            return [
+                'success' => true,
+                'data' => $refundResult,
+                'message' => 'Refund request processed successfully'
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Refund failed: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Process refund or cancel based on transaction status
+     * 
+     * @param string $orderId Order ID or Transaction ID
+     * @param array $params Additional parameters
+     * @return array
+     */
+    public function processRefundOrCancel($orderId, $params = [])
+    {
+        try {
+            // Get transaction status first
+            $statusResult = $this->getTransactionStatus($orderId);
+            
+            if (!$statusResult['success']) {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to get transaction status: ' . $statusResult['message']
+                ];
+            }
+
+            $transactionStatus = $statusResult['data']->transaction_status ?? null;
+
+            // If transaction is settled, perform refund
+            if ($transactionStatus === 'settlement') {
+                return $this->refundTransaction($orderId, $params);
+            }
+            // If transaction is pending, perform cancel
+            elseif (in_array($transactionStatus, ['pending', 'authorize', 'capture'])) {
+                return $this->cancelTransaction($orderId);
+            }
+            // If already cancelled or failed
+            elseif (in_array($transactionStatus, ['cancel', 'expire', 'failure', 'deny'])) {
+                return [
+                    'success' => false,
+                    'message' => 'Transaction is already ' . $transactionStatus
+                ];
+            }
+            // If already refunded
+            elseif (in_array($transactionStatus, ['refund', 'partial_refund'])) {
+                return [
+                    'success' => false,
+                    'message' => 'Transaction is already refunded'
+                ];
+            }
+            else {
+                return [
+                    'success' => false,
+                    'message' => 'Cannot process refund/cancel for transaction status: ' . $transactionStatus
+                ];
+            }
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Error processing refund/cancel: ' . $e->getMessage()
+            ];
+        }
+    }
 }

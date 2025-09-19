@@ -61,7 +61,7 @@ class Deliveries extends Component
             ])
             ->where('courier_id', Auth::id())
             ->when($this->statusFilter !== 'all', function ($query) {
-                $query->where('delivery_status', $this->statusFilter);
+                $query->where('status', $this->statusFilter);
             })
             ->when($this->search, function ($query) {
                 $query->whereHas('order', function ($q) {

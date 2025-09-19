@@ -189,7 +189,7 @@ class WebhookController extends Controller
                 break;
             case 'cancelled':
                 $updateData['cancelled_at'] = now();
-                $updateData['cancel_reason'] = 'Pembayaran gagal atau dibatalkan';
+                $updateData['cancellation_reason'] = 'Pembayaran gagal atau dibatalkan';
                 break;
         }
         

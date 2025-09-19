@@ -81,7 +81,7 @@ if ($this->newStatus === 'delivered') {
 public function showUpdateDeliveryModal()
 {
     $this->deliveryNotes = $this->delivery->delivery_notes ?? '';
-    $this->newStatus = $this->delivery->delivery_status;
+    $this->newStatus = $this->delivery->status;
     $this->showUpdateModal = true;
 }
 

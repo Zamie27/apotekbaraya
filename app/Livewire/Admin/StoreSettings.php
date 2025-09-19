@@ -18,6 +18,7 @@ class StoreSettings extends Component
     public $store_province = '';
     public $store_postal_code = '';
     public $store_phone = '';
+    public $store_whatsapp = ''; // WhatsApp number for customer contact
     public $store_email = '';
     public $store_hours = ''; // Store operating hours for pickup
 
@@ -40,7 +41,8 @@ class StoreSettings extends Component
         'store_regency' => 'required|string|max:255', // Kabupaten/Kota
         'store_province' => 'required|string|max:255', // Provinsi
         'store_postal_code' => 'required|string|max:10', // Kode Pos
-        'store_phone' => 'required|string|max:20',
+        'store_phone' => 'required|string|max:20|regex:/^\+62[0-9]{8,13}$/',
+        'store_whatsapp' => 'nullable|string|max:20|regex:/^\+62[0-9]{8,13}$/',
         'store_email' => 'required|email|max:255',
         'store_hours' => 'required|string|max:255', // Store operating hours
         'shipping_rate_per_km' => 'required|numeric|min:0',
@@ -57,6 +59,9 @@ class StoreSettings extends Component
         'store_province.required' => 'Provinsi wajib diisi.',
         'store_postal_code.required' => 'Kode pos wajib diisi.',
         'store_phone.required' => 'Nomor telepon wajib diisi.',
+        'store_phone.regex' => 'Nomor telepon harus menggunakan format +62 (contoh: +6281234567890). Jangan gunakan awalan 08.',
+        'store_whatsapp.max' => 'Nomor WhatsApp maksimal 20 karakter.',
+        'store_whatsapp.regex' => 'Nomor WhatsApp harus menggunakan format +62 (contoh: +6281234567890). Jangan gunakan awalan 08.',
         'store_email.required' => 'Email toko wajib diisi.',
         'store_email.email' => 'Format email tidak valid.',
         'store_hours.required' => 'Jam operasional toko wajib diisi.',
@@ -89,6 +94,7 @@ class StoreSettings extends Component
             $this->store_province = StoreSetting::get('store_province', '');
             $this->store_postal_code = StoreSetting::get('store_postal_code', '');
             $this->store_phone = StoreSetting::get('store_phone', '');
+            $this->store_whatsapp = StoreSetting::get('whatsapp_number', '');
             $this->store_email = StoreSetting::get('store_email', '');
             $this->store_hours = StoreSetting::get('store_hours', 'Senin-Sabtu: 08:00-20:00');
 
@@ -119,6 +125,7 @@ class StoreSettings extends Component
             StoreSetting::set('store_province', $this->store_province, 'string');
             StoreSetting::set('store_postal_code', $this->store_postal_code, 'string');
             StoreSetting::set('store_phone', $this->store_phone, 'string');
+            StoreSetting::set('whatsapp_number', $this->store_whatsapp, 'string');
             StoreSetting::set('store_email', $this->store_email, 'string');
             StoreSetting::set('store_hours', $this->store_hours, 'string');
 
@@ -127,11 +134,18 @@ class StoreSettings extends Component
             StoreSetting::set('max_delivery_distance', $this->max_delivery_distance, 'number');
             StoreSetting::set('free_shipping_minimum', $this->free_shipping_minimum, 'number');
 
-            $this->successMessage = 'Pengaturan toko berhasil disimpan!';
-            $this->errorMessage = '';
-
             // Clear cache
             StoreSetting::clearCache();
+            
+            // Reload settings to ensure form data is preserved
+            $this->loadSettings();
+
+            // Dispatch success event with notification and page refresh
+            $this->dispatch('settings-saved', [
+                'message' => 'Pengaturan toko berhasil disimpan!',
+                'type' => 'success'
+            ]);
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->errorMessage = 'Validasi gagal. Periksa kembali data yang dimasukkan.';
             throw $e;

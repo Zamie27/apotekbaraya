@@ -44,10 +44,14 @@ class StoreSettingsSeeder extends Seeder
                 'value' => '15',
                 'type' => 'number'
             ],
-            [
-                'key' => 'free_shipping_minimum',
+            [                'key' => 'free_shipping_minimum',
                 'value' => '100000',
                 'type' => 'number'
+            ],
+            [
+                'key' => 'store_hours',
+                'value' => 'Senin-Sabtu: 08:00-20:00',
+                'type' => 'string'
             ],
             // Google Maps API key removed - now using OpenStreetMap Nominatim
             // [

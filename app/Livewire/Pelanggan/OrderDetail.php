@@ -22,6 +22,13 @@ class OrderDetail extends Component
     public $cancelReason = '';
     public $cancelReasonOther = '';
     
+    // Refund properties
+    public $showRefundModal = false;
+    public $refundReason = '';
+    public $customRefundReason = '';
+    public $refundDescription = '';
+    public $selectedRefundOrderId = null;
+    
     // Delivery proof modal properties
     public $showDeliveryProofModal = false;
     public $deliveryProofImage = null;
@@ -30,6 +37,24 @@ class OrderDetail extends Component
     public $isCheckingPaymentStatus = false;
     public $paymentStatusMessage = '';
     
+    protected $rules = [
+        'cancelReason' => 'required|string',
+        'cancelReasonOther' => 'required_if:cancelReason,lainnya|string|min:3',
+        'refundReason' => 'required|string',
+        'customRefundReason' => 'required_if:refundReason,lainnya|string|min:3',
+        'refundDescription' => 'nullable|string|max:500',
+    ];
+
+    protected $messages = [
+        'cancelReason.required' => 'Alasan pembatalan harus dipilih.',
+        'cancelReasonOther.required_if' => 'Alasan lainnya harus diisi.',
+        'cancelReasonOther.min' => 'Alasan lainnya minimal 3 karakter.',
+        'refundReason.required' => 'Alasan refund harus dipilih.',
+        'customRefundReason.required_if' => 'Alasan lainnya harus diisi.',
+        'customRefundReason.min' => 'Alasan lainnya minimal 3 karakter.',
+        'refundDescription.max' => 'Keterangan tambahan maksimal 500 karakter.',
+    ];
+
     /**
      * Check if cancel button should be enabled
      * 
@@ -143,26 +168,44 @@ class OrderDetail extends Component
                 : $this->getCancelReasonText($this->cancelReason);
 
             // Cancel the order
-            $this->order->cancelOrder($cancelReasonText, auth()->id());
+            $success = $this->order->cancelOrder($cancelReasonText, auth()->id());
 
-            // Log the cancellation
-            Log::info('Order cancelled by customer', [
-                'order_id' => $this->order->id,
-                'customer_id' => auth()->id(),
-                'reason' => $cancelReasonText
-            ]);
+            if ($success) {
+                // Log the cancellation
+                Log::info('Order cancelled by customer', [
+                    'order_id' => $this->order->id,
+                    'customer_id' => auth()->id(),
+                    'reason' => $cancelReasonText
+                ]);
 
-            // Close modal and reset
-            $this->closeCancelModal();
+                // Close modal and reset immediately
+                $this->closeCancelModal();
 
-            // Refresh order data
-            $this->loadOrder();
+                // Force refresh order data from database
+                $this->order = null; // Clear cached order
+                $this->loadOrder(); // Reload fresh data
+                
+                // Dispatch refresh events
+                $this->dispatch('orderUpdated');
+                $this->dispatch('$refresh');
+                
+                // Dispatch notification and auto-refresh page
+                $this->dispatch('show-notification', [
+                    'type' => 'success',
+                    'message' => 'Pesanan berhasil dibatalkan.'
+                ]);
+                
+                // Auto-refresh page after 1 second
+                $this->dispatch('auto-refresh-page');
 
-            session()->flash('success', 'Pesanan berhasil dibatalkan.');
+                session()->flash('success', 'Pesanan berhasil dibatalkan.');
+            } else {
+                session()->flash('error', 'Gagal membatalkan pesanan. Pesanan mungkin tidak dapat dibatalkan.');
+            }
             
         } catch (\Exception $e) {
             Log::error('Failed to cancel order', [
-                'order_id' => $this->order->id,
+                'order_id' => $this->order->id ?? 'unknown',
                 'error' => $e->getMessage()
             ]);
             
@@ -270,6 +313,114 @@ class OrderDetail extends Component
             // Clear status message after 3 seconds
             $this->dispatch('clear-payment-status-message');
         }
+    }
+
+    /**
+     * Open refund modal
+     */
+    public function openRefundModal($orderId)
+    {
+        $this->selectedRefundOrderId = $orderId;
+        $this->refundReason = '';
+        $this->customRefundReason = '';
+        $this->refundDescription = '';
+        $this->showRefundModal = true;
+        $this->resetErrorBag(['refundReason', 'customRefundReason', 'refundDescription']);
+    }
+
+    /**
+     * Submit refund request
+     */
+    public function submitRefundRequest()
+    {
+        // Validate refund data
+        $this->validate([
+            'refundReason' => 'required|string',
+            'customRefundReason' => 'required_if:refundReason,lainnya|string|min:3',
+            'refundDescription' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            // Check if order exists and belongs to current user
+            if (!$this->order || $this->order->user_id !== auth()->id()) {
+                session()->flash('error', 'Pesanan tidak ditemukan atau tidak memiliki akses.');
+                return;
+            }
+
+            // Check if order can be refunded
+            if (!$this->order->canBeRefunded()) {
+                session()->flash('error', 'Pesanan ini tidak dapat direfund.');
+                return;
+            }
+
+            // Check if refund already exists
+            if ($this->order->refunds()->where('status', '!=', 'rejected')->exists()) {
+                session()->flash('error', 'Refund untuk pesanan ini sudah pernah diajukan.');
+                return;
+            }
+
+            // Prepare refund reason
+            $finalReason = $this->refundReason === 'lainnya' ? $this->customRefundReason : $this->refundReason;
+
+            // Create refund request
+            $refund = $this->order->refunds()->create([
+                'refund_id' => 'REF-' . strtoupper(uniqid()),
+                'amount' => $this->order->total_amount,
+                'reason' => $finalReason,
+                'description' => $this->refundDescription,
+                'status' => 'pending',
+                'requested_at' => now(),
+            ]);
+
+            // Log refund request
+            Log::info('Refund request created', [
+                'refund_id' => $refund->refund_id,
+                'order_id' => $this->order->order_id,
+                'user_id' => auth()->id(),
+                'amount' => $refund->amount,
+                'reason' => $refund->reason,
+            ]);
+
+            // Close modal and show success message
+            $this->closeRefundModal();
+            session()->flash('success', 'Permintaan refund berhasil diajukan. Tim kami akan meninjau permintaan Anda.');
+            
+            // Refresh order data
+            $this->loadOrder();
+
+        } catch (\Exception $e) {
+            Log::error('Error creating refund request: ' . $e->getMessage());
+            session()->flash('error', 'Terjadi kesalahan saat mengajukan refund. Silakan coba lagi.');
+        }
+    }
+
+    /**
+     * Close refund modal
+     */
+    public function closeRefundModal()
+    {
+        $this->showRefundModal = false;
+        $this->selectedRefundOrderId = null;
+        $this->refundReason = '';
+        $this->customRefundReason = '';
+        $this->refundDescription = '';
+        $this->resetErrorBag(['refundReason', 'customRefundReason', 'refundDescription']);
+    }
+
+    /**
+     * Check if refund form can be submitted
+     */
+    public function getCanSubmitRefundProperty()
+    {
+        if (empty($this->refundReason)) {
+            return false;
+        }
+
+        if ($this->refundReason === 'lainnya' && (empty($this->customRefundReason) || strlen($this->customRefundReason) < 3)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -420,7 +571,7 @@ class OrderDetail extends Component
                 'completed' => true,
                 'icon' => 'x-circle',
                 'is_cancelled' => true,
-                'cancel_reason' => $this->order->cancel_reason
+                'cancel_reason' => $this->order->cancellation_reason
             ];
 
             return $timeline;

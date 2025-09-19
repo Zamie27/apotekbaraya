@@ -21,12 +21,13 @@ class DeliveryDetail extends Component
     public $timeline = [];
     public $shippingAddress = '';
 
-    // Modal properties for updating delivery
-    public $showUpdateModal = false;
+    // Modal state properties
+    public bool $showModal = false;
+    public string $actionType = '';
+    public string $newStatus = '';
+    public string $deliveryNotes = '';
+    public string $failedReason = '';
     public $deliveryPhoto;
-    public $deliveryNotes = '';
-    public $newStatus = '';
-    public $failedReason = '';
 
     // Validation rules (dynamic validation is used in updateDelivery method)
     protected $rules = [
@@ -86,13 +87,13 @@ class DeliveryDetail extends Component
         // Debug: Log current status for troubleshooting
         Log::info('Timeline Debug', [
             'order_status' => $order->status,
-            'delivery_status' => $delivery->delivery_status,
+            'status' => $delivery->status,
             'payment_status' => $order->payment?->payment_status,
             'order_id' => $order->order_id
         ]);
 
         // Check if order/delivery failed - if so, show completed steps up to failure point
-        $isFailed = $order->status === 'failed' || $delivery->delivery_status === 'failed';
+        $isFailed = $order->status === 'failed' || $delivery->status === 'failed';
         $isCancelled = $order->status === 'cancelled';
         
         $this->timeline = [
@@ -116,21 +117,21 @@ class DeliveryDetail extends Component
             ],
             [
                 'label' => 'Siap Diantar',
-                'completed' => in_array($delivery->delivery_status, ['ready_to_ship', 'in_transit', 'delivered']) || 
+                'completed' => in_array($delivery->status, ['ready_to_ship', 'in_transit', 'delivered']) || 
                               in_array($order->status, ['ready_to_ship', 'shipped', 'delivered', 'completed']) ||
                               ($isFailed && $order->ready_to_ship_at), // Show completed if failed but was ready to ship
                 'date' => $order->ready_to_ship_at
             ],
             [
                 'label' => 'Dalam Perjalanan',
-                'completed' => in_array($delivery->delivery_status, ['in_transit', 'delivered']) || 
+                'completed' => in_array($delivery->status, ['in_transit', 'delivered']) || 
                               in_array($order->status, ['shipped', 'delivered', 'completed']) ||
                               ($isFailed && $order->shipped_at), // Show completed if failed but was in transit
                 'date' => $order->shipped_at
             ],
             [
                 'label' => 'Terkirim',
-                'completed' => $delivery->delivery_status === 'delivered' || 
+                'completed' => $delivery->status === 'delivered' || 
                               $order->status === 'delivered' || 
                               $order->status === 'completed' ||
                               ($isFailed && $order->shipped_at), // Show completed if failed after being shipped
@@ -145,7 +146,7 @@ class DeliveryDetail extends Component
                 'completed' => true,
                 'date' => $order->cancelled_at
             ];
-        } elseif ($delivery->delivery_status === 'failed' || $order->status === 'failed') {
+        } elseif ($delivery->status === 'failed' || $order->status === 'failed') {
             $this->timeline[] = [
                 'label' => 'Gagal Kirim',
                 'completed' => true,
@@ -176,23 +177,14 @@ class DeliveryDetail extends Component
     }
 
     /**
-     * Show update delivery modal.
-     */
-    public function showUpdateDelivery()
-    {
-        $this->deliveryNotes = $this->delivery->delivery_notes ?? '';
-        $this->newStatus = $this->delivery->delivery_status;
-        $this->showUpdateModal = true;
-    }
-
-    /**
-     * Show update delivery modal with form for detailed status update.
+     * Show modal for updating delivery status.
      */
     public function showUpdateDeliveryModal()
     {
         $this->deliveryNotes = $this->delivery->delivery_notes ?? '';
-        $this->newStatus = $this->delivery->delivery_status;
-        $this->showUpdateModal = true;
+        $this->newStatus = ''; // Reset to empty so user must select new status
+        $this->failedReason = ''; // Reset failed reason
+        $this->showModal = true;
     }
 
     /**
@@ -207,22 +199,41 @@ class DeliveryDetail extends Component
     }
 
     /**
-     * Show confirmation modal for starting delivery.
+     * Open action modal for delivery status update
+     */
+    public function openActionModal($actionType)
+    {
+        Log::info('DeliveryDetail: Opening action modal', [
+            'delivery_id' => $this->delivery->delivery_id,
+            'action_type' => $actionType,
+            'current_status' => $this->delivery->status
+        ]);
+        
+        $this->actionType = $actionType;
+        $this->showModal = true;
+        $this->resetValidation();
+        
+        // Reset form fields
+        $this->deliveryNotes = '';
+        $this->failedReason = '';
+        $this->deliveryPhoto = null;
+        
+        // Set new status based on action type
+        $this->newStatus = match($actionType) {
+            'start_delivery' => 'in_transit',
+            'complete_delivery' => 'delivered',
+            'fail_delivery' => 'failed',
+            default => $this->delivery->status
+        };
+    }
+    
+    /**
+     * Show confirmation modal for starting delivery (backward compatibility)
      */
     public function showStartDeliveryConfirmation()
     {
-        $this->dispatch('show-confirmation', [
-            'title' => 'Konfirmasi Mulai Pengiriman',
-            'message' => 'Apakah Anda yakin ingin memulai pengiriman untuk pesanan ' . $this->delivery->order->order_number . '?',
-            'confirmText' => 'Ya, Mulai Pengiriman',
-            'cancelText' => 'Batal',
-            'confirmButtonClass' => 'btn-primary',
-            'actionMethod' => 'startDelivery',
-            'actionParams' => []
-        ]);
+        $this->openActionModal('start_delivery');
     }
-
-
 
     /**
      * Start delivery - change status from ready_to_ship to in_transit.
@@ -231,19 +242,19 @@ class DeliveryDetail extends Component
     {
         try {
             Log::info('StartDelivery called for delivery ID: ' . $this->delivery->delivery_id);
-            Log::info('Current delivery status: ' . $this->delivery->delivery_status);
+            Log::info('Current delivery status: ' . $this->delivery->status);
             Log::info('Current order status: ' . $this->delivery->order->status);
             
             // Check if delivery status is ready_to_ship
-            if ($this->delivery->delivery_status !== 'ready_to_ship') {
-                Log::warning('Delivery status is not ready_to_ship: ' . $this->delivery->delivery_status);
-                session()->flash('error', 'Pengiriman tidak dapat dimulai. Status saat ini: ' . $this->delivery->delivery_status);
+            if ($this->delivery->status !== 'ready_to_ship') {
+            Log::warning('Delivery status is not ready_to_ship: ' . $this->delivery->status);
+            session()->flash('error', 'Pengiriman tidak dapat dimulai. Status saat ini: ' . $this->delivery->status);
                 return;
             }
 
             // Update delivery status to in_transit
             $deliveryUpdated = $this->delivery->update([
-                'delivery_status' => 'in_transit'
+                'status' => 'in_transit'
             ]);
             Log::info('Delivery update result: ' . ($deliveryUpdated ? 'success' : 'failed'));
 
@@ -258,10 +269,16 @@ class DeliveryDetail extends Component
             $this->loadDelivery();
             $this->buildTimeline();
             
-            Log::info('After reload - Delivery status: ' . $this->delivery->delivery_status);
-            Log::info('After reload - Order status: ' . $this->delivery->order->status);
-
-            session()->flash('success', 'Pengiriman berhasil dimulai.');
+            // Close modal
+            $this->closeModal();
+            
+            session()->flash('success', 'Pengiriman berhasil dimulai!');
+            
+            Log::info('DeliveryDetail: Start delivery completed successfully', [
+                'delivery_id' => $this->delivery->delivery_id,
+                'new_delivery_status' => $this->delivery->status,
+                'new_order_status' => $this->delivery->order->status
+            ]);
 
         } catch (\Exception $e) {
             Log::error('Error starting delivery: ' . $e->getMessage());
@@ -271,73 +288,38 @@ class DeliveryDetail extends Component
     }
 
     /**
-     * Update delivery status with photo and notes.
+     * Update delivery status based on action type
      */
     public function updateDelivery()
     {
-        // Dynamic validation rules based on status
-        $rules = [
-            'deliveryNotes' => 'nullable|string|max:500',
-            'newStatus' => 'required|in:in_transit,delivered,failed',
-        ];
+        Log::info('UpdateDelivery method called', [
+            'delivery_id' => $this->delivery->delivery_id,
+            'current_status' => $this->delivery->status,
+            'action_type' => $this->actionType,
+            'new_status' => $this->newStatus,
+            'delivery_notes' => $this->deliveryNotes,
+            'failed_reason' => $this->failedReason ?? null,
+            'has_photo' => !empty($this->deliveryPhoto)
+        ]);
         
-        // Photo is optional for all statuses
-        $rules['deliveryPhoto'] = 'nullable|image|max:2048';
-        
-        // Failed reason is required only for failed status
-        if ($this->newStatus === 'failed') {
-            $rules['failedReason'] = 'required|string|max:500';
-        }
-
-        $this->validate($rules);
-
         try {
-            $updateData = [
-                'delivery_status' => $this->newStatus,
-                'delivery_notes' => $this->deliveryNotes
-            ];
-
-            // Handle photo upload
-            if ($this->deliveryPhoto) {
-                // Delete old photo if exists
-                if ($this->delivery->delivery_photo) {
-                    Storage::delete($this->delivery->delivery_photo);
-                }
-
-                $photoPath = $this->deliveryPhoto->store('delivery-photos', 'public');
-                $updateData['delivery_photo'] = $photoPath;
+            if ($this->actionType === 'complete_delivery') {
+                $this->completeDelivery();
+            } elseif ($this->actionType === 'fail_delivery') {
+                $this->failDelivery();
             }
-
-            // Handle status-specific updates
-            if ($this->newStatus === 'delivered') {
-                $updateData['delivered_at'] = now();
-                
-                // Update order status to delivered
-                $this->delivery->order->update([
-                    'status' => 'delivered',
-                    'delivered_at' => now()
-                ]);
-            } elseif ($this->newStatus === 'failed') {
-                // Update order status to failed when delivery fails
-                $this->delivery->order->update([
-                    'status' => 'failed',
-                    'failed_at' => now(),
-                    'failed_by_courier_id' => Auth::id(), // Store courier who failed the delivery
-                    'failed_reason' => $this->failedReason ?? 'Pengiriman gagal' // Store failure reason
-                ]);
-            }
-
-            // Update delivery
-            $this->delivery->update($updateData);
 
             // Reload data
             $this->loadDelivery();
             $this->buildTimeline();
 
-            // Reset form
-            $this->reset(['deliveryPhoto', 'deliveryNotes', 'newStatus', 'failedReason', 'showUpdateModal']);
-
-            session()->flash('success', 'Status pengiriman berhasil diperbarui.');
+            // Close modal and reset form
+            $this->closeModal();
+            
+            Log::info('UpdateDelivery completed successfully', [
+                'final_delivery_status' => $this->delivery->status,
+                'final_order_status' => $this->delivery->order->status
+            ]);
 
         } catch (\Exception $e) {
             Log::error('Error updating delivery: ' . $e->getMessage());
@@ -346,11 +328,189 @@ class DeliveryDetail extends Component
     }
 
     /**
-     * Close modal and reset form.
+     * Complete delivery process
+     */
+    private function completeDelivery()
+    {
+        $this->validate([
+            'deliveryPhoto' => 'required|image|max:2048',
+            'deliveryNotes' => 'nullable|string|max:500',
+        ]);
+
+        // Delete old photo if exists
+        if ($this->delivery->delivery_photo) {
+            Storage::delete($this->delivery->delivery_photo);
+        }
+
+        // Upload photo
+        $photoPath = $this->deliveryPhoto->store('delivery-photos', 'public');
+
+        $this->delivery->update([
+            'status' => 'delivered',
+            'delivered_at' => now(),
+            'delivery_photo' => $photoPath,
+            'delivery_notes' => $this->deliveryNotes,
+        ]);
+
+        // Update order status
+        $this->delivery->order->update([
+            'status' => 'delivered',
+            'delivered_at' => now()
+        ]);
+
+        session()->flash('success', 'Pengiriman berhasil diselesaikan!');
+        Log::info('Delivery completed', ['delivery_id' => $this->delivery->delivery_id]);
+    }
+
+    /**
+     * Mark delivery as failed
+     */
+    private function failDelivery()
+    {
+        $this->validate([
+            'failedReason' => 'required|string|max:500',
+            'deliveryNotes' => 'nullable|string|max:500',
+            'deliveryPhoto' => 'nullable|image|max:2048',
+        ]);
+
+        $updateData = [
+            'status' => 'failed',
+            'delivery_notes' => $this->deliveryNotes,
+        ];
+
+        // Handle optional photo upload for failed delivery
+        if ($this->deliveryPhoto) {
+            // Delete old photo if exists
+            if ($this->delivery->delivery_photo) {
+                Storage::delete($this->delivery->delivery_photo);
+            }
+            $photoPath = $this->deliveryPhoto->store('delivery-photos', 'public');
+            $updateData['delivery_photo'] = $photoPath;
+        }
+
+        $this->delivery->update($updateData);
+
+        // Update order status
+        $this->delivery->order->update([
+            'status' => 'failed',
+            'failed_at' => now(),
+            'failed_by_courier_id' => Auth::id(),
+            'failed_reason' => $this->failedReason
+        ]);
+
+        session()->flash('success', 'Status pengiriman berhasil diperbarui menjadi gagal.');
+        Log::info('Delivery marked as failed', ['delivery_id' => $this->delivery->delivery_id, 'reason' => $this->failedReason]);
+    }
+
+    /**
+     * Handle form submission based on action type
+     */
+    public function submitAction()
+    {
+        Log::info('DeliveryDetail: Submitting action', [
+            'delivery_id' => $this->delivery->delivery_id,
+            'action_type' => $this->actionType,
+            'new_status' => $this->newStatus
+        ]);
+        
+        try {
+            switch ($this->actionType) {
+                case 'start_delivery':
+                    $this->startDelivery();
+                    break;
+                case 'complete_delivery':
+                    $this->updateDelivery();
+                    break;
+                case 'fail_delivery':
+                    $this->updateDelivery();
+                    break;
+                default:
+                    session()->flash('error', 'Aksi tidak valid!');
+            }
+        } catch (\Exception $e) {
+            Log::error('Error in submitAction: ' . $e->getMessage());
+            session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get badge color class for delivery status
+     */
+    public function getDeliveryStatusBadgeColor($status)
+    {
+        return match($status) {
+            'pending' => 'badge-warning',
+            'ready_to_ship' => 'badge-info',
+            'in_transit' => 'badge-primary',
+            'delivered' => 'badge-success',
+            'failed' => 'badge-error',
+            default => 'badge-neutral'
+        };
+    }
+
+    /**
+     * Get human readable label for delivery status
+     */
+    public function getDeliveryStatusLabel($status)
+    {
+        return match($status) {
+            'pending' => 'Menunggu Pengiriman',
+            'ready_to_ship' => 'Siap Diantar',
+            'in_transit' => 'Pesanan Diantar',
+            'delivered' => 'Pesanan Selesai',
+            'failed' => 'Pesanan Dibatalkan',
+            default => 'Status Tidak Dikenal'
+        };
+    }
+
+    /**
+     * Get badge color class for order status
+     */
+    public function getOrderStatusBadgeColor($status)
+    {
+        return match($status) {
+            'pending' => 'badge-warning',
+            'confirmed' => 'badge-info',
+            'processing' => 'badge-primary',
+            'ready_to_ship' => 'badge-secondary',
+            'shipped' => 'badge-accent',
+            'delivered' => 'badge-success',
+            'cancelled' => 'badge-error',
+            'refunded' => 'badge-neutral',
+            default => 'badge-ghost'
+        };
+    }
+
+    /**
+     * Get human readable label for order status
+     */
+    public function getOrderStatusLabel($status)
+    {
+        return match($status) {
+            'pending' => 'Menunggu',
+            'confirmed' => 'Dikonfirmasi',
+            'processing' => 'Diproses',
+            'ready_to_ship' => 'Siap Diantar',
+            'shipped' => 'Dikirim',
+            'delivered' => 'Selesai',
+            'cancelled' => 'Dibatalkan',
+            'refunded' => 'Dikembalikan',
+            default => 'Status Tidak Diketahui'
+        };
+    }
+    
+    /**
+     * Close modal and reset form
      */
     public function closeModal()
     {
-        $this->reset(['deliveryPhoto', 'deliveryNotes', 'newStatus', 'failedReason', 'showUpdateModal']);
+        $this->showModal = false;
+        $this->actionType = '';
+        $this->newStatus = '';
+        $this->deliveryNotes = '';
+        $this->failedReason = '';
+        $this->deliveryPhoto = null;
+        $this->resetValidation();
     }
 
     /**

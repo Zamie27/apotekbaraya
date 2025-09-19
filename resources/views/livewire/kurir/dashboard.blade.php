@@ -137,7 +137,7 @@
                         <td>{{ $delivery->order->user->name }}</td>
                         <td>
                             @php
-                                $statusClass = match($delivery->delivery_status) {
+                                $statusClass = match($delivery->status) {
                                     'pending' => 'badge-warning',
                                     'in_transit' => 'badge-info',
                                     'delivered' => 'badge-success',

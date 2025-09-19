@@ -12,9 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->timestamp('cancelled_at')->nullable()->after('delivered_at');
-            $table->text('cancel_reason')->nullable()->after('cancelled_at');
-            $table->foreignId('cancelled_by')->nullable()->constrained('users', 'user_id')->after('cancel_reason');
+            // Add cancelled_by column to track who cancelled the order
+            $table->foreignId('cancelled_by')->nullable()->after('cancelled_at')
+                  ->constrained('users', 'user_id')
+                  ->onDelete('set null');
         });
     }
 
@@ -25,7 +26,7 @@ return new class extends Migration
     {
         Schema::table('orders', function (Blueprint $table) {
             $table->dropForeign(['cancelled_by']);
-            $table->dropColumn(['cancelled_at', 'cancel_reason', 'cancelled_by']);
+            $table->dropColumn('cancelled_by');
         });
     }
 };

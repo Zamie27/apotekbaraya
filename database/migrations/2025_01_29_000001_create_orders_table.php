@@ -70,10 +70,12 @@ return new class extends Migration
             $table->foreignId('courier_id')->nullable()->constrained('users', 'user_id');
             $table->json('delivery_address');
             $table->decimal('delivery_fee', 8, 2)->default(0);
-            $table->enum('delivery_type', ['regular', 'express'])->default('regular');
+            $table->enum('delivery_type', ['regular', 'express', 'standard'])->default('regular');
             $table->timestamp('estimated_delivery')->nullable();
             $table->timestamp('delivered_at')->nullable();
             $table->text('delivery_notes')->nullable();
+            $table->string('delivery_photo')->nullable();
+            $table->enum('status', ['pending', 'assigned', 'picked_up', 'in_transit', 'delivered', 'failed', 'ready_to_ship'])->default('pending');
             $table->timestamps();
         });
     }

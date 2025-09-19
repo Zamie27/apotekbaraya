@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->timestamp('ready_to_ship_at')->nullable()->after('confirmed_at');
+        Schema::table('user_logs', function (Blueprint $table) {
+            $table->text('description')->nullable()->after('action');
+            $table->json('details')->nullable()->after('description');
         });
     }
 
@@ -21,8 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn('ready_to_ship_at');
+        Schema::table('user_logs', function (Blueprint $table) {
+            $table->dropColumn(['description', 'details']);
         });
     }
 };

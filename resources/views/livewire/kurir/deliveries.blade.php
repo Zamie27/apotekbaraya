@@ -78,7 +78,7 @@
                             </td>
                             <td>
                                 @php
-                                    $statusClass = match($delivery->delivery_status) {
+                                    $statusClass = match($delivery->status) {
                                         'pending' => 'badge-warning',
                                         'ready_to_ship' => 'badge-accent',
                                         'in_transit' => 'badge-info',
@@ -114,7 +114,7 @@
                                     
                                     <!-- Status Display Only -->
                                     @php
-                                        $actionStatusClass = match($delivery->delivery_status) {
+                                        $actionStatusClass = match($delivery->status) {
                                             'pending' => 'badge-warning',
                                             'ready_to_ship' => 'badge-accent',
                                             'in_transit' => 'badge-info',
@@ -123,13 +123,13 @@
                                             default => 'badge-neutral'
                                         };
                                         
-                                        $actionStatusText = match($delivery->delivery_status) {
+                                        $actionStatusText = match($delivery->status) {
                                             'pending' => 'Menunggu',
                                             'ready_to_ship' => ($delivery->order->shipping_type === 'pickup' ? 'Siap Diambil' : 'Siap Diantar'),
                                             'in_transit' => 'Dalam Perjalanan',
                                             'delivered' => 'Selesai',
                                             'failed' => 'Dibatalkan',
-                                            default => ucfirst(str_replace('_', ' ', $delivery->delivery_status))
+                                            default => ucfirst(str_replace('_', ' ', $delivery->status))
                                         };
                                     @endphp
                                     <span class="badge {{ $actionStatusClass }}">

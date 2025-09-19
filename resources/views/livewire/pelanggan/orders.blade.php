@@ -240,6 +240,18 @@
                                     </button>
                                     @endif
 
+                                    @if ($order->canBeRefunded() && !$order->refunds()->where('status', '!=', 'rejected')->exists())
+                                    <button
+                                        wire:click="openRefundModal('{{ $order->order_id }}')"
+                                        class="btn btn-warning btn-xs sm:btn-sm w-full text-xs sm:text-sm"
+                                        type="button">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                        </svg>
+                                        Ajukan Refund
+                                    </button>
+                                    @endif
+
                                     @if ($order->isCompleted())
                                     <button class="btn btn-primary btn-xs sm:btn-sm w-full text-xs sm:text-sm">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -247,6 +259,23 @@
                                         </svg>
                                         Beli Lagi
                                     </button>
+                                    @endif
+
+                                    @if ($order->refunds()->where('status', '!=', 'rejected')->exists())
+                                    @php
+                                        $refund = $order->refunds()->where('status', '!=', 'rejected')->first();
+                                    @endphp
+                                    <div class="alert alert-info text-xs p-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <div>
+                                            <span class="font-medium">Status Refund:</span>
+                                            <span class="badge badge-{{ $refund->status === 'pending' ? 'warning' : ($refund->status === 'approved' ? 'success' : 'error') }} badge-xs ml-1">
+                                                {{ ucfirst($refund->status) }}
+                                            </span>
+                                        </div>
+                                    </div>
                                     @endif
                                 </div>
                             </div>
@@ -359,5 +388,108 @@
             </div>
         </div>
         @endif
+
+        <!-- Refund Modal -->
+        @if ($showRefundModal)
+        <div class="modal modal-open" x-data="{ refundReason: @entangle('refundReason'), customRefundReason: @entangle('customRefundReason') }">
+            <div class="modal-box w-11/12 max-w-md">
+                <h3 class="font-bold text-base sm:text-lg mb-3 sm:mb-4">Ajukan Refund</h3>
+                
+                <div class="alert alert-warning mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <div>
+                        <h4 class="font-bold">Perhatian!</h4>
+                        <div class="text-xs">Refund hanya dapat diajukan untuk pesanan yang sudah selesai dan dalam kondisi tertentu.</div>
+                    </div>
+                </div>
+
+                <form wire:submit="submitRefundRequest" class="space-y-3 sm:space-y-4">
+                    <div class="form-control">
+                        <label class="label py-1">
+                            <span class="label-text text-sm">Alasan Refund <span class="text-red-500">*</span></span>
+                        </label>
+                        <select class="select select-bordered select-sm sm:select-md w-full text-sm @error('refundReason') select-error @enderror" x-model="refundReason" wire:model="refundReason">
+                            <option value="">Pilih alasan refund</option>
+                            <option value="produk_rusak">Produk rusak/cacat</option>
+                            <option value="produk_salah">Produk tidak sesuai pesanan</option>
+                            <option value="kadaluarsa">Produk kadaluarsa</option>
+                            <option value="tidak_sesuai">Tidak sesuai deskripsi</option>
+                            <option value="efek_samping">Efek samping obat</option>
+                            <option value="lainnya">Lainnya</option>
+                        </select>
+                        @error('refundReason')
+                        <label class="label py-1">
+                            <span class="label-text-alt text-error text-xs">{{ $message }}</span>
+                        </label>
+                        @enderror
+                    </div>
+
+                    <div class="form-control" x-show="refundReason === 'lainnya'">
+                        <label class="label py-1">
+                            <span class="label-text text-sm">Alasan Lainnya <span class="text-red-500">*</span></span>
+                        </label>
+                        <textarea
+                            class="textarea textarea-bordered textarea-sm sm:textarea-md text-sm @error('customRefundReason') textarea-error @enderror"
+                            placeholder="Jelaskan alasan refund secara detail..."
+                            rows="3"
+                            x-model="customRefundReason"
+                            wire:model="customRefundReason"></textarea>
+                        @error('customRefundReason')
+                        <label class="label py-1">
+                            <span class="label-text-alt text-error text-xs">{{ $message }}</span>
+                        </label>
+                        @enderror
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label py-1">
+                            <span class="label-text text-sm">Keterangan Tambahan</span>
+                        </label>
+                        <textarea
+                            class="textarea textarea-bordered textarea-sm sm:textarea-md text-sm @error('refundDescription') textarea-error @enderror"
+                            placeholder="Berikan keterangan tambahan jika diperlukan..."
+                            rows="3"
+                            wire:model="refundDescription"></textarea>
+                        @error('refundDescription')
+                        <label class="label py-1">
+                            <span class="label-text-alt text-error text-xs">{{ $message }}</span>
+                        </label>
+                        @enderror
+                    </div>
+
+                    <div class="modal-action gap-2">
+                        <button
+                            wire:click="closeRefundModal"
+                            class="btn btn-ghost btn-sm sm:btn-md text-sm"
+                            type="button">
+                            Batal
+                        </button>
+                        <button
+                            type="submit"
+                            class="btn btn-warning btn-sm sm:btn-md text-sm"
+                            x-bind:disabled="!refundReason || (refundReason === 'lainnya' && (!customRefundReason || customRefundReason.length < 3))">
+                            <span wire:loading.remove wire:target="submitRefundRequest">Ajukan Refund</span>
+                            <span wire:loading wire:target="submitRefundRequest" class="loading loading-spinner loading-sm"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        @endif
     </div>
 </div>
+
+@script
+<script>
+    // Handle auto-refresh page event
+    document.addEventListener('livewire:initialized', () => {
+        Livewire.on('auto-refresh-page', () => {
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000); // Refresh after 1 second
+        });
+    });
+</script>
+@endscript

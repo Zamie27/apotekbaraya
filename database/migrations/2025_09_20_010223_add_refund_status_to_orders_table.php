@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->timestamp('waiting_payment_at')->nullable()->after('created_at');
-            $table->timestamp('waiting_confirmation_at')->nullable()->after('waiting_payment_at');
+            $table->enum('refund_status', ['pending', 'completed'])->nullable()->after('cancellation_reason');
         });
     }
 
@@ -23,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn(['waiting_payment_at', 'waiting_confirmation_at']);
+            $table->dropColumn('refund_status');
         });
     }
 };

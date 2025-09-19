@@ -16,7 +16,7 @@ class PaymentMethodSeeder extends Seeder
         $paymentMethods = [
             [
                 'code' => 'cod',
-                'name' => 'Cash on Delivery (COD)',
+                'name' => 'Transfer',
                 'type' => 'cash',
                 'description' => 'Bayar langsung di toko saat mengambil pesanan',
                 'config' => json_encode([

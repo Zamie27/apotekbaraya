@@ -356,19 +356,19 @@
                         <div class="flex justify-between items-start gap-3">
                             <div class="flex-1 min-w-0">
                                 <div class="flex flex-wrap items-center gap-1 sm:gap-2 mb-2">
-                                    <span class="badge badge-primary badge-xs sm:badge-sm text-xs">{{ ucfirst($address['label']) }}</span>
+                                    <span class="badge badge-primary badge-xs sm:badge-sm text-xs">{{ ucfirst($address['label'] ?? '') }}</span>
                                     @if($address['is_default'])
                                     <span class="badge badge-success badge-xs sm:badge-sm text-xs">Alamat Utama</span>
                                     @endif
                                 </div>
-                                <h4 class="font-semibold text-base sm:text-lg truncate">{{ $address['recipient_name'] }}</h4>
-                                <p class="text-xs sm:text-sm text-gray-600 mb-1">{{ $address['phone'] }}</p>
-                                <p class="text-xs sm:text-sm mb-2 break-words">{{ $address['detailed_address'] }}</p>
+                                <h4 class="font-semibold text-base sm:text-lg truncate">{{ $address['recipient_name'] ?? '' }}</h4>
+                                <p class="text-xs sm:text-sm text-gray-600 mb-1">{{ $address['phone'] ?? '' }}</p>
+                                <p class="text-xs sm:text-sm mb-2 break-words">{{ $address['detailed_address'] ?? '' }}</p>
                                 <p class="text-xs sm:text-sm text-gray-600 break-words">
-                                    {{ $address['district'] }}, {{ $address['city'] }} {{ $address['postal_code'] }}
+                                    {{ $address['district'] ?? '' }}, {{ $address['city'] ?? '' }} {{ $address['postal_code'] ?? '' }}
                                 </p>
                                 @if($address['notes'])
-                                <p class="text-xs sm:text-sm text-gray-500 mt-1 italic break-words">{{ $address['notes'] }}</p>
+                                    <p class="text-xs sm:text-sm text-gray-500 mt-1 italic break-words">{{ $address['notes'] ?? '' }}</p>
                                 @endif
                             </div>
                             <div class="dropdown dropdown-end flex-shrink-0">

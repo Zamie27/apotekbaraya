@@ -27,7 +27,7 @@ class Delivery extends Model
         'delivered_at',
         'delivery_notes',
         'delivery_photo',
-        'delivery_status'
+        'status'
     ];
 
     /**
@@ -114,7 +114,7 @@ class Delivery extends Model
      */
     public function getDeliveryStatusLabelAttribute(): string
     {
-        return match($this->delivery_status) {
+        return match($this->status) {
             'pending' => 'Menunggu Pengiriman',
             'ready_to_ship' => 'Siap Diantar',
             'in_transit' => 'Pesanan Diantar',
@@ -129,7 +129,7 @@ class Delivery extends Model
      */
     public function canBeUpdatedByCourier(): bool
     {
-        return in_array($this->delivery_status, ['ready_to_ship', 'in_transit']);
+        return in_array($this->status, ['ready_to_ship', 'in_transit']);
     }
 
     /**
@@ -137,7 +137,7 @@ class Delivery extends Model
      */
     public function isReadyToShip(): bool
     {
-        return $this->delivery_status === 'ready_to_ship';
+        return $this->status === 'ready_to_ship';
     }
 
     /**
@@ -145,7 +145,7 @@ class Delivery extends Model
      */
     public function isInTransit(): bool
     {
-        return $this->delivery_status === 'in_transit';
+        return $this->status === 'in_transit';
     }
 
     /**
@@ -153,6 +153,6 @@ class Delivery extends Model
      */
     public function scopeByStatus($query, $status)
     {
-        return $query->where('delivery_status', $status);
+        return $query->where('status', $status);
     }
 }

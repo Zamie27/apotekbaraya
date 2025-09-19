@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\Refund;
 
 class Order extends Model
 {
@@ -39,12 +40,20 @@ class Order extends Model
         'shipping_address',
         'notes',
         'confirmed_at',
+        'confirmed_by',
         'processing_at',
         'receipt_image',
         'confirmation_note',
+        'receipt_photo',
+        'receipt_photo_uploaded_by',
+        'receipt_photo_uploaded_at',
+        'delivery_photo',
+        'delivery_photo_uploaded_by',
+        'delivery_photo_uploaded_at',
         'cancelled_at',
-        'cancel_reason',
+        'cancellation_reason',
         'cancelled_by',
+        'refund_status',
         'waiting_payment_at',
         'waiting_confirmation_at',
         'ready_to_ship_at',
@@ -79,7 +88,9 @@ class Order extends Model
         'shipped_at' => 'datetime',
         'picked_up_at' => 'datetime',
         'delivered_at' => 'datetime',
-        'completed_at' => 'datetime'
+        'completed_at' => 'datetime',
+        'receipt_photo_uploaded_at' => 'datetime',
+        'delivery_photo_uploaded_at' => 'datetime'
     ];
 
     /**
@@ -115,11 +126,11 @@ class Order extends Model
     }
 
     /**
-     * Get the user who cancelled the order.
+     * Get the order items for the order (alias for items).
      */
-    public function cancelledBy(): BelongsTo
+    public function orderItems(): HasMany
     {
-        return $this->belongsTo(User::class, 'cancelled_by', 'user_id');
+        return $this->items();
     }
 
     /**
@@ -128,6 +139,55 @@ class Order extends Model
     public function failedByCourier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'failed_by_courier_id', 'user_id');
+    }
+
+    /**
+     * Get the refunds for the order.
+     */
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(Refund::class, 'order_id', 'order_id');
+    }
+
+    /**
+     * Get the latest refund for the order.
+     */
+    public function latestRefund(): HasOne
+    {
+        return $this->hasOne(Refund::class, 'order_id', 'order_id')
+                    ->latest('created_at');
+    }
+
+    /**
+     * Get the user who cancelled the order.
+     */
+    public function cancelledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by', 'user_id');
+    }
+
+    /**
+     * Get the user who confirmed the order.
+     */
+    public function confirmedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'confirmed_by', 'user_id');
+    }
+
+    /**
+     * Get the user who uploaded the receipt photo.
+     */
+    public function receiptPhotoUploadedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'receipt_photo_uploaded_by', 'user_id');
+    }
+
+    /**
+     * Get the user who uploaded the delivery photo.
+     */
+    public function deliveryPhotoUploadedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'delivery_photo_uploaded_by', 'user_id');
     }
 
     /**
@@ -316,77 +376,7 @@ class Order extends Model
         };
     }
 
-    /**
-     * Cancel order with reason and user who cancelled.
-     */
-    public function cancelOrder(string $reason, int $cancelledBy): bool
-    {
-        if (!$this->canBeCancelled()) {
-            return false;
-        }
 
-        try {
-            $midtransCancelled = false;
-            $midtransMessage = '';
-            
-            // Cancel transaction in Midtrans first if order has payment
-            if ($this->payment && $this->payment->snap_token) {
-                $midtransService = new \App\Services\MidtransService();
-                $cancelResult = $midtransService->cancelTransaction($this->order_number);
-                
-                if ($cancelResult['success']) {
-                    $midtransCancelled = true;
-                    \Log::info('Midtrans transaction cancelled successfully', [
-                        'order_id' => $this->order_id,
-                        'order_number' => $this->order_number
-                    ]);
-                } else {
-                    $midtransMessage = $cancelResult['message'] ?? 'Unknown error';
-                    $currentStatus = $cancelResult['current_status'] ?? 'unknown';
-                    
-                    \Log::warning('Failed to cancel Midtrans transaction, proceeding with local cancellation', [
-                        'order_id' => $this->order_id,
-                        'order_number' => $this->order_number,
-                        'midtrans_error' => $midtransMessage,
-                        'current_status' => $currentStatus
-                    ]);
-                    
-                    // Always proceed with local cancellation regardless of Midtrans status
-                    // This handles cases where transaction doesn't exist in Midtrans (404)
-                    // or is in any other state that prevents cancellation
-                    \Log::info('Proceeding with local cancellation despite Midtrans failure', [
-                        'order_id' => $this->order_id,
-                        'current_status' => $currentStatus,
-                        'reason' => 'Midtrans cancellation failed but local cancellation should proceed'
-                    ]);
-                }
-            }
-
-            // Update order status to cancelled
-            $this->update([
-                'status' => 'cancelled',
-                'cancelled_at' => now(),
-                'cancel_reason' => $reason,
-                'cancelled_by' => $cancelledBy
-            ]);
-
-            // Update payment status if exists
-            if ($this->payment) {
-                $this->payment->update([
-                    'status' => 'cancelled',
-                    'cancelled_at' => now()
-                ]);
-            }
-
-            return true;
-        } catch (\Exception $e) {
-            \Log::error('Error cancelling order', [
-                'order_id' => $this->order_id,
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
-    }
 
     /**
      * Confirm order by apoteker.
@@ -405,7 +395,8 @@ class Order extends Model
 
             $updateData = [
                 'status' => 'confirmed',
-                'confirmed_at' => now()
+                'confirmed_at' => now(),
+                'confirmed_by' => $confirmedBy
             ];
             
             // Only add confirmation_note if it's provided
@@ -472,7 +463,7 @@ class Order extends Model
     /**
      * Mark order as ready to ship with receipt upload and courier assignment.
      */
-    public function markAsReadyToShip(string $receiptImagePath, ?int $courierId = null): bool
+    public function markAsReadyToShip(string $receiptPhotoPath, ?int $courierId = null): bool
     {
         if ($this->status !== 'processing') {
             return false;
@@ -484,7 +475,9 @@ class Order extends Model
 
         $this->update([
             'status' => $newStatus,
-            'receipt_image' => $receiptImagePath,
+            'receipt_photo' => $receiptPhotoPath,
+            'receipt_photo_uploaded_by' => auth()->id(),
+            'receipt_photo_uploaded_at' => now(),
             $timestampField => now()
         ]);
 
@@ -494,7 +487,7 @@ class Order extends Model
                 'delivery_address' => $this->shipping_address,
                 'delivery_fee' => $this->delivery_fee,
                 'delivery_type' => 'standard',
-                'delivery_status' => 'ready_to_ship',
+                'status' => 'ready_to_ship',
                 'estimated_delivery' => now()->addDays(1)
             ];
 
@@ -517,13 +510,13 @@ class Order extends Model
     /**
      * Mark order as ready for pickup (alias for markAsReadyToShip for pickup orders).
      */
-    public function markAsReadyForPickup(string $receiptImagePath): bool
+    public function markAsReadyForPickup(string $receiptPhotoPath): bool
     {
         if ($this->status !== 'processing' || $this->shipping_type !== 'pickup') {
             return false;
         }
 
-        return $this->markAsReadyToShip($receiptImagePath);
+        return $this->markAsReadyToShip($receiptPhotoPath);
     }
 
     /**
@@ -782,7 +775,7 @@ class Order extends Model
             $steps[] = [
                 'status' => 'cancelled',
                 'label' => 'Dibatalkan',
-                'description' => 'Pesanan dibatalkan: ' . ($this->cancel_reason ?? 'Tidak ada keterangan'),
+                'description' => 'Pesanan dibatalkan: ' . ($this->cancellation_reason ?? 'Tidak ada keterangan'),
                 'completed' => true,
                 'current' => true,
                 'date' => $this->cancelled_at
@@ -846,5 +839,352 @@ class Order extends Model
     public function scopeCompleted($query)
     {
         return $query->where('status', 'delivered');
+    }
+
+    /**
+     * Cancel order with optional refund processing.
+     * 
+     * @param string $reason Cancellation reason
+     * @param int $cancelledBy User ID who cancelled the order
+     * @param bool $processRefund Whether to process refund automatically
+     * @return bool
+     */
+    public function cancelOrder(string $reason, int $cancelledBy, bool $processRefund = true): bool
+    {
+        // Check if order can be cancelled
+        if (!$this->canBeCancelled()) {
+            return false;
+        }
+
+        try {
+            $midtransCancelled = false;
+            $midtransMessage = '';
+            
+            // Cancel transaction in Midtrans first if order has payment
+            if ($this->payment && $this->payment->snap_token) {
+                $midtransService = new \App\Services\MidtransService();
+                $cancelResult = $midtransService->cancelTransaction($this->order_number);
+                
+                if ($cancelResult['success']) {
+                    $midtransCancelled = true;
+                    \Log::info('Midtrans transaction cancelled successfully', [
+                        'order_id' => $this->order_id,
+                        'order_number' => $this->order_number
+                    ]);
+                } else {
+                    $midtransMessage = $cancelResult['message'] ?? 'Unknown error';
+                    $currentStatus = $cancelResult['current_status'] ?? 'unknown';
+                    
+                    \Log::warning('Failed to cancel Midtrans transaction, proceeding with local cancellation', [
+                        'order_id' => $this->order_id,
+                        'order_number' => $this->order_number,
+                        'midtrans_error' => $midtransMessage,
+                        'current_status' => $currentStatus
+                    ]);
+                    
+                    // Always proceed with local cancellation regardless of Midtrans status
+                    // This handles cases where transaction doesn't exist in Midtrans (404)
+                    // or is in any other state that prevents cancellation
+                    \Log::info('Proceeding with local cancellation despite Midtrans failure', [
+                        'order_id' => $this->order_id,
+                        'current_status' => $currentStatus,
+                        'reason' => 'Midtrans cancellation failed but local cancellation should proceed'
+                    ]);
+                }
+            }
+
+            // Check if payment was paid before cancellation (for refund processing)
+            $wasPaymentPaid = $this->payment && $this->payment->status === 'paid';
+            
+            // Update order status to cancelled
+            $updateData = [
+                'status' => 'cancelled',
+                'cancelled_at' => now(),
+                'cancellation_reason' => $reason
+            ];
+            
+            // Set refund status to pending if payment was paid
+            if ($wasPaymentPaid) {
+                $updateData['refund_status'] = 'pending';
+            }
+            
+            $this->update($updateData);
+
+            // Update payment status if exists
+            if ($this->payment) {
+                $this->payment->update([
+                    'status' => 'cancelled',
+                    'cancelled_at' => now()
+                ]);
+            }
+
+            // Process refund if payment was paid and processRefund is true
+            if ($processRefund && $wasPaymentPaid) {
+                $this->processRefund($cancelledBy, $reason);
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            \Log::error('Error cancelling order', [
+                'order_id' => $this->order_id,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Process refund for cancelled order.
+     * 
+     * @param int $requestedBy User ID who requested the refund
+     * @param string|null $reason Refund reason
+     * @return Refund|null
+     */
+    public function processRefund(int $requestedBy, ?string $reason = null): ?Refund
+    {
+        // Check if payment exists and is paid
+        if (!$this->payment || $this->payment->status !== 'paid') {
+            return null;
+        }
+
+        // Check if refund already exists
+        if ($this->refunds()->exists()) {
+            return $this->latestRefund;
+        }
+
+        // Create refund record
+        $refund = new Refund([
+            'order_id' => $this->order_id,
+            'payment_id' => $this->payment->payment_id,
+            'refund_key' => 'REF-' . $this->order_id . '-' . time(),
+            'refund_amount' => $this->payment->amount,
+            'reason' => $reason ?? 'Order cancellation',
+            'status' => 'pending',
+            'requested_by' => $requestedBy,
+            'requested_at' => now()
+        ]);
+
+        if ($refund->save()) {
+            // Try to process refund with Midtrans
+            try {
+                $midtransService = app(\App\Services\MidtransService::class);
+                $result = $midtransService->processRefundOrCancel(
+                    $this->payment->transaction_id,
+                    $refund->refund_key,
+                    $refund->refund_amount,
+                    $refund->reason
+                );
+
+                if ($result['success']) {
+                    $refund->status = 'completed';
+                    $refund->processed_at = now();
+                    $refund->midtrans_response = json_encode($result['data']);
+                    
+                    // Update payment status
+                    $this->payment->status = 'refunded';
+                    $this->payment->save();
+                } else {
+                    $refund->status = 'failed';
+                    $refund->failure_reason = $result['message'];
+                }
+                
+                $refund->save();
+            } catch (\Exception $e) {
+                $refund->status = 'failed';
+                $refund->failure_reason = $e->getMessage();
+                $refund->save();
+            }
+
+            return $refund;
+        }
+
+        return null;
+    }
+
+
+
+    /**
+     * Check if order can be refunded.
+     * 
+     * @return bool
+     */
+    public function canBeRefunded(): bool
+    {
+        return $this->payment && 
+               $this->payment->status === 'paid' && 
+               in_array($this->status, ['cancelled', 'failed']) &&
+               !$this->refunds()->where('status', 'completed')->exists();
+    }
+
+    /**
+     * Get refund status from latest refund relation.
+     * 
+     * @return string|null
+     */
+    public function getLatestRefundStatus(): ?string
+    {
+        $latestRefund = $this->latestRefund;
+        return $latestRefund ? $latestRefund->status : null;
+    }
+
+    /**
+     * Check if order has pending refund.
+     * 
+     * @return bool
+     */
+    public function hasPendingRefund(): bool
+    {
+        return $this->refunds()->where('status', 'pending')->exists();
+    }
+
+    /**
+     * Check if order has completed refund.
+     * 
+     * @return bool
+     */
+    public function hasCompletedRefund(): bool
+    {
+        return $this->refunds()->where('status', 'completed')->exists();
+    }
+
+    /**
+     * Check if order needs refund (cancelled with paid payment).
+     * 
+     * @return bool
+     */
+    public function needsRefund(): bool
+    {
+        return $this->status === 'cancelled' && 
+               $this->payment && 
+               $this->payment->status === 'paid' && 
+               $this->refund_status === 'pending';
+    }
+
+    /**
+     * Mark refund as completed.
+     * 
+     * @return bool
+     */
+    public function markRefundCompleted(): bool
+    {
+        return $this->update(['refund_status' => 'completed']);
+    }
+
+    /**
+     * Get refund status label.
+     * 
+     * @return string|null
+     */
+    public function getRefundStatusLabel(): ?string
+    {
+        if (!$this->refund_status) {
+            return null;
+        }
+
+        return match($this->refund_status) {
+            'pending' => 'Menunggu Refund',
+            'completed' => 'Sukses Refund',
+            default => null
+        };
+    }
+
+    /**
+     * Delete order permanently from database.
+     * This will also delete related records (items, payment, delivery, refunds).
+     * 
+     * @param string $reason Deletion reason
+     * @param int $deletedBy User ID who deleted the order
+     * @return bool
+     */
+    public function deleteOrder(string $reason, int $deletedBy): bool
+    {
+        try {
+            \DB::beginTransaction();
+
+            // Log the deletion activity
+            \Log::info('Order deletion initiated', [
+                'order_id' => $this->order_id,
+                'order_number' => $this->order_number,
+                'deleted_by' => $deletedBy,
+                'reason' => $reason
+            ]);
+
+            // Cancel Midtrans transaction if exists
+            if ($this->payment && $this->payment->snap_token) {
+                try {
+                    $midtransService = new \App\Services\MidtransService();
+                    $cancelResult = $midtransService->cancelTransaction($this->order_number);
+                    
+                    \Log::info('Midtrans transaction cancellation attempt', [
+                        'order_id' => $this->order_id,
+                        'success' => $cancelResult['success'],
+                        'message' => $cancelResult['message'] ?? 'No message'
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to cancel Midtrans transaction during deletion', [
+                        'order_id' => $this->order_id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            // Delete related records in proper order
+            // Delete order items first
+            $this->items()->delete();
+            
+            // Delete delivery record if exists
+            if ($this->delivery) {
+                $this->delivery->delete();
+            }
+            
+            // Delete refunds if exists
+            $this->refunds()->delete();
+            
+            // Delete payment record if exists
+            if ($this->payment) {
+                $this->payment->delete();
+            }
+            
+            // Finally delete the order itself
+            $deleted = $this->delete();
+            
+            if ($deleted) {
+                \DB::commit();
+                
+                \Log::info('Order deleted successfully', [
+                    'order_id' => $this->order_id,
+                    'order_number' => $this->order_number,
+                    'deleted_by' => $deletedBy
+                ]);
+                
+                return true;
+            }
+            
+            \DB::rollBack();
+            return false;
+            
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            
+            \Log::error('Error deleting order', [
+                'order_id' => $this->order_id,
+                'order_number' => $this->order_number,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return false;
+        }
+    }
+
+    /**
+     * Check if order can be deleted.
+     * Orders can only be deleted if they are in early stages.
+     * 
+     * @return bool
+     */
+    public function canBeDeleted(): bool
+    {
+        return in_array($this->status, ['pending', 'waiting_payment', 'waiting_confirmation', 'cancelled']);
     }
 }

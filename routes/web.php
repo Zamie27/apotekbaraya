@@ -6,6 +6,7 @@ use App\Http\Controllers\PaymentController;
 use App\Livewire\Dashboard;
 use App\Livewire\Kategori;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
+use App\Livewire\Admin\OrderManagement;
 use App\Livewire\Admin\StoreSettings;
 use App\Livewire\Apoteker\Dashboard as ApotekerDashboard;
 use App\Livewire\Apoteker\Orders as ApotekerOrders;
@@ -78,7 +79,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Guest only routes (redirect to dashboard if authenticated)
 Route::middleware('guest')->group(function () {
     Route::get('/login', Login::class)->name('login');
-    Route::get('/register', Register::class);
+    Route::get('/register', Register::class)->name('register');
 });
 
 // Email verification routes
@@ -96,9 +97,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Admin routes - only admin can access
     Route::middleware('role:admin')->group(function () {
-        Route::get('/admin/dashboard', AdminDashboard::class);
-        Route::get('/admin/profile', AdminProfile::class);
+        Route::get('/admin/dashboard', AdminDashboard::class)->name('admin.dashboard');
+        Route::get('/admin/profile', AdminProfile::class)->name('admin.profile');
         Route::get('/admin/settings', StoreSettings::class)->name('admin.settings');
+        Route::get('/admin/orders', OrderManagement::class)->name('admin.orders');
+        Route::get('/admin/orders/{orderId}', \App\Livewire\Admin\OrderDetail::class)->name('admin.orders.detail');
+        Route::get('/admin/refunds', \App\Livewire\Admin\RefundManagement::class)->name('admin.refunds');
 
         // Add more admin routes here
         // Route::get('/admin/users', AdminUsers::class);
@@ -110,7 +114,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/apoteker/dashboard', ApotekerDashboard::class)->name('apoteker.dashboard');
         Route::get('/apoteker/orders', ApotekerOrders::class)->name('apoteker.orders');
         Route::get('/apoteker/orders/{orderId}', \App\Livewire\Apoteker\OrderDetail::class)->name('apoteker.orders.detail');
-        Route::get('/apoteker/profile', ApotekerProfile::class);
+        Route::get('/apoteker/profile', ApotekerProfile::class)->name('apoteker.profile');
         // Add more apoteker routes here
         // Route::get('/apoteker/prescriptions', ApotekerPrescriptions::class);
         // Route::get('/apoteker/inventory', ApotekerInventory::class);
@@ -129,7 +133,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Pelanggan routes - only pelanggan can access
     Route::middleware('role:pelanggan')->group(function () {
         // Dashboard pelanggan sekarang menggunakan dashboard utama di /dashboard
-        Route::get('/profile', Profile::class);
+        Route::get('/profile', Profile::class)->name('profile');
         // Customer orders and cart routes
         Route::get('/orders', \App\Livewire\Pelanggan\Orders::class)->name('pelanggan.orders');
         Route::get('/orders/{orderId}', \App\Livewire\Pelanggan\OrderDetail::class)->name('pelanggan.orders.show');
