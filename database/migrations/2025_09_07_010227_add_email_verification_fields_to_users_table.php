@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('user_addresses', function (Blueprint $table) {
-            $table->decimal('latitude', 10, 8)->nullable()->after('postal_code');
-            $table->decimal('longitude', 11, 8)->nullable()->after('latitude');
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('otp_code', 6)->nullable()->after('email_verified_at');
+            $table->timestamp('otp_expires_at')->nullable()->after('otp_code');
         });
     }
 
@@ -22,8 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('user_addresses', function (Blueprint $table) {
-            $table->dropColumn(['latitude', 'longitude']);
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn(['otp_code', 'otp_expires_at']);
         });
     }
 };

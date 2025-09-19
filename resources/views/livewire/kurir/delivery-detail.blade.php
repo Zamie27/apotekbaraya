@@ -72,7 +72,10 @@
                             <h3 class="text-lg font-semibold mb-3">Aksi Pengiriman</h3>
                             <div class="flex flex-wrap gap-3">
                                 @if($delivery->delivery_status === 'ready_to_ship')
-                                    <button wire:click="startDelivery" class="btn btn-primary" wire:loading.attr="disabled">
+                                    <button 
+                                        wire:click="showStartDeliveryConfirmation" 
+                                        class="btn btn-primary" 
+                                        wire:loading.attr="disabled">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                                         </svg>
@@ -80,14 +83,20 @@
                                         <span wire:loading>Memproses...</span>
                                     </button>
                                 @elseif($delivery->delivery_status === 'in_transit')
-                                    <button wire:click="showUpdateDelivery" class="btn btn-secondary" wire:loading.attr="disabled">
+                                    <button 
+                                        wire:click="showUpdateDeliveryModal" 
+                                        class="btn btn-secondary" 
+                                        wire:loading.attr="disabled">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
-                                        Update Status
+                                        <span wire:loading.remove>Update Status</span>
+                                        <span wire:loading>Memproses...</span>
                                     </button>
                                 @endif
                             </div>
+
+
                         </div>
                     </div>
                 </div>
@@ -493,14 +502,17 @@
                     @endif
 
                     <!-- Modal Actions -->
-                    <div class="modal-action">
+                    <div class="modal-action" x-data="{ showConfirm: false }">
                         <button type="button" wire:click="closeModal" class="btn btn-ghost" wire:loading.attr="disabled">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                             Batal
                         </button>
-                        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+                        <button type="button" 
+                                x-on:click="showConfirm = true" 
+                                class="btn btn-primary" 
+                                wire:loading.attr="disabled">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
@@ -523,9 +535,72 @@
                                 @endif
                             </span>
                         </button>
+
+                        <!-- Confirmation Dialog for Submit -->
+                        <div x-show="showConfirm" 
+                             x-transition:enter="transition ease-out duration-300" 
+                             x-transition:enter-start="opacity-0" 
+                             x-transition:enter-end="opacity-100" 
+                             x-transition:leave="transition ease-in duration-200" 
+                             x-transition:leave-start="opacity-100" 
+                             x-transition:leave-end="opacity-0" 
+                             class="fixed inset-0 z-[60] overflow-y-auto" 
+                             style="display: none;">
+                            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" x-on:click="showConfirm = false"></div>
+                                <div class="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+                                    <div class="flex items-center mb-4">
+                                        <div class="flex items-center justify-center w-12 h-12 mx-auto bg-orange-100 rounded-full">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-gray-900 text-center mb-2">
+                                        @if($newStatus === 'delivered')
+                                            Konfirmasi Pengiriman Selesai
+                                        @elseif($newStatus === 'failed')
+                                            Konfirmasi Laporan Gagal Kirim
+                                        @else
+                                            Konfirmasi Update Status
+                                        @endif
+                                    </h3>
+                                    <p class="text-sm text-gray-500 text-center mb-6">
+                                        @if($newStatus === 'delivered')
+                                            Apakah Anda yakin pesanan telah berhasil diterima oleh pelanggan?
+                                        @elseif($newStatus === 'failed')
+                                            Apakah Anda yakin ingin melaporkan pengiriman ini sebagai gagal kirim?
+                                        @else
+                                            Apakah Anda yakin ingin mengupdate status pengiriman ini?
+                                        @endif
+                                    </p>
+                                    <div class="flex gap-3 justify-center">
+                                        <button type="button" 
+                                                x-on:click="showConfirm = false" 
+                                                class="btn btn-ghost">
+                                            Batal
+                                        </button>
+                                        <button type="button" 
+                                                x-on:click="showConfirm = false; $wire.updateDelivery()" 
+                                                class="btn btn-primary">
+                                            @if($newStatus === 'delivered')
+                                                Ya, Konfirmasi Terkirim
+                                            @elseif($newStatus === 'failed')
+                                                Ya, Laporkan Gagal
+                                            @else
+                                                Ya, Update Status
+                                            @endif
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
     @endif
+
+    <!-- Confirmation Modal Component -->
+    <livewire:confirmation-modal />
 </div>

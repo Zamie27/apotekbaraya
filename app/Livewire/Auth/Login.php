@@ -21,16 +21,28 @@ class Login extends Component
     // Laravel validation will handle input security
     // Removed preg_replace sanitization to rely on Laravel's built-in security
 
+    /**
+     * Handle user login with email verification check
+     */
     public function login()
     {
         $this->validate();
 
         if (Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
+            $user = Auth::user();
+            
+            // Check if email is verified
+            if (is_null($user->email_verified_at)) {
+                Auth::logout();
+                
+                session()->flash('warning', 'Akun Anda belum diaktivasi. Silakan cek email dan klik link aktivasi yang telah dikirimkan.');
+                
+                return redirect()->route('email.verification.notice');
+            }
+            
             session()->regenerate();
 
             // Redirect based on user role
-            $user = Auth::user();
-
             switch ($user->role->name) {
                 case 'admin':
                     return redirect('/admin/dashboard');

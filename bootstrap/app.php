@@ -3,6 +3,7 @@
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\CheckStoreConfiguration;
+use App\Http\Middleware\EmailVerified;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'guest' => RedirectIfAuthenticated::class,
             'store.config' => CheckStoreConfiguration::class,
+            'verified' => EmailVerified::class,
         ]);
         
         // Exclude Midtrans webhook from CSRF verification

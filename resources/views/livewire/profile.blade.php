@@ -43,38 +43,38 @@
                             @enderror
                         </div>
 
-                        <!-- Username Field -->
+                        <!-- Username Field (Disabled) -->
                         <div class="form-control">
                             <label class="label">
                                 <span class="label-text text-sm sm:text-base font-medium">Username</span>
+                                <span class="label-text-alt text-xs text-gray-500">Tidak dapat diubah</span>
                             </label>
                             <input
                                 type="text"
                                 wire:model="username"
-                                class="input input-bordered w-full text-sm sm:text-base @error('username') input-error @enderror"
-                                placeholder="Masukkan username">
-                            @error('username')
+                                disabled
+                                class="input input-bordered w-full text-sm sm:text-base bg-gray-100 cursor-not-allowed"
+                                placeholder="Username tidak dapat diubah">
                             <label class="label">
-                                <span class="label-text-alt text-xs sm:text-sm text-error">{{ $message }}</span>
+                                <span class="label-text-alt text-xs text-gray-500">Username bersifat permanen dan tidak dapat diubah</span>
                             </label>
-                            @enderror
                         </div>
 
-                        <!-- Email Field -->
+                        <!-- Email Field (Disabled) -->
                         <div class="form-control">
                             <label class="label">
                                 <span class="label-text text-sm sm:text-base font-medium">Email</span>
+                                <span class="label-text-alt text-xs text-gray-500">Tidak dapat diubah</span>
                             </label>
                             <input
                                 type="email"
                                 wire:model="email"
-                                class="input input-bordered w-full text-sm sm:text-base @error('email') input-error @enderror"
-                                placeholder="Masukkan email">
-                            @error('email')
+                                disabled
+                                class="input input-bordered w-full text-sm sm:text-base bg-gray-100 cursor-not-allowed"
+                                placeholder="Email tidak dapat diubah">
                             <label class="label">
-                                <span class="label-text-alt text-xs sm:text-sm text-error">{{ $message }}</span>
+                                <span class="label-text-alt text-xs text-gray-500">Email terkait dengan verifikasi akun dan tidak dapat diubah</span>
                             </label>
-                            @enderror
                         </div>
 
                         <!-- Phone Field -->
@@ -129,7 +129,7 @@
 
                         <!-- Submit Button -->
                         <div class="card-actions justify-end pt-4">
-                            <button type="submit" class="btn btn-primary btn-sm sm:btn-md">
+                            <button type="submit" class="btn btn-success btn-sm sm:btn-md">
                                 <span wire:loading.remove>
                                     <span class="text-xs sm:text-sm">Simpan Perubahan</span>
                                 </span>
@@ -264,7 +264,7 @@
                         </div>
 
                         <!-- Submit Button -->
-                        <button type="submit" class="btn btn-primary btn-sm w-full">
+                        <button type="submit" class="btn btn-success btn-sm w-full">
                             <span wire:loading.remove>
                                 <x-icons.check class="w-4 h-4 mr-2" />
                                 Update Password
@@ -290,7 +290,7 @@
                         <x-icons.map-pin class="w-4 h-4 sm:w-5 sm:h-5" />
                         Alamat Saya
                     </h2>
-                    <button wire:click="openAddressForm" class="btn btn-primary btn-sm w-full sm:w-auto">
+                    <button wire:click="openAddressForm" class="btn btn-success btn-sm w-full sm:w-auto">
                         <x-icons.plus class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                         <span class="text-xs sm:text-sm">Tambah Alamat</span>
                     </button>
@@ -414,7 +414,7 @@
                     <div class="text-center py-6 sm:py-8">
                         <x-icons.map-pin class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-gray-400 mb-3 sm:mb-4" />
                         <p class="text-sm sm:text-base text-gray-500 mb-3 sm:mb-4">Belum ada alamat tersimpan</p>
-                        <button wire:click="openAddressForm" class="btn btn-primary btn-sm sm:btn-md">
+                        <button wire:click="openAddressForm" class="btn btn-success btn-sm sm:btn-md">
                             <x-icons.plus class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                             <span class="text-xs sm:text-sm">Tambah Alamat Pertama</span>
                         </button>

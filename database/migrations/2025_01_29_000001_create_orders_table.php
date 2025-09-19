@@ -19,12 +19,40 @@ return new class extends Migration
             $table->decimal('delivery_fee', 8, 2)->default(0);
             $table->decimal('discount_amount', 8, 2)->default(0);
             $table->decimal('total_price', 12, 2);
-            $table->enum('status', ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'])->default('pending');
+            $table->enum('status', [
+                'created',
+                'waiting_payment',
+                'payment_success', 
+                'waiting_confirmation',
+                'pending',
+                'confirmed',
+                'processing',
+                'ready_to_ship',
+                'ready_for_pickup',
+                'shipped',
+                'picked_up',
+                'delivered',
+                'completed',
+                'cancelled',
+                'failed',
+                'refunded'
+            ])->default('created');
             $table->json('shipping_address');
             $table->text('notes')->nullable();
             $table->timestamp('confirmed_at')->nullable();
             $table->timestamp('shipped_at')->nullable();
             $table->timestamp('delivered_at')->nullable();
+            $table->timestamp('cancelled_at')->nullable();
+            $table->text('cancellation_reason')->nullable();
+            $table->timestamp('failed_at')->nullable();
+            $table->text('failure_reason')->nullable();
+            $table->text('confirmation_note')->nullable();
+            $table->timestamp('processing_at')->nullable();
+            $table->timestamp('ready_to_ship_at')->nullable();
+            $table->timestamp('ready_for_pickup_at')->nullable();
+            $table->timestamp('picked_up_at')->nullable();
+            $table->timestamp('waiting_payment_at')->nullable();
+            $table->timestamp('waiting_confirmation_at')->nullable();
             $table->timestamps();
         });
 

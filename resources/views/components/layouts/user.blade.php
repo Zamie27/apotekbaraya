@@ -75,7 +75,6 @@
                             </div>
                             <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
                                 <li><a href="/profile" class="text-sm">Profil</a></li>
-                                <li><a href="/settings" class="text-sm">Pengaturan</a></li>
                                 <li><a href="{{ route('pelanggan.orders') }}" class="text-sm">Pesanan Saya</a></li>
                                 <li><a href="/logout" class="text-red-600 hover:bg-base-200 text-sm">Keluar</a></li>
                             </ul>
@@ -195,10 +194,10 @@
         </div>
     </footer>
 
-    @livewireScripts
-
     <!-- Alpine.js for interactive components -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    @livewireScripts
     
     @stack('scripts')
 
@@ -246,6 +245,8 @@
 
     <!-- Toast Notifications -->
     @livewire('toast-notification')
+    
+    @livewireScripts
 </body>
 
 </html>

@@ -16,6 +16,7 @@ use App\Livewire\Kurir\Profile as KurirProfile;
 use App\Livewire\Profile;
 use App\Livewire\Auth\Login;
 use App\Livewire\Auth\Register;
+use App\Livewire\Auth\EmailVerification;
 use App\Livewire\Checkout;
 use Illuminate\Support\Facades\Route;
 use App\Models\StoreSetting;
@@ -43,7 +44,7 @@ Route::get('/', function () {
 })->name('root');
 
 // Public homepage for guests
-Route::get('/dashboard', Dashboard::class)->name('dashboard')->middleware('auth');
+Route::get('/dashboard', Dashboard::class)->name('dashboard')->middleware(['auth', 'verified']);
 
 // Home route alias for dashboard (for backward compatibility)
 Route::get('/home', function () {
@@ -62,14 +63,14 @@ Route::get('/kategori/{slug?}', Kategori::class)->name('kategori');
 // Payment routes (accessible by Midtrans and authenticated users)
 Route::post('/payment/notification', [\App\Http\Controllers\WebhookController::class, 'midtransNotification'])->name('payment.notification');
 Route::get('/payment/finish', [PaymentController::class, 'finish'])->name('payment.finish');
-Route::middleware('auth')->get('/payment/status', [PaymentController::class, 'checkStatus'])->name('payment.status');
-Route::middleware('auth')->get('/payment', \App\Livewire\Payment::class)->name('payment.page');
-Route::middleware('auth')->get('/payment/snap', \App\Livewire\PaymentSnap::class)->name('payment.snap');
+Route::middleware(['auth', 'verified'])->get('/payment/status', [PaymentController::class, 'checkStatus'])->name('payment.status');
+Route::middleware(['auth', 'verified'])->get('/payment', \App\Livewire\Payment::class)->name('payment.page');
+Route::middleware(['auth', 'verified'])->get('/payment/snap', \App\Livewire\PaymentSnap::class)->name('payment.snap');
 
 
 
-// Cart and Checkout pages (requires authentication)
-Route::middleware('auth')->group(function () {
+// Cart and Checkout pages (requires authentication and email verification)
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/cart', \App\Livewire\Cart::class)->name('cart');
     Route::get('/checkout', Checkout::class)->name('checkout')->middleware('store.config');
 });
@@ -80,8 +81,16 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', Register::class);
 });
 
+// Email verification routes
+Route::get('/email/verify/{token}', [\App\Http\Controllers\EmailVerificationController::class, 'verify'])->name('email.verify');
+Route::get('/email/verification/notice', [\App\Http\Controllers\EmailVerificationController::class, 'notice'])->name('email.verification.notice');
+Route::post('/email/verification/resend', [\App\Http\Controllers\EmailVerificationController::class, 'resend'])->name('email.verification.resend');
+
+// Email verification route (accessible by authenticated users who haven't verified email)
+Route::get('/email/verification', EmailVerification::class)->name('email.verification')->middleware('auth');
+
 // Authenticated routes
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     // Logout - ubah dari POST ke GET untuk kemudahan
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 

@@ -28,12 +28,12 @@ class DeliveryDetail extends Component
     public $newStatus = '';
     public $failedReason = '';
 
-    // Validation rules
+    // Validation rules (dynamic validation is used in updateDelivery method)
     protected $rules = [
-        'deliveryPhoto' => 'required|image|max:2048', // 2MB max
+        'deliveryPhoto' => 'nullable|image|max:2048', // 2MB max
         'deliveryNotes' => 'nullable|string|max:500',
         'newStatus' => 'required|in:in_transit,delivered,failed',
-        'failedReason' => 'required_if:newStatus,failed|string|max:500'
+        'failedReason' => 'nullable|string|max:500'
     ];
 
     protected $messages = [
@@ -186,35 +186,86 @@ class DeliveryDetail extends Component
     }
 
     /**
+     * Show update delivery modal with form for detailed status update.
+     */
+    public function showUpdateDeliveryModal()
+    {
+        $this->deliveryNotes = $this->delivery->delivery_notes ?? '';
+        $this->newStatus = $this->delivery->delivery_status;
+        $this->showUpdateModal = true;
+    }
+
+    /**
+     * Listen for confirmation events from ConfirmationModal.
+     */
+    #[On('confirmation-confirmed')]
+    public function handleConfirmation($actionMethod, $actionParams = [])
+    {
+        if (method_exists($this, $actionMethod)) {
+            $this->$actionMethod(...$actionParams);
+        }
+    }
+
+    /**
+     * Show confirmation modal for starting delivery.
+     */
+    public function showStartDeliveryConfirmation()
+    {
+        $this->dispatch('show-confirmation', [
+            'title' => 'Konfirmasi Mulai Pengiriman',
+            'message' => 'Apakah Anda yakin ingin memulai pengiriman untuk pesanan ' . $this->delivery->order->order_number . '?',
+            'confirmText' => 'Ya, Mulai Pengiriman',
+            'cancelText' => 'Batal',
+            'confirmButtonClass' => 'btn-primary',
+            'actionMethod' => 'startDelivery',
+            'actionParams' => []
+        ]);
+    }
+
+
+
+    /**
      * Start delivery - change status from ready_to_ship to in_transit.
      */
     public function startDelivery()
     {
         try {
+            Log::info('StartDelivery called for delivery ID: ' . $this->delivery->delivery_id);
+            Log::info('Current delivery status: ' . $this->delivery->delivery_status);
+            Log::info('Current order status: ' . $this->delivery->order->status);
+            
+            // Check if delivery status is ready_to_ship
             if ($this->delivery->delivery_status !== 'ready_to_ship') {
-                session()->flash('error', 'Pengiriman tidak dapat dimulai pada status saat ini.');
+                Log::warning('Delivery status is not ready_to_ship: ' . $this->delivery->delivery_status);
+                session()->flash('error', 'Pengiriman tidak dapat dimulai. Status saat ini: ' . $this->delivery->delivery_status);
                 return;
             }
 
             // Update delivery status to in_transit
-            $this->delivery->update([
+            $deliveryUpdated = $this->delivery->update([
                 'delivery_status' => 'in_transit'
             ]);
+            Log::info('Delivery update result: ' . ($deliveryUpdated ? 'success' : 'failed'));
 
             // Update order status to shipped
-            $this->delivery->order->update([
+            $orderUpdated = $this->delivery->order->update([
                 'status' => 'shipped',
                 'shipped_at' => now()
             ]);
+            Log::info('Order update result: ' . ($orderUpdated ? 'success' : 'failed'));
 
             // Reload data
             $this->loadDelivery();
             $this->buildTimeline();
+            
+            Log::info('After reload - Delivery status: ' . $this->delivery->delivery_status);
+            Log::info('After reload - Order status: ' . $this->delivery->order->status);
 
             session()->flash('success', 'Pengiriman berhasil dimulai.');
 
         } catch (\Exception $e) {
             Log::error('Error starting delivery: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             session()->flash('error', 'Terjadi kesalahan saat memulai pengiriman.');
         }
     }
@@ -224,10 +275,18 @@ class DeliveryDetail extends Component
      */
     public function updateDelivery()
     {
-        // Validate based on status
-        $rules = $this->rules;
+        // Dynamic validation rules based on status
+        $rules = [
+            'deliveryNotes' => 'nullable|string|max:500',
+            'newStatus' => 'required|in:in_transit,delivered,failed',
+        ];
+        
+        // Photo is optional for all statuses
+        $rules['deliveryPhoto'] = 'nullable|image|max:2048';
+        
+        // Failed reason is required only for failed status
         if ($this->newStatus === 'failed') {
-            $rules['deliveryPhoto'] = 'nullable|image|max:2048';
+            $rules['failedReason'] = 'required|string|max:500';
         }
 
         $this->validate($rules);

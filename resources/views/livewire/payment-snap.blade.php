@@ -94,6 +94,15 @@
     document.addEventListener('DOMContentLoaded', function() {
         const payButton = document.getElementById('pay-button');
 
+        // Listen for payment redirect events from Livewire
+        window.addEventListener('payment-redirect', function(event) {
+            console.log('Redirecting to:', event.detail.url);
+            // Add small delay to ensure session flash messages are set
+            setTimeout(function() {
+                window.location.href = event.detail.url;
+            }, 500);
+        });
+
         payButton.addEventListener('click', function(e) {
             e.preventDefault();
 
@@ -123,14 +132,7 @@
                 },
                 onClose: function() {
                     console.log('Payment popup closed');
-                    // Re-enable button
-                    payButton.disabled = false;
-                    payButton.innerHTML = `
-                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                        </svg>
-                        Bayar Sekarang
-                    `;
+                    @this.call('handlePaymentClose');
                 }
             });
         });

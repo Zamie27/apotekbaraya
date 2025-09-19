@@ -4,6 +4,7 @@ namespace App\Livewire\Auth;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Services\EmailVerificationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Layout;
@@ -36,6 +37,9 @@ class Register extends Component
     // Laravel validation will handle input security
     // Removed preg_replace sanitization to rely on Laravel's built-in security
 
+    /**
+     * Handle user registration and send email verification
+     */
     public function register()
     {
         $this->validate([
@@ -56,12 +60,26 @@ class Register extends Component
             'phone' => $this->phone,
             'password' => Hash::make($this->password),
             'role_id' => $pelangganRole->role_id,
+            'email_verified_at' => null, // Email not verified yet
         ]);
 
-        // Redirect to login page with success message instead of auto-login
-        session()->flash('success', 'Akun berhasil dibuat! Silakan masuk dengan email dan password yang telah Anda buat.');
-        
-        return redirect('/login');
+        // Send email verification
+        $emailVerificationService = new EmailVerificationService();
+        $emailSent = $emailVerificationService->sendVerificationEmail($user);
+
+        if ($emailSent) {
+            session()->flash('success', 'Akun berhasil dibuat! Email aktivasi telah dikirim ke ' . $user->email . '. Silakan cek email Anda untuk mengaktifkan akun.');
+            
+            // Redirect to login with notice to check email
+            return redirect()->route('login')->with('registration_success', true);
+        } else {
+            // If email sending failed, delete the user and show error
+            $user->delete();
+            
+            session()->flash('error', 'Gagal mengirim email aktivasi. Silakan coba lagi.');
+            
+            return;
+        }
     }
 
     public function render()

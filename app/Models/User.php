@@ -18,12 +18,15 @@ class User extends Authenticatable
         'username',
         'email',
         'phone',
+        'email_verified_at',
         'password',
         'role_id',
         'status',
         'date_of_birth',
         'gender',
         'avatar',
+        'verification_token',
+        'verification_token_expires_at',
     ];
 
     protected $hidden = [
@@ -37,6 +40,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'date_of_birth' => 'date',
+            'verification_token_expires_at' => 'datetime',
         ];
     }
 

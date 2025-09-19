@@ -71,7 +71,7 @@ class WebhookController extends Controller
      */
     private function verifyMidtransSignature(array $notification): bool
     {
-        $serverKey = config('midtrans.server_key');
+        $serverKey = config('services.midtrans.server_key');
         $orderId = $notification['order_id'] ?? '';
         $statusCode = $notification['status_code'] ?? '';
         $grossAmount = $notification['gross_amount'] ?? '';

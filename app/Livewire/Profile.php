@@ -22,10 +22,8 @@ class Profile extends Component
     #[Validate('required|string|max:100|regex:/^[a-zA-Z\s]+$/')]
     public $name;
 
-    #[Validate('required|string|max:50|regex:/^[a-zA-Z0-9_]+$/')]
+    // Username and email are disabled in the form, no validation needed
     public $username;
-
-    #[Validate('required|email|max:255')]
     public $email;
 
     #[Validate('nullable|string|min:10|max:15|regex:/^[0-9]+$/')]
@@ -303,17 +301,21 @@ class Profile extends Component
         );
     }
 
+    /**
+     * Update user profile information
+     */
     public function updateProfile()
     {
         $user = Auth::user();
         
-        // Validate unique fields excluding current user
+        // Validate all fields including unique constraints
         $this->validate([
-            'username' => 'required|string|max:50|unique:users,username,' . $user->user_id . ',user_id|regex:/^[a-zA-Z0-9_]+$/',
-            'email' => 'required|email|max:255|unique:users,email,' . $user->user_id . ',user_id',
+            'name' => 'required|string|max:100|regex:/^[a-zA-Z\s]+$/',
+            'phone' => 'nullable|string|min:10|max:15|regex:/^[0-9]+$/',
+            'date_of_birth' => 'nullable|date|before:today',
+            'gender' => 'nullable|in:male,female',
+            'avatar' => 'nullable|image|max:2048'
         ]);
-
-        $this->validate();
         
         // Handle avatar upload
         if ($this->avatar) {
@@ -329,11 +331,9 @@ class Profile extends Component
             $avatarPath = $user->avatar;
         }
 
-        // Update user data
+        // Update user data (excluding email and username as they are disabled)
         $user->update([
             'name' => $this->name,
-            'username' => $this->username,
-            'email' => $this->email,
             'phone' => $this->phone,
             'date_of_birth' => $this->date_of_birth,
             'gender' => $this->gender,

@@ -15,6 +15,8 @@ class PaymentSnap extends Component
     public $clientKey;
     public $snapJsUrl;
     public $paymentStatus = 'pending';
+    public $shouldRedirect = false;
+    public $redirectUrl = '';
     
     /**
      * Mount the payment SNAP component
@@ -75,9 +77,16 @@ class PaymentSnap extends Component
             'result' => $result
         ]);
         
-        // Redirect to order detail with success message
+        // Check payment status from Midtrans to confirm the payment
+        $this->checkPaymentStatus();
+        
+        // Set redirect flag and URL for JavaScript to handle
         session()->flash('success', 'Pembayaran berhasil! Pesanan Anda sedang diproses.');
-        return redirect()->route('pelanggan.orders.show', $this->order->order_id);
+        $this->shouldRedirect = true;
+        $this->redirectUrl = route('pelanggan.orders.show', [$this->order->order_id, 'from_payment' => 1]);
+        
+        // Dispatch browser event for redirect
+        $this->dispatch('payment-redirect', ['url' => $this->redirectUrl]);
     }
     
     /**
@@ -90,9 +99,16 @@ class PaymentSnap extends Component
             'result' => $result
         ]);
         
-        // Redirect to order detail with info message
+        // Check payment status from Midtrans to get latest status
+        $this->checkPaymentStatus();
+        
+        // Set redirect flag and URL for JavaScript to handle
         session()->flash('info', 'Pembayaran sedang diproses. Silakan tunggu konfirmasi.');
-        return redirect()->route('pelanggan.orders.show', $this->order->order_id);
+        $this->shouldRedirect = true;
+        $this->redirectUrl = route('pelanggan.orders.show', [$this->order->order_id, 'from_payment' => 1]);
+        
+        // Dispatch browser event for redirect
+        $this->dispatch('payment-redirect', ['url' => $this->redirectUrl]);
     }
     
     /**
@@ -105,9 +121,16 @@ class PaymentSnap extends Component
             'result' => $result
         ]);
         
-        // Redirect to order detail with error message
+        // Check payment status from Midtrans to confirm the error
+        $this->checkPaymentStatus();
+        
+        // Set redirect flag and URL for JavaScript to handle
         session()->flash('error', 'Pembayaran gagal atau dibatalkan.');
-        return redirect()->route('pelanggan.orders.show', $this->order->order_id);
+        $this->shouldRedirect = true;
+        $this->redirectUrl = route('pelanggan.orders.show', [$this->order->order_id, 'from_payment' => 1]);
+        
+        // Dispatch browser event for redirect
+        $this->dispatch('payment-redirect', ['url' => $this->redirectUrl]);
     }
     
     /**
@@ -119,8 +142,65 @@ class PaymentSnap extends Component
             'order_id' => $this->order->order_id
         ]);
         
-        // Redirect back to order detail
-        return redirect()->route('pelanggan.orders.show', $this->order->order_id);
+        // Set redirect flag and URL for JavaScript to handle
+        $this->shouldRedirect = true;
+        $this->redirectUrl = route('pelanggan.orders.show', $this->order->order_id);
+        
+        // Dispatch browser event for redirect
+        $this->dispatch('payment-redirect', ['url' => $this->redirectUrl]);
+    }
+    
+    /**
+     * Check payment status from Midtrans and update order if needed
+     */
+    public function checkPaymentStatus()
+    {
+        try {
+            $midtransService = app(MidtransService::class);
+            $statusResult = $midtransService->getTransactionStatus($this->order->order_number);
+            
+            if ($statusResult['success']) {
+                $transactionData = $statusResult['data'];
+                $transactionStatus = $transactionData['transaction_status'] ?? null;
+                
+                Log::info('Payment status checked from PaymentSnap', [
+                    'order_id' => $this->order->order_id,
+                    'order_number' => $this->order->order_number,
+                    'transaction_status' => $transactionStatus
+                ]);
+                
+                // Update payment and order status based on Midtrans response
+                if ($transactionStatus === 'settlement' || $transactionStatus === 'capture') {
+                    // Payment successful - update payment and order status
+                    $this->order->payment->update([
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                        'transaction_id' => $transactionData['transaction_id'] ?? null,
+                        'payment_type' => $transactionData['payment_type'] ?? null,
+                    ]);
+                   
+                    $this->order->update([
+                        'status' => 'waiting_confirmation',
+                        'waiting_confirmation_at' => now()
+                    ]);
+                    
+                    Log::info('Payment status updated successfully', [
+                        'order_id' => $this->order->order_id,
+                        'new_status' => 'waiting_confirmation'
+                    ]);
+                }
+            } else {
+                Log::warning('Failed to check payment status from PaymentSnap', [
+                    'order_id' => $this->order->order_id,
+                    'error' => $statusResult['message'] ?? 'Unknown error'
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error checking payment status from PaymentSnap', [
+                'order_id' => $this->order->order_id,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
     
     /**

@@ -26,12 +26,43 @@ class OrderDetail extends Component
     public $showDeliveryProofModal = false;
     public $deliveryProofImage = null;
     
+    // Payment status check loading state
+    public $isCheckingPaymentStatus = false;
+    public $paymentStatusMessage = '';
+    
+    /**
+     * Check if cancel button should be enabled
+     * 
+     * @return bool
+     */
+    public function getCanSubmitCancelProperty()
+    {
+        if (empty($this->cancelReason)) {
+            return false;
+        }
+        
+        if ($this->cancelReason === 'lainnya') {
+            return !empty($this->cancelReasonOther) && strlen($this->cancelReasonOther) >= 3;
+        }
+        
+        return true;
+    }
+    
     // Note: Properti konfirmasi pesanan dihapus karena pelanggan tidak boleh mengkonfirmasi pesanan
 
     public function mount($orderId)
     {
         $this->orderId = $orderId;
         $this->loadOrder();
+        
+        // Auto-check payment status if order has pending payment
+        // This is especially useful after redirect from payment page
+        if ($this->order && 
+            $this->order->payment && 
+            $this->order->payment->status === 'pending' && 
+            $this->order->status !== 'cancelled') {
+            $this->checkPaymentStatus();
+        }
     }
 
     /**
@@ -149,6 +180,7 @@ class OrderDetail extends Component
         $this->showCancelModal = false;
         $this->selectedOrderId = null;
         $this->reset(['cancelReason', 'cancelReasonOther']);
+        $this->resetErrorBag();
     }
 
     /**
@@ -174,6 +206,10 @@ class OrderDetail extends Component
      */
     public function checkPaymentStatus()
     {
+        // Set loading state
+        $this->isCheckingPaymentStatus = true;
+        $this->paymentStatusMessage = 'Memeriksa status pembayaran...';
+        
         try {
             $midtransService = app(MidtransService::class);
             $statusResult = $midtransService->getTransactionStatus($this->order->order_number);
@@ -190,6 +226,8 @@ class OrderDetail extends Component
                 
                 // Update payment and order status based on Midtrans response
                  if ($transactionStatus === 'settlement' || $transactionStatus === 'capture') {
+                     $this->paymentStatusMessage = 'Pembayaran berhasil! Memperbarui status pesanan...';
+                     
                      // Payment successful - update payment and order status
                      $this->order->payment->update([
                          'status' => 'paid',
@@ -206,12 +244,14 @@ class OrderDetail extends Component
                     // Reload order data
                     $this->loadOrder();
                     
+                    $this->paymentStatusMessage = 'Status pembayaran berhasil diperbarui!';
                     session()->flash('success', 'Status pembayaran berhasil diperbarui! Pesanan Anda sedang menunggu konfirmasi.');
-                    return;
+                } else {
+                    $this->paymentStatusMessage = 'Status pembayaran: ' . ucfirst(str_replace('_', ' ', $transactionStatus));
+                    session()->flash('info', 'Status pembayaran: ' . ucfirst(str_replace('_', ' ', $transactionStatus)));
                 }
-                
-                session()->flash('info', 'Status pembayaran: ' . ucfirst(str_replace('_', ' ', $transactionStatus)));
             } else {
+                $this->paymentStatusMessage = 'Gagal memeriksa status pembayaran.';
                 session()->flash('error', 'Gagal memeriksa status pembayaran.');
             }
         } catch (\Exception $e) {
@@ -220,7 +260,15 @@ class OrderDetail extends Component
                 'error' => $e->getMessage()
             ]);
             
+            $this->paymentStatusMessage = 'Terjadi kesalahan saat memeriksa status pembayaran.';
             session()->flash('error', 'Terjadi kesalahan saat memeriksa status pembayaran.');
+        } finally {
+            // Reset loading state and reload order data
+            $this->isCheckingPaymentStatus = false;
+            $this->loadOrder();
+            
+            // Clear status message after 3 seconds
+            $this->dispatch('clear-payment-status-message');
         }
     }
 

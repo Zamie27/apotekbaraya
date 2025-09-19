@@ -41,6 +41,20 @@
         </div>
         @endif
 
+        {{-- Payment Status Check Message --}}
+        @if ($isCheckingPaymentStatus || $paymentStatusMessage)
+        <div class="alert alert-info mb-6" id="payment-status-alert">
+            @if ($isCheckingPaymentStatus)
+            <span class="loading loading-spinner loading-sm"></span>
+            @else
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            @endif
+            <span>{{ $paymentStatusMessage }}</span>
+        </div>
+        @endif
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             <!-- Main Content -->
             <div class="lg:col-span-2 space-y-4 sm:space-y-6">
@@ -435,17 +449,17 @@
 
     {{-- Cancel Order Modal --}}
     @if($showCancelModal)
-        <div class="modal modal-open" x-data="{ cancelReason: @entangle('cancelReason'), cancelReasonOther: @entangle('cancelReasonOther') }">
+        <div class="modal modal-open">
             <div class="modal-box w-11/12 max-w-md">
                 <h3 class="font-bold text-base sm:text-lg mb-3 sm:mb-4">Batalkan Pesanan</h3>
                 <p class="mb-3 sm:mb-4 text-sm sm:text-base">Mengapa Anda ingin membatalkan pesanan ini?</p>
 
-                <form wire:submit="cancelOrder" class="space-y-3 sm:space-y-4">
+                <form wire:submit.prevent="cancelOrder" class="space-y-3 sm:space-y-4">
                     <div class="form-control">
                         <label class="label py-1">
                             <span class="label-text text-sm">Pilih alasan pembatalan:</span>
                         </label>
-                        <select class="select select-bordered select-sm sm:select-md w-full text-sm @error('cancelReason') select-error @enderror" x-model="cancelReason" wire:model="cancelReason">
+                        <select class="select select-bordered select-sm sm:select-md w-full text-sm @error('cancelReason') select-error @enderror" wire:model.live="cancelReason">
                             <option value="">Pilih alasan...</option>
                             <option value="salah_pesan">Salah membuat pesanan</option>
                             <option value="ganti_barang">Ingin mengganti barang</option>
@@ -461,7 +475,8 @@
                         @enderror
                     </div>
 
-                    <div class="form-control" x-show="cancelReason === 'lainnya'">
+                    @if($cancelReason === 'lainnya')
+                    <div class="form-control">
                         <label class="label py-1">
                             <span class="label-text text-sm">Jelaskan alasan lainnya:</span>
                         </label>
@@ -469,14 +484,14 @@
                             class="textarea textarea-bordered textarea-sm sm:textarea-md text-sm @error('cancelReasonOther') textarea-error @enderror"
                             placeholder="Masukkan alasan pembatalan..."
                             rows="3"
-                            x-model="cancelReasonOther"
-                            wire:model="cancelReasonOther"></textarea>
+                            wire:model.live="cancelReasonOther"></textarea>
                         @error('cancelReasonOther')
                         <label class="label py-1">
                             <span class="label-text-alt text-error text-xs">{{ $message }}</span>
                         </label>
                         @enderror
                     </div>
+                    @endif
 
                     <div class="modal-action gap-2">
                         <button
@@ -488,8 +503,12 @@
                         <button
                             type="submit"
                             class="btn btn-error btn-sm sm:btn-md text-sm"
-                            x-bind:disabled="!cancelReason || (cancelReason === 'lainnya' && (!cancelReasonOther || cancelReasonOther.length < 3))">
-                            Ya, Batalkan Pesanan
+                            @if(!$this->canSubmitCancel) disabled @endif
+                            wire:loading.attr="disabled"
+                            wire:target="cancelOrder">
+                            <span wire:loading.remove wire:target="cancelOrder">Ya, Batalkan Pesanan</span>
+                            <span wire:loading wire:target="cancelOrder" class="loading loading-spinner loading-xs mr-2"></span>
+                            <span wire:loading wire:target="cancelOrder">Membatalkan...</span>
                         </button>
                     </div>
                 </form>
@@ -566,11 +585,64 @@
         }
     }
 
+    // Check payment status immediately when returning from payment page
+    function checkPaymentOnReturn() {
+        try {
+            // Check if user just returned from payment (detect success/info flash messages)
+            const hasPaymentMessage = document.querySelector('.alert-success, .alert-info');
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromPayment = urlParams.get('from_payment');
+            
+            if ((hasPaymentMessage || fromPayment) && 
+                $wire.order &&
+                $wire.order.payment &&
+                $wire.order.payment.status === 'pending' &&
+                $wire.order.status !== 'cancelled') {
+                
+                console.log('User returned from payment, checking status...');
+                setTimeout(() => {
+                    $wire.checkPaymentStatus();
+                }, 1000); // Small delay to ensure component is ready
+            }
+        } catch (error) {
+            console.log('Payment return check skipped:', error.message);
+        }
+    }
+
     // Initialize payment check when component is ready
     document.addEventListener('livewire:initialized', () => {
         initPaymentStatusCheck();
+        checkPaymentOnReturn();
     });
 
+    // Also check when page becomes visible (user switches back to tab)
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            try {
+                if ($wire.order &&
+                    $wire.order.payment &&
+                    $wire.order.payment.status === 'pending' &&
+                    $wire.order.status !== 'cancelled') {
+                    $wire.checkPaymentStatus();
+                }
+            } catch (error) {
+                console.log('Visibility change check skipped:', error.message);
+            }
+        }
+    });
+
+    // Handle clear payment status message event
+    document.addEventListener('livewire:initialized', () => {
+        Livewire.on('clear-payment-status-message', () => {
+            setTimeout(() => {
+                try {
+                    $wire.set('paymentStatusMessage', '');
+                } catch (error) {
+                    console.log('Clear payment status message failed:', error.message);
+                }
+            }, 3000); // Clear after 3 seconds
+        });
+    });
 
 </script>
 @endscript

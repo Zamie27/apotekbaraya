@@ -416,42 +416,71 @@
         const recaptchaToken = document.getElementById('recaptcha-token');
         const isProduction = {{ config('app.env') === 'production' ? 'true' : 'false' }};
 
+        console.log('Checkout button found:', checkoutButton !== null);
+        console.log('reCAPTCHA token input found:', recaptchaToken !== null);
+        console.log('Environment:', isProduction ? 'Production' : 'Development');
+
         if (checkoutButton && recaptchaToken) {
+            // Gunakan addEventListener dengan parameter yang benar
             checkoutButton.addEventListener('click', function(e) {
                 e.preventDefault();
+                console.log('Checkout button clicked');
 
                 // Check if button is disabled
-                if (this.disabled) {
+                if (checkoutButton.disabled || checkoutButton.classList.contains('disabled')) {
+                    console.log('Button is disabled, ignoring click');
                     return;
                 }
                 
                 // Handle reCAPTCHA based on environment
                 if (isProduction && typeof grecaptcha !== 'undefined') {
+                    console.log('Using production reCAPTCHA flow');
                     // Execute reCAPTCHA for production
-                    grecaptcha.ready(function() {
-                        grecaptcha.execute('{{ config("services.recaptcha.site_key") }}', {
-                                action: 'checkout'
-                            })
-                            .then(function(token) {
-                                // Set the token to the hidden input
-                                recaptchaToken.value = token;
+                    try {
+                        grecaptcha.ready(function() {
+                            console.log('reCAPTCHA ready, executing...');
+                            grecaptcha.execute('{{ config("services.recaptcha.site_key") }}', {
+                                    action: 'checkout'
+                                })
+                                .then(function(token) {
+                                    console.log('reCAPTCHA token received');
+                                    // Set the token to the hidden input
+                                    recaptchaToken.value = token;
 
-                                // Trigger Livewire method
-                                @this.set('recaptchaToken', token);
-                                @this.call('processCheckout');
-                            })
-                            .catch(function(error) {
-                                // For production, show error and don't proceed
-                                alert('Terjadi kesalahan verifikasi keamanan. Silakan coba lagi.');
-                            });
-                    });
+                                    // Trigger Livewire method
+                                    console.log('Calling Livewire processCheckout method');
+                                    Livewire.dispatch('set-recaptcha-token', [token]);
+                                    Livewire.dispatch('process-checkout');
+                                })
+                                .catch(function(error) {
+                                    console.error('reCAPTCHA error:', error);
+                                    // For production, show error and don't proceed
+                                    alert('Terjadi kesalahan verifikasi keamanan. Silakan coba lagi.');
+                                });
+                        });
+                    } catch (error) {
+                        console.error('Error in reCAPTCHA execution:', error);
+                        alert('Terjadi kesalahan verifikasi keamanan. Silakan coba lagi.');
+                    }
                 } else {
+                    console.log('Using development flow (skipping reCAPTCHA)');
                     // For development/localhost, skip reCAPTCHA and proceed directly
-                    recaptchaToken.value = 'dev-token-' + Date.now();
-                    @this.set('recaptchaToken', recaptchaToken.value);
-                    @this.call('processCheckout');
+                    try {
+                        recaptchaToken.value = 'dev-token-' + Date.now();
+                        console.log('Setting dev token:', recaptchaToken.value);
+                        
+                        // Gunakan Livewire.dispatch untuk Livewire 3.x
+                        Livewire.dispatch('set-recaptcha-token', [recaptchaToken.value]);
+                        Livewire.dispatch('process-checkout');
+                        console.log('processCheckout method called successfully');
+                    } catch (error) {
+                        console.error('Error calling processCheckout:', error);
+                    }
                 }
             });
+            console.log('Click event listener added to checkout button');
+        } else {
+            console.error('Checkout button or recaptchaToken input not found');
         }
     });
 </script>

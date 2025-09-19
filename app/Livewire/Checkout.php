@@ -25,6 +25,9 @@ class Checkout extends Component
     public $isProcessing = false;
     public $recaptchaToken = '';
     
+    // Livewire 3 menggunakan format berbeda untuk listeners
+    // Listeners akan didefinisikan dengan method tersendiri
+    
 
     
     // New address form fields using array structure
@@ -437,16 +440,37 @@ class Checkout extends Component
         }
     }
 
+    /**
+     * Set reCAPTCHA token from JavaScript
+     * 
+     * @param string $token
+     * @return void
+     */
+    #[\Livewire\Attributes\On('set-recaptcha-token')]
+    public function setRecaptchaToken($token)
+    {
+        $this->recaptchaToken = $token;
+        Log::info('reCAPTCHA token set', ['token_length' => strlen($this->recaptchaToken)]);
+    }
+
+    #[\Livewire\Attributes\On('process-checkout')]
     public function processCheckout()
     {
         try {
             // Prevent duplicate submissions
             if ($this->isSubmitting) {
+                Log::info('Preventing duplicate submission');
                 return;
             }
             
             $this->isSubmitting = true;
             $this->isProcessing = true;
+            
+            Log::info('Processing checkout', [
+                'shipping_type' => $this->shippingType,
+                'has_recaptcha_token' => !empty($this->recaptchaToken),
+                'token_length' => strlen($this->recaptchaToken)
+            ]);
             
             // Validate reCAPTCHA token first
             $this->validate([
