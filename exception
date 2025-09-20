@@ -15,8 +15,8 @@
     895▕     /**
 
   [33m1   [39m[39;1mvendor\psy\psysh\src\Shell.php[39;22m:[39;1m1390[39;22m
-  [90m    Psy\Shell::setCode("DB::table('email_notifications')-")[39m
+  [90m    Psy\Shell::setCode("DB::table('failed_jobs')-")[39m
 
   [33m2   [39m[39;1mvendor\laravel\tinker\src\Console\TinkerCommand.php[39;22m:[39;1m76[39;22m
-  [90m    Psy\Shell::execute("DB::table('email_notifications')-")[39m
+  [90m    Psy\Shell::execute("DB::table('failed_jobs')-")[39m
 

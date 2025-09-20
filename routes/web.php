@@ -107,9 +107,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/admin/orders', OrderManagement::class)->name('admin.orders');
         Route::get('/admin/orders/{orderId}', \App\Livewire\Admin\OrderDetail::class)->name('admin.orders.detail');
         Route::get('/admin/refunds', \App\Livewire\Admin\RefundManagement::class)->name('admin.refunds');
+        Route::get('/admin/users', \App\Livewire\Admin\UserManagement::class)->name('admin.users');
+        Route::get('/admin/email-notifications', \App\Livewire\Admin\EmailNotificationSettings::class)->name('admin.email-notifications');
+        Route::get('/admin/user-activity-reports', \App\Livewire\Admin\UserActivityReports::class)->name('admin.user-activity-reports');
 
         // Add more admin routes here
-        // Route::get('/admin/users', AdminUsers::class);
         // Route::get('/admin/products', AdminProducts::class);
     });
 

@@ -3,7 +3,7 @@
         <!-- Header -->
         <div class="mb-8">
             <div class="flex items-center gap-4 mb-4">
-                <a href="{{ route('admin.refunds') }}" class="btn btn-ghost btn-sm">
+                <a href="{{ route('admin.orders') }}" class="btn btn-ghost btn-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -14,7 +14,7 @@
             <div class="breadcrumbs text-sm">
                 <ul>
                     <li><a href="/admin/dashboard" class="text-blue-600 hover:text-blue-800">Dashboard</a></li>
-                    <li><a href="{{ route('admin.refunds') }}" class="text-blue-600 hover:text-blue-800">Manajemen Refund</a></li>
+                    <li><a href="{{ route('admin.orders') }}" class="text-blue-600 hover:text-blue-800">Manajemen Pesanan</a></li>
                     <li class="text-gray-500">{{ $order->order_number }}</li>
                 </ul>
             </div>
@@ -433,6 +433,35 @@
         </div>
     </dialog>
 
+    <!-- Modal Foto Struk -->
+    <dialog id="receipt_photo_modal" class="modal">
+        <div class="modal-box max-w-2xl">
+            <h3 class="font-bold text-lg mb-4">Foto Struk Penerimaan</h3>
+            <div class="flex justify-center">
+                <img id="receipt_photo_preview" src="" alt="Foto Struk" class="max-w-full max-h-96 rounded-lg shadow-lg">
+            </div>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn">Tutup</button>
+                </form>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Modal Foto Pengiriman -->
+    <dialog id="delivery_photo_modal" class="modal">
+        <div class="modal-box max-w-2xl">
+            <h3 class="font-bold text-lg mb-4">Foto Bukti Pengiriman/Pengambilan</h3>
+            <div class="flex justify-center">
+                <img id="delivery_photo_preview" src="" alt="Foto Pengiriman" class="max-w-full max-h-96 rounded-lg shadow-lg">
+            </div>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn">Tutup</button>
+                </form>
+            </div>
+        </div>
+    </dialog>
     <!-- Order Log Modal -->
     <dialog id="order_log_modal" class="modal">
         <div class="modal-box w-11/12 max-w-5xl">
@@ -461,8 +490,7 @@
                         </div>
                     </div>
 
-                    <!-- Photo Upload Component -->
-                    <livewire:admin.order-photo-upload :order="$order" wire:key="photo-upload-{{ $order->order_id }}" />
+
 
                     <!-- Activity Timeline -->
                     <div class="card bg-base-200">
@@ -514,8 +542,52 @@
                                         <p class="text-sm text-gray-600">{{ ucfirst($order->receiptPhotoUploadedBy->role->name) }}</p>
                                         <p class="text-xs text-gray-500">{{ $order->receipt_photo_uploaded_at ? $order->receipt_photo_uploaded_at->format('d M Y, H:i') : '-' }}</p>
                                         <div class="mt-2">
-                                            <button onclick="receipt_photo_modal.showModal()" class="btn btn-xs btn-outline">
+                                            <button onclick="showReceiptPhoto('{{ asset('storage/' . $order->receipt_photo) }}')" class="btn btn-xs btn-outline">
                                                 Lihat Foto
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
+
+                                <!-- Pickup Photo Uploaded (for pickup orders) -->
+                                @if($order->shipping_type === 'pickup' && $order->pickup_image)
+                                <div class="flex items-start gap-3">
+                                    <div class="flex-shrink-0 w-8 h-8 bg-warning rounded-full flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-medium">Foto Pengambilan Diupload</p>
+                                        <p class="text-sm text-gray-600">Pesanan diambil oleh pelanggan</p>
+                                        <p class="text-xs text-gray-500">{{ $order->picked_up_at ? $order->picked_up_at->format('d M Y, H:i') : '-' }}</p>
+                                        <div class="mt-2">
+                                            <button onclick="showDeliveryPhoto('{{ asset('storage/' . $order->pickup_image) }}')" class="btn btn-xs btn-outline">
+                                                Lihat Bukti Pengambilan
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
+
+                                <!-- Delivery Photo Uploaded (for delivery orders) -->
+                                @if($order->shipping_type === 'delivery' && $order->delivery && $order->delivery->delivery_photo)
+                                <div class="flex items-start gap-3">
+                                    <div class="flex-shrink-0 w-8 h-8 bg-warning rounded-full flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-medium">Foto Pengiriman Diupload</p>
+                                        @if($order->delivery->courier)
+                                            <p class="text-sm text-gray-600">Kurir: {{ $order->delivery->courier->name }}</p>
+                                        @endif
+                                        <p class="text-xs text-gray-500">{{ $order->delivery->delivered_at ? $order->delivery->delivered_at->format('d M Y, H:i') : '-' }}</p>
+                                        <div class="mt-2">
+                                            <button onclick="showDeliveryPhoto('{{ asset('storage/' . $order->delivery->delivery_photo) }}')" class="btn btn-xs btn-outline">
+                                                Lihat Bukti Pengiriman
                                             </button>
                                         </div>
                                     </div>
@@ -698,6 +770,22 @@
                 @this.call('deleteOrder', reason);
                 document.getElementById('delete_order_modal').close();
             }
+        }
+
+        // Show delivery photo function
+        function showDeliveryPhoto(photoUrl) {
+            const modal = document.getElementById('delivery_photo_modal');
+            const preview = document.getElementById('delivery_photo_preview');
+            preview.src = photoUrl;
+            modal.showModal();
+        }
+
+        // Show receipt photo function
+        function showReceiptPhoto(photoUrl) {
+            const modal = document.getElementById('receipt_photo_modal');
+            const preview = document.getElementById('receipt_photo_preview');
+            preview.src = photoUrl;
+            modal.showModal();
         }
 
         // Show delivery photo function

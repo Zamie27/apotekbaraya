@@ -201,53 +201,7 @@ class OrderDetail extends Component
         return $timeline;
     }
 
-    /**
-     * Delete order permanently from database.
-     */
-    public function deleteOrder($reason)
-    {
-        try {
-            // Validate reason
-            if (empty($reason) || strlen(trim($reason)) < 10) {
-                session()->flash('error', 'Alasan penghapusan harus minimal 10 karakter.');
-                return;
-            }
 
-            // Check if order can be deleted
-            if (!$this->order->canBeDeleted()) {
-                session()->flash('error', 'Pesanan dengan status ini tidak dapat dihapus.');
-                return;
-            }
-
-            // Log the deletion activity
-            \Log::info('Order deletion initiated', [
-                'order_id' => $this->order->id,
-                'order_number' => $this->order->order_number,
-                'deleted_by' => auth()->id(),
-                'reason' => $reason,
-                'timestamp' => now()
-            ]);
-
-            // Delete the order
-            $orderNumber = $this->order->order_number;
-            $this->order->deleteOrder();
-
-            // Flash success message
-            session()->flash('message', "Pesanan {$orderNumber} berhasil dihapus dari sistem.");
-
-            // Redirect to order management page
-            return redirect()->route('admin.orders.index');
-
-        } catch (\Exception $e) {
-            \Log::error('Failed to delete order', [
-                'order_id' => $this->order->id,
-                'error' => $e->getMessage(),
-                'user_id' => auth()->id()
-            ]);
-
-            session()->flash('error', 'Terjadi kesalahan saat menghapus pesanan. Silakan coba lagi.');
-        }
-    }
 
     /**
      * Refresh order data after status changes.
@@ -265,6 +219,77 @@ class OrderDetail extends Component
     public function handleOrderUpdate()
     {
         $this->loadOrder();
+    }
+
+    /**
+     * Delete order permanently from the system.
+     * This action is irreversible and should be used with caution.
+     *
+     * @param string $reason The reason for deleting the order
+     */
+    public function deleteOrder($reason = '')
+    {
+        try {
+            // Check if order exists
+            if (!$this->order) {
+                session()->flash('error', 'Pesanan tidak ditemukan.');
+                return;
+            }
+
+            // Validate deletion reason
+            if (empty($reason) || strlen(trim($reason)) < 10) {
+                session()->flash('error', 'Alasan penghapusan harus minimal 10 karakter.');
+                return;
+            }
+
+            // Check if order can be deleted (only certain statuses)
+            $deletableStatuses = ['pending', 'waiting_payment', 'waiting_confirmation', 'cancelled'];
+            if (!in_array($this->order->status, $deletableStatuses)) {
+                session()->flash('error', 'Pesanan dengan status ini tidak dapat dihapus.');
+                return;
+            }
+
+            // Store order data for logging
+            $orderNumber = $this->order->order_number;
+            $orderId = $this->order->order_id;
+
+            // Log the deletion action
+            \Log::info('Order deleted by admin', [
+                'order_id' => $orderId,
+                'order_number' => $orderNumber,
+                'admin_id' => auth()->id(),
+                'admin_name' => auth()->user()->name,
+                'deletion_reason' => $reason,
+                'order_status' => $this->order->status,
+                'deleted_at' => now()
+            ]);
+
+            // Delete related records first (cascade delete)
+            // Order items will be deleted automatically due to foreign key constraints
+            // Payment records will be deleted automatically
+            // Delivery records will be deleted automatically
+            // Refund records will be deleted automatically
+
+            // Delete the order
+            $this->order->delete();
+
+            // Flash success message
+            session()->flash('success', "Pesanan {$orderNumber} berhasil dihapus dari sistem.");
+
+            // Redirect to order management page
+            return redirect()->route('admin.orders');
+
+        } catch (\Exception $e) {
+            // Log the error
+            \Log::error('Failed to delete order: ' . $e->getMessage(), [
+                'order_id' => $this->order->order_id ?? null,
+                'admin_id' => auth()->id(),
+                'deletion_reason' => $reason ?? 'N/A'
+            ]);
+
+            // Flash error message
+            session()->flash('error', 'Terjadi kesalahan saat menghapus pesanan. Silakan coba lagi.');
+        }
     }
 
     /**

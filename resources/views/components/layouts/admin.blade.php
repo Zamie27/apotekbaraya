@@ -38,7 +38,6 @@
                         tabindex="0"
                         class="p-2 mt-3 shadow menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] w-52">
                         <li><a href="/admin/profile">Profil</a></li>
-                        <li><a href="/admin/orders">Pesanan</a></li>
                         <li><a href="/logout" class="text-left text-red-600 hover:bg-base-200">Keluar</a></li>
                     </ul>
                 </div>
@@ -72,6 +71,30 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{{ route('admin.users') }}" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group {{ request()->routeIs('admin.users*') ? 'bg-gray-100' : '' }}">
+                        <svg class="w-5 h-5 text-gray-500 transition duration-75 shrink-0 group-hover:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                        </svg>
+                        <span class="ms-3">Manajemen Pengguna</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.email-notifications') }}" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group {{ request()->routeIs('admin.email-notifications*') ? 'bg-gray-100' : '' }}">
+                        <svg class="w-5 h-5 text-gray-500 transition duration-75 shrink-0 group-hover:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                        <span class="ms-3">Notifikasi Email</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.user-activity-reports') }}" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group {{ request()->routeIs('admin.user-activity-reports*') ? 'bg-gray-100' : '' }}">
+                        <svg class="w-5 h-5 text-gray-500 transition duration-75 shrink-0 group-hover:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 00-2-2z"></path>
+                        </svg>
+                        <span class="ms-3">Laporan Aktivitas</span>
+                    </a>
+                </li>
+                <li>
                     <a href="{{ route('admin.settings') }}" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group {{ request()->routeIs('admin.settings') ? 'bg-gray-100' : '' }}">
                         <svg class="w-5 h-5 text-gray-500 transition duration-75 shrink-0 group-hover:text-gray-900" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                             <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
@@ -79,25 +102,7 @@
                         <span class="ms-3">Pengaturan Toko</span>
                     </a>
                 </li>
-                <li>
-                    <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group">
-                        <x-icons.inbox class="w-5 h-5 text-gray-500 transition duration-75 shrink-0 group-hover:text-gray-900" />
-                        <span class="flex-1 ms-3 whitespace-nowrap">Inbox</span>
-                        <span class="inline-flex items-center justify-center w-3 h-3 p-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full ms-3 ">3</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group">
-                        <x-icons.users class="w-5 h-5 text-gray-500 transition duration-75 shrink-0 group-hover:text-gray-900" />
-                        <span class="flex-1 ms-3 whitespace-nowrap">Users</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group">
-                        <x-icons.shopping-bag class="w-5 h-5 text-gray-500 transition duration-75 shrink-0 group-hover:text-gray-900" />
-                        <span class="flex-1 ms-3 whitespace-nowrap">Products</span>
-                    </a>
-                </li>
+
 
             </ul>
         </div>

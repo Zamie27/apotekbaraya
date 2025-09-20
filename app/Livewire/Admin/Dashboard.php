@@ -121,12 +121,11 @@ class Dashboard extends Component
     }
     
     /**
-     * Get recent activity logs with delivery details
+     * Get recent orders (orderan yang masuk) sorted by newest first
      */
     public function getRecentActivitiesProperty()
     {
-        return UserLog::with('user')
-            ->whereIn('action', ['courier_assigned', 'order_shipped', 'order_delivered', 'delivery_cancelled'])
+        return Order::with(['user', 'orderItems.product'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();

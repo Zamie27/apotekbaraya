@@ -4,66 +4,66 @@
 
         {{-- Flash Messages --}}
         @if (session('success'))
-            <div class="alert alert-success mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>{{ session('success') }}</span>
-            </div>
+        <div class="alert alert-success mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{ session('success') }}</span>
+        </div>
         @endif
-        
+
         @if (session('registration_success'))
-            <div class="alert alert-info mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <div>
-                    <div class="font-semibold">Cek Email untuk Aktivasi Akun</div>
-                    <div class="text-sm">Kami telah mengirimkan link aktivasi ke email Anda. Silakan cek inbox dan klik link tersebut untuk mengaktifkan akun.</div>
-                </div>
+        <div class="alert alert-info mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <div>
+                <div class="font-semibold">Cek Email untuk Aktivasi Akun</div>
+                <div class="text-sm">Kami telah mengirimkan link aktivasi ke email Anda. Silakan cek inbox dan klik link tersebut untuk mengaktifkan akun.</div>
             </div>
+        </div>
         @endif
-        
+
         @if (session('email_verified'))
-            <div class="alert alert-success mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div>
-                    <div class="font-semibold">Akun Berhasil Diaktivasi!</div>
-                    <div class="text-sm">Selamat! Akun Anda sudah aktif. Silakan login untuk melanjutkan.</div>
-                </div>
+        <div class="alert alert-success mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+                <div class="font-semibold">Akun Berhasil Diaktivasi!</div>
+                <div class="text-sm">Selamat! Akun Anda sudah aktif. Silakan login untuk melanjutkan.</div>
             </div>
+        </div>
         @endif
-        
+
         @if (session('verification_failed'))
-            <div class="alert alert-error mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div>
-                    <div class="font-semibold">Aktivasi Gagal</div>
-                    <div class="text-sm">Link aktivasi tidak valid atau sudah kedaluwarsa. Silakan minta kirim ulang email aktivasi.</div>
-                </div>
+        <div class="alert alert-error mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+                <div class="font-semibold">Aktivasi Gagal</div>
+                <div class="text-sm">Link aktivasi tidak valid atau sudah kedaluwarsa. Silakan minta kirim ulang email aktivasi.</div>
             </div>
+        </div>
         @endif
-        
+
         @if (session('warning'))
-            <div class="alert alert-warning mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-                <span>{{ session('warning') }}</span>
-            </div>
+        <div class="alert alert-warning mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <span>{{ session('warning') }}</span>
+        </div>
         @endif
-        
+
         @if (session('error'))
-            <div class="alert alert-error mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>{{ session('error') }}</span>
-            </div>
+        <div class="alert alert-error mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{ session('error') }}</span>
+        </div>
         @endif
 
         <form wire:submit="login">
@@ -123,14 +123,14 @@
             </button>
         </form>
 
-        <div class="text-center space-y-3">
+        <div class="text-center space-y-2">
+
             <!-- Forgot Password Link -->
             <p class="text-sm">
-                <a href="/forgot-password" class="font-medium text-primary hover:underline" wire:navigate>
+                <a href="/forgot-password" class="font-medium text-success hover:underline" wire:navigate>
                     Lupa Password?
                 </a>
             </p>
-            
             <!-- Registration Link -->
             <p class="text-sm text-gray-500">
                 Belum memiliki akun?
@@ -138,17 +138,6 @@
                     Registrasi di sini
                 </a>
             </p>
-        </div>
-
-        <!-- Test Accounts Info -->
-        <div class="p-4 mt-6 rounded-lg bg-info/10">
-            <h3 class="mb-2 text-sm font-medium">Akun Test:</h3>
-            <div class="space-y-1 text-xs">
-                <p><strong>Admin:</strong> admin@apotekbaraya.com | password</p>
-                <p><strong>Apoteker:</strong> apoteker@apotekbaraya.com | password</p>
-                <p><strong>Kurir:</strong> kurir@apotekbaraya.com | password</p>
-                <p><strong>Pelanggan:</strong> pelanggan@apotekbaraya.com | password</p>
-            </div>
         </div>
     </fieldset>
 

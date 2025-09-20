@@ -158,19 +158,47 @@ class DeliveryDetail extends Component
     }
 
     /**
-     * Format shipping address for display.
+     * Format shipping address for display with complete details.
      */
     public function formatShippingAddress()
     {
-        $address = $this->delivery->delivery_address;
+        $address = $this->delivery->order->shipping_address;
         
         if (is_array($address)) {
-            $this->shippingAddress = implode(', ', array_filter([
-                $address['street'] ?? '',
-                $address['city'] ?? '',
-                $address['state'] ?? '',
-                $address['postal_code'] ?? ''
-            ]));
+            // Build complete address string with all available details
+            $addressParts = [];
+            
+            // Add detailed address first
+            if (!empty($address['detailed_address'])) {
+                $addressParts[] = $address['detailed_address'];
+            }
+            
+            // Add district/subdistrict
+            if (!empty($address['district'])) {
+                $addressParts[] = $address['district'];
+            }
+            
+            // Add city
+            if (!empty($address['city'])) {
+                $addressParts[] = $address['city'];
+            }
+            
+            // Add regency (kabupaten)
+            if (!empty($address['regency'])) {
+                $addressParts[] = $address['regency'];
+            }
+            
+            // Add province
+            if (!empty($address['province'])) {
+                $addressParts[] = $address['province'];
+            }
+            
+            // Add postal code
+            if (!empty($address['postal_code'])) {
+                $addressParts[] = $address['postal_code'];
+            }
+            
+            $this->shippingAddress = implode(', ', array_filter($addressParts));
         } else {
             $this->shippingAddress = $address ?? 'Alamat tidak tersedia';
         }
