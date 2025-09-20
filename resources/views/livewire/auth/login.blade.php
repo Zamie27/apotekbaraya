@@ -123,7 +123,15 @@
             </button>
         </form>
 
-        <div class="text-center">
+        <div class="text-center space-y-3">
+            <!-- Forgot Password Link -->
+            <p class="text-sm">
+                <a href="/forgot-password" class="font-medium text-primary hover:underline" wire:navigate>
+                    Lupa Password?
+                </a>
+            </p>
+            
+            <!-- Registration Link -->
             <p class="text-sm text-gray-500">
                 Belum memiliki akun?
                 <a href="/register" class="font-medium text-success hover:underline" wire:navigate>
