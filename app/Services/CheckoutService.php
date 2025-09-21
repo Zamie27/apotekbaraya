@@ -232,9 +232,10 @@ class CheckoutService
                 ]);
             }
 
-            // Get default payment method (COD as fallback)
-            $defaultPaymentMethod = PaymentMethod::where('code', 'cod')->first() 
-                ?? PaymentMethod::first();
+            // Get default payment method (prioritize bank_transfer, then cod, then any active method)
+            $defaultPaymentMethod = PaymentMethod::where('code', 'bank_transfer')->where('is_active', true)->first()
+                ?? PaymentMethod::where('code', 'cod')->where('is_active', true)->first() 
+                ?? PaymentMethod::where('is_active', true)->first();
             
             if (!$defaultPaymentMethod) {
                 throw new \Exception('No payment method available. Please contact administrator.');
