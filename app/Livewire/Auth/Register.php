@@ -26,7 +26,7 @@ class Register extends Component
     #[Validate('required|min:10|max:15|regex:/^[0-9]+$/')]
     public $phone = '';
 
-    #[Validate('required|min:8|max:255')]
+    #[Validate('required|min:8|max:255|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$*!])[A-Za-z\d@#$*!]+$/')]
     public $password = '';
 
     #[Validate('required|same:password')]
@@ -36,6 +36,21 @@ class Register extends Component
 
     // Laravel validation will handle input security
     // Removed preg_replace sanitization to rely on Laravel's built-in security
+
+    /**
+     * Custom validation messages for better user experience
+     */
+    protected function messages()
+    {
+        return [
+            'password.required' => 'Kata sandi wajib diisi.',
+            'password.min' => 'Kata sandi minimal 8 karakter.',
+            'password.max' => 'Kata sandi maksimal 255 karakter.',
+            'password.regex' => 'Kata sandi harus mengandung minimal 1 huruf kecil, 1 huruf kapital, 1 angka, dan 1 simbol (@#$*!).',
+            'password_confirmation.required' => 'Konfirmasi kata sandi wajib diisi.',
+            'password_confirmation.same' => 'Konfirmasi kata sandi tidak cocok.',
+        ];
+    }
 
     /**
      * Handle user registration and send email verification

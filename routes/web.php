@@ -47,8 +47,8 @@ Route::get('/', function () {
     return redirect('/dashboard');
 })->name('root');
 
-// Public homepage for guests
-Route::get('/dashboard', Dashboard::class)->name('dashboard')->middleware(['auth', 'verified']);
+// Public homepage for guests and authenticated users
+Route::get('/dashboard', Dashboard::class)->name('dashboard');
 
 // Home route alias for dashboard (for backward compatibility)
 Route::get('/home', function () {

@@ -203,32 +203,40 @@
 
     <script>
 
-        // Update cart counter
+        // Update cart counter (only for authenticated users)
         function updateCartCounter() {
             @auth
-            fetch('/api/cart/count')
-                .then(response => response.json())
-                .then(data => {
-                    const counter = document.getElementById('cart-counter');
-                    if (data.count > 0) {
-                        counter.textContent = data.count;
-                        counter.classList.remove('hidden');
-                    } else {
-                        counter.classList.add('hidden');
-                    }
-                })
-                .catch(error => console.error('Error updating cart counter:', error));
+            const counter = document.getElementById('cart-counter');
+            if (counter) {
+                fetch('/api/cart/count')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.count > 0) {
+                            counter.textContent = data.count;
+                            counter.classList.remove('hidden');
+                        } else {
+                            counter.classList.add('hidden');
+                        }
+                    })
+                    .catch(error => console.error('Error updating cart counter:', error));
+            }
             @endauth
         }
 
-        // Update counter on page load
-        document.addEventListener('DOMContentLoaded', updateCartCounter);
+        // Update counter on page load (only for authenticated users)
+        document.addEventListener('DOMContentLoaded', function() {
+            @auth
+            updateCartCounter();
+            @endauth
+        });
 
-        // Listen for Livewire events
+        // Listen for Livewire events (only for authenticated users)
         document.addEventListener('livewire:init', () => {
+            @auth
             Livewire.on('cart-updated', () => {
                 updateCartCounter();
             });
+            @endauth
         });
         
         // Listen for auto refresh event from OrderStatusActions component
