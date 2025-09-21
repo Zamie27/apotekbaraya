@@ -27,7 +27,7 @@ class RedirectIfAuthenticated
                         return redirect('/kurir/dashboard');
                     case 'pelanggan':
                     default:
-                        return redirect('/pelanggan/dashboard');
+                        return redirect('/dashboard');
                 }
             }
         }

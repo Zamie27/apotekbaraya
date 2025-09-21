@@ -6,6 +6,7 @@ use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Models\StoreSetting;
 use App\Models\UserAddress;
 use App\Services\DistanceCalculatorService;
@@ -231,10 +232,18 @@ class CheckoutService
                 ]);
             }
 
+            // Get default payment method (COD as fallback)
+            $defaultPaymentMethod = PaymentMethod::where('code', 'cod')->first() 
+                ?? PaymentMethod::first();
+            
+            if (!$defaultPaymentMethod) {
+                throw new \Exception('No payment method available. Please contact administrator.');
+            }
+
             // Create payment record
             $payment = Payment::create([
                 'order_id' => $order->order_id,
-                'payment_method_id' => 1, // Default payment method, will be updated by callback
+                'payment_method_id' => $defaultPaymentMethod->payment_method_id,
                 'amount' => $summary['total'],
                 'status' => 'pending', // Will be updated by Midtrans callback
                 // Remove paid_at from create, let it default to null

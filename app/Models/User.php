@@ -88,6 +88,11 @@ class User extends Authenticatable
     }
 
     // Helper methods untuk check role
+    public function hasRole($roleName)
+    {
+        return $this->role && $this->role->name === $roleName;
+    }
+
     public function isAdmin()
     {
         return $this->role->name === 'admin';

@@ -754,7 +754,7 @@
             @if($deliveryProofImage)
             <div class="flex justify-center">
                 <img
-                    src="{{ Storage::url($deliveryProofImage) }}"
+                    src="{{ str_starts_with($deliveryProofImage, 'storage/') ? asset($deliveryProofImage) : asset('storage/' . $deliveryProofImage) }}"
                     alt="@if($order->shipping_type === 'pickup') Bukti Pengambilan @else Bukti Pengiriman @endif"
                     class="max-w-full h-auto rounded-lg shadow-lg"
                     style="max-height: 70vh;">

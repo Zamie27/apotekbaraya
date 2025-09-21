@@ -29,7 +29,7 @@ class RoleMiddleware
                     return redirect('/kurir/dashboard')->with('error', 'Akses ditolak. Anda tidak memiliki izin untuk mengakses halaman tersebut.');
                 case 'pelanggan':
                 default:
-                    return redirect('/pelanggan/dashboard')->with('error', 'Akses ditolak. Anda tidak memiliki izin untuk mengakses halaman tersebut.');
+                    return redirect('/dashboard')->with('error', 'Akses ditolak. Anda tidak memiliki izin untuk mengakses halaman tersebut.');
             }
         }
 

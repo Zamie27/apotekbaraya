@@ -51,6 +51,23 @@
                     </div>
                 </a>
 
+                <!-- Manajemen Resep -->
+                <a href="{{ route('apoteker.prescriptions.index') }}" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300">
+                    <div class="card-body">
+                        <div class="flex items-center space-x-4">
+                            <div class="p-3 bg-info/10 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="card-title text-lg">Manajemen Resep</h3>
+                                <p class="text-gray-600">Kelola resep dokter dari pelanggan</p>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
                 <!-- Manajemen Produk -->
                 <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 opacity-50">
                     <div class="card-body">

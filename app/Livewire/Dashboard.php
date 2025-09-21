@@ -60,6 +60,41 @@ class Dashboard extends Component
         return auth()->user();
     }
     
+    /**
+     * Open WhatsApp consultation
+     */
+    public function openConsultation()
+    {
+        // Get store WhatsApp number from settings
+        $whatsappNumber = $this->getStoreWhatsAppNumber();
+        
+        if (!$whatsappNumber) {
+            session()->flash('error', 'Nomor WhatsApp toko belum dikonfigurasi. Silakan hubungi admin.');
+            return;
+        }
+        
+        // Create consultation message
+        $userName = auth()->user()->name;
+        $message = "Halo, saya {$userName} ingin berkonsultasi mengenai obat dan produk kesehatan. Mohon bantuannya.";
+        $encodedMessage = urlencode($message);
+        
+        // Create WhatsApp URL
+        $whatsappUrl = "https://wa.me/{$whatsappNumber}?text={$encodedMessage}";
+        
+        // Redirect to WhatsApp
+        $this->redirect($whatsappUrl);
+    }
+    
+    /**
+     * Get store WhatsApp number from settings
+     */
+    private function getStoreWhatsAppNumber()
+    {
+        // For now, return a default number. Later this will be from settings
+        // TODO: Implement settings table and get from database
+        return '6281234567890'; // Default WhatsApp number
+    }
+    
     public function render()
     {
         return view('livewire.dashboard', [

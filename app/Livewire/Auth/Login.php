@@ -52,7 +52,7 @@ class Login extends Component
                     return redirect('/kurir/dashboard');
                 case 'pelanggan':
                 default:
-                    return redirect('/');
+                    return redirect('/dashboard');
             }
         }
 

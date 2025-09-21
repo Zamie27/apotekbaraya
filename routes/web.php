@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PrescriptionController;
 
 use App\Livewire\Dashboard;
 use App\Livewire\Kategori;
@@ -121,8 +122,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/apoteker/orders', ApotekerOrders::class)->name('apoteker.orders');
         Route::get('/apoteker/orders/{orderId}', \App\Livewire\Apoteker\OrderDetail::class)->name('apoteker.orders.detail');
         Route::get('/apoteker/profile', ApotekerProfile::class)->name('apoteker.profile');
+        
+        // Prescription management routes for apoteker
+        Route::get('/apoteker/prescriptions', [PrescriptionController::class, 'manage'])->name('apoteker.prescriptions.index');
+        Route::get('/apoteker/prescriptions/{prescription}', [PrescriptionController::class, 'detail'])->name('apoteker.prescriptions.detail');
+        Route::post('/apoteker/prescriptions/{prescription}/confirm', [PrescriptionController::class, 'confirm'])->name('apoteker.prescriptions.confirm');
+        
         // Add more apoteker routes here
-        // Route::get('/apoteker/prescriptions', ApotekerPrescriptions::class);
         // Route::get('/apoteker/inventory', ApotekerInventory::class);
     });
 
@@ -143,6 +149,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Customer orders and cart routes
         Route::get('/orders', \App\Livewire\Pelanggan\Orders::class)->name('pelanggan.orders');
         Route::get('/orders/{orderId}', \App\Livewire\Pelanggan\OrderDetail::class)->name('pelanggan.orders.show');
+        
+        // Prescription upload routes for customers
+        Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('customer.prescriptions.index');
+        Route::get('/prescriptions/create', [PrescriptionController::class, 'create'])->name('customer.prescriptions.create');
+        Route::post('/prescriptions', [PrescriptionController::class, 'store'])->name('customer.prescriptions.store');
+        Route::get('/prescriptions/{prescription}', [PrescriptionController::class, 'show'])->name('customer.prescriptions.show');
+        
         // Route::get('/cart', \App\Livewire\Pelanggan\Cart::class)->name('cart');
         // Add more pelanggan routes here
     });

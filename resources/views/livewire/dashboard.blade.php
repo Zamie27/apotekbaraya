@@ -20,6 +20,17 @@
                 <a href="/login" class="btn btn-success btn-sm">Masuk</a>
             </div>
         </div>
+        
+        {{-- Link ke Daftar Resep --}}
+        <div class="mt-4 text-center">
+            <a href="{{ route('prescriptions.index') }}" 
+               class="btn btn-outline btn-primary btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Lihat Resep Saya
+            </a>
+        </div>
     </div>
     @endif
 
@@ -39,6 +50,73 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <span>{{ session('error') }}</span>
+    </div>
+    @endif
+
+    {{-- Fitur Khusus Pelanggan --}}
+    @if($isAuthenticated && $currentUser->hasRole('pelanggan'))
+    <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 my-4 sm:my-6 border border-gray-200">
+        <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-4 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-success mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Layanan Khusus
+        </h3>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {{-- Fitur Konsultasi --}}
+            <div class="card bg-gradient-to-br from-green-50 to-green-100 shadow-md hover:shadow-lg transition-shadow duration-300 border border-green-200">
+                <div class="card-body p-4">
+                    <div class="flex items-center mb-3">
+                        <div class="p-2 bg-green-500 rounded-lg text-white mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">Konsultasi</h4>
+                            <p class="text-sm text-gray-600">Chat dengan Apoteker</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-700 mb-4">Konsultasi gratis dengan apoteker profesional untuk mendapatkan rekomendasi obat yang tepat.</p>
+                    <button 
+                        wire:click="openConsultation" 
+                        class="btn btn-success btn-sm w-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Mulai Konsultasi
+                    </button>
+                </div>
+            </div>
+
+            {{-- Fitur Unggah Resep --}}
+            <div class="card bg-gradient-to-br from-blue-50 to-blue-100 shadow-md hover:shadow-lg transition-shadow duration-300 border border-blue-200">
+                <div class="card-body p-4">
+                    <div class="flex items-center mb-3">
+                        <div class="p-2 bg-blue-500 rounded-lg text-white mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">Unggah Resep</h4>
+                            <p class="text-sm text-gray-600">Upload resep dokter</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-700 mb-4">Unggah foto resep dokter dan kami akan menyiapkan obat sesuai resep untuk Anda.</p>
+                    <a 
+                        href="{{ route('customer.prescriptions.create') }}" 
+                        class="btn btn-primary btn-sm w-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Unggah Resep
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
     @endif
 
