@@ -135,8 +135,13 @@ class Orders extends Component
     /**
      * Get order status label
      */
-    public function getStatusLabel($status)
+    public function getStatusLabel($status, $order = null)
     {
+        // Check if payment is expired for waiting_payment status
+        if ($status === 'waiting_payment' && $order && $order->isPaymentExpired()) {
+            return 'Pesanan Expired';
+        }
+
         return match($status) {
             'pending' => 'Pesanan Dibuat',
             'waiting_payment' => 'Menunggu Pembayaran',

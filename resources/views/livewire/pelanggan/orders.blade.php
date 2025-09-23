@@ -148,6 +148,26 @@
                                             </div>
                                         </div>
                                         @endif
+
+                                        {{-- Expired payment information --}}
+                                        @if($order->status === 'waiting_payment' && $order->isPaymentExpired())
+                                        <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                            <div class="flex items-start gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <div class="flex-1">
+                                                    <h5 class="text-sm font-medium text-red-800 mb-1">Pesanan Expired</h5>
+                                                    <p class="text-xs text-red-700">
+                                                        Batas waktu pembayaran telah habis. Pesanan akan dibatalkan otomatis.
+                                                        @if($order->payment_expired_at)
+                                                        <br><span class="font-medium">Expired:</span> {{ $order->payment_expired_at->format('d M Y, H:i') }}
+                                                        @endif
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @endif
                                     </div>
                                 </div>
 

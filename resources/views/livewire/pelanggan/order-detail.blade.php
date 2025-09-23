@@ -55,6 +55,24 @@
         </div>
         @endif
 
+        {{-- Expired Order Warning --}}
+        @if ($order->status === 'waiting_payment' && $order->isPaymentExpired())
+        <div class="alert alert-error mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <div>
+                <h3 class="font-bold">Pesanan Expired!</h3>
+                <div class="text-sm">
+                    Pesanan ini telah melewati batas waktu pembayaran (1 hari) dan akan dibatalkan secara otomatis oleh sistem.
+                    @if ($order->payment_expired_at)
+                        <br>Batas waktu pembayaran: {{ $order->payment_expired_at->format('d M Y, H:i') }}
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endif
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             <!-- Main Content -->
             <div class="lg:col-span-2 space-y-4 sm:space-y-6">

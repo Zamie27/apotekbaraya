@@ -269,6 +269,11 @@ class Order extends Model
      */
     public function getStatusBadgeColorAttribute()
     {
+        // Check if payment is expired for waiting_payment status
+        if ($this->status === 'waiting_payment' && $this->isPaymentExpired()) {
+            return 'badge-error';
+        }
+
         return match($this->status) {
             'pending' => 'badge-warning',
             'waiting_payment' => 'badge-warning',
@@ -297,6 +302,11 @@ class Order extends Model
      */
     public function getStatusLabelAttribute(): string
     {
+        // Check if payment is expired for waiting_payment status
+        if ($this->status === 'waiting_payment' && $this->isPaymentExpired()) {
+            return 'Pesanan Expired';
+        }
+
         return match($this->status) {
             'pending' => 'Pesanan Dibuat',
             'waiting_payment' => 'Menunggu Pembayaran',
@@ -1186,5 +1196,118 @@ class Order extends Model
     public function canBeDeleted(): bool
     {
         return in_array($this->status, ['pending', 'waiting_payment', 'waiting_confirmation', 'cancelled']);
+    }
+
+    /**
+     * Check if order is eligible for automatic cancellation
+     * 
+     * @return bool
+     */
+    public function isEligibleForAutoCancellation(): bool
+    {
+        return $this->status === 'waiting_payment' 
+            && $this->isPaymentExpired()
+            && !$this->hasSuccessfulPayment();
+    }
+
+    /**
+     * Check if order has successful payment
+     * 
+     * @return bool
+     */
+    public function hasSuccessfulPayment(): bool
+    {
+        return $this->payment && in_array($this->payment->status, ['settlement', 'capture', 'success']);
+    }
+
+    /**
+     * Cancel order automatically due to expiration
+     * 
+     * @return bool
+     */
+    public function cancelDueToExpiration(): bool
+    {
+        if (!$this->isEligibleForAutoCancellation()) {
+            return false;
+        }
+
+        try {
+            \DB::beginTransaction();
+
+            // Update order status
+            $this->update([
+                'status' => 'cancelled',
+                'cancelled_at' => now(),
+                'cancellation_reason' => 'Pesanan Expired - Tidak dibayar dalam 1 hari',
+                'cancelled_by' => 'system'
+            ]);
+
+            // Restore product stock
+            $this->restoreProductStock();
+
+            \DB::commit();
+
+            \Log::info('Order automatically cancelled due to expiration', [
+                'order_id' => $this->order_id,
+                'order_number' => $this->order_number,
+                'total_amount' => $this->total_price,
+                'created_at' => $this->created_at,
+                'cancelled_at' => now(),
+            ]);
+
+            return true;
+
+        } catch (\Exception $e) {
+            \DB::rollBack();
+
+            \Log::error('Failed to cancel expired order', [
+                'order_id' => $this->order_id,
+                'order_number' => $this->order_number,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Restore product stock for cancelled order
+     * 
+     * @return void
+     */
+    private function restoreProductStock(): void
+    {
+        foreach ($this->items as $item) {
+            if ($item->product) {
+                $item->product->increment('stock_quantity', $item->qty);
+
+                \Log::info('Stock restored for product', [
+                    'product_id' => $item->product->product_id,
+                    'product_name' => $item->product->name,
+                    'quantity_restored' => $item->qty,
+                    'new_stock' => $item->product->fresh()->stock_quantity,
+                    'order_number' => $this->order_number
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Scope to find orders eligible for automatic cancellation
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int $expireDays
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeEligibleForAutoCancellation($query, int $expireDays = 1)
+    {
+        $expireDate = now()->subDays($expireDays);
+        
+        return $query->where('status', 'waiting_payment')
+            ->where('created_at', '<=', $expireDate)
+            ->whereDoesntHave('payment', function ($paymentQuery) {
+                $paymentQuery->whereIn('status', ['settlement', 'capture', 'success']);
+            });
     }
 }

@@ -219,7 +219,8 @@ class CheckoutService
                 'is_free_shipping' => $summary['is_free_shipping'],
                 'shipping_address' => $shippingAddress,
                 'notes' => $checkoutData['notes'] ?? null,
-                'status' => 'pending'
+                'status' => 'pending',
+                'payment_expired_at' => now()->addDay() // Set payment expiration to 1 day from now
             ]);
 
             // Create order items

@@ -139,13 +139,25 @@ class OrderManagement extends Component
     /**
      * Get status label in Indonesian.
      */
-    public function getStatusLabel($status)
+    public function getStatusLabel($status, $order = null)
     {
+        // Check if payment is expired for waiting_payment status
+        if ($status === 'waiting_payment' && $order && $order->isPaymentExpired()) {
+            return 'Pesanan Expired';
+        }
+
         return match($status) {
             'pending' => 'Menunggu',
+            'waiting_payment' => 'Menunggu Pembayaran',
+            'waiting_confirmation' => 'Menunggu Konfirmasi',
+            'confirmed' => 'Dikonfirmasi',
             'processing' => 'Diproses',
+            'ready_to_ship' => 'Siap Diantar',
+            'ready_for_pickup' => 'Siap Diambil',
             'shipped' => 'Dikirim',
+            'picked_up' => 'Diambil',
             'delivered' => 'Selesai',
+            'completed' => 'Selesai',
             'cancelled' => 'Dibatalkan',
             default => ucfirst($status)
         };
