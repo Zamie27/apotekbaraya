@@ -66,6 +66,9 @@
                 <a href="/kategori" class="btn btn-xs sm:btn-sm {{ !$categoryId ? 'btn-success' : 'btn-outline btn-success' }} whitespace-nowrap">
                     Semua Kategori
                 </a>
+                <a href="/kategori/promo" class="btn btn-xs sm:btn-sm {{ $category && $category->name === 'Promo' ? 'btn-warning' : 'btn-outline btn-warning' }} whitespace-nowrap">
+                    🏷️ Promo
+                </a>
                 @foreach($categories as $cat)
                 <a href="/kategori/{{ $cat->slug }}" class="btn btn-xs sm:btn-sm {{ $categoryId == $cat->category_id ? 'btn-success' : 'btn-outline btn-success' }} whitespace-nowrap">
                     {{ $cat->name }} ({{ $cat->products_count }})

@@ -31,14 +31,25 @@ class Kategori extends Component
     public function mount($slug = null)
     {
         if ($slug) {
-            // Try to find by slug first, fallback to ID for backward compatibility
-            $this->category = Category::where('is_active', true)
-                ->where(function($query) use ($slug) {
-                    $query->where('slug', $slug)
-                          ->orWhere('category_id', $slug);
-                })
-                ->firstOrFail();
-            $this->categoryId = $this->category->category_id;
+            // Handle special "promo" category
+            if ($slug === 'promo') {
+                $this->category = (object) [
+                    'category_id' => 'promo',
+                    'name' => 'Promo',
+                    'slug' => 'promo',
+                    'description' => 'Produk dengan harga diskon khusus'
+                ];
+                $this->categoryId = 'promo';
+            } else {
+                // Try to find by slug first, fallback to ID for backward compatibility
+                $this->category = Category::where('is_active', true)
+                    ->where(function($query) use ($slug) {
+                        $query->where('slug', $slug)
+                              ->orWhere('category_id', $slug);
+                    })
+                    ->firstOrFail();
+                $this->categoryId = $this->category->category_id;
+            }
         } else {
             $this->category = null;
         }
@@ -90,7 +101,12 @@ class Kategori extends Component
 
         // Filter berdasarkan kategori jika ada
         if ($this->categoryId) {
-            $query->where('category_id', $this->categoryId);
+            if ($this->categoryId === 'promo') {
+                // Filter produk yang sedang diskon (memiliki discount_price)
+                $query->onSale();
+            } else {
+                $query->where('category_id', $this->categoryId);
+            }
         }
 
         // Filter berdasarkan pencarian
@@ -101,8 +117,12 @@ class Kategori extends Component
             });
         }
 
-        // Default ordering by name
-        $query->orderBy('name', 'asc');
+        // Default ordering by name, but for promo category, order by discount percentage desc
+        if ($this->categoryId === 'promo') {
+            $query->orderByRaw('((price - discount_price) / price) DESC');
+        } else {
+            $query->orderBy('name', 'asc');
+        }
 
         return $query->paginate($this->perPage);
     }

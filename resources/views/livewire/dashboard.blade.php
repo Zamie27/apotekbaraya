@@ -198,6 +198,12 @@
                 Semua Kategori
             </a>
 
+            {{-- Promo Category Button --}}
+            <a href="/kategori/promo"
+                class="rounded-lg btn btn-warning btn-sm sm:btn-md text-white whitespace-nowrap hover:scale-105 transition-transform">
+                🏷️ Promo
+            </a>
+
             {{-- Category Buttons from Database --}}
             @foreach($categories as $category)
             <a href="/kategori/{{ $category->slug }}"
