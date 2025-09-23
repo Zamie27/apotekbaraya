@@ -53,10 +53,13 @@
                             </div>
                         </div>
 
-                        <!-- Notification Bell (hidden on mobile) -->
-                        <button class="btn btn-ghost btn-circle btn-md sm:btn-lg hidden sm:flex">
-                            <x-icons.bell class="h-5 w-5 sm:h-6 sm:w-6 text-gray-700" />
-                        </button>
+                        <!-- My Orders Button (hidden on mobile) -->
+                        <a href="{{ route('user.orders') }}" class="btn btn-ghost btn-circle btn-md sm:btn-lg hidden sm:flex relative">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                            @livewire('order-counter')
+                        </a>
 
                         <!-- Cart Icon with Counter -->
                         <a href="{{ route('cart') }}" class="btn btn-ghost btn-circle btn-md sm:btn-lg relative">
@@ -75,7 +78,6 @@
                             </div>
                             <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
                                 <li><a href="/profile" class="text-sm">Profil</a></li>
-                                <li><a href="{{ route('pelanggan.orders') }}" class="text-sm">Pesanan Saya</a></li>
                                 <li><a href="/logout" class="text-red-600 hover:bg-base-200 text-sm">Keluar</a></li>
                             </ul>
                         </div>

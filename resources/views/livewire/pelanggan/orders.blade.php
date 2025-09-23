@@ -327,17 +327,17 @@
 
         <!-- Cancel Order Modal -->
         @if ($showCancelModal)
-        <div class="modal modal-open" x-data="{ cancelReason: @entangle('cancelReason'), cancelReasonOther: @entangle('cancelReasonOther') }">
+        <div class="modal modal-open">
             <div class="modal-box w-11/12 max-w-md">
                 <h3 class="font-bold text-base sm:text-lg mb-3 sm:mb-4">Batalkan Pesanan</h3>
                 <p class="mb-3 sm:mb-4 text-sm sm:text-base">Mengapa Anda ingin membatalkan pesanan ini?</p>
 
-                <form wire:submit="cancelOrder" class="space-y-3 sm:space-y-4">
+                <form wire:submit.prevent="cancelOrder" class="space-y-3 sm:space-y-4">
                     <div class="form-control">
                         <label class="label py-1">
                             <span class="label-text text-sm">Pilih alasan pembatalan:</span>
                         </label>
-                        <select class="select select-bordered select-sm sm:select-md w-full text-sm @error('cancelReason') select-error @enderror" x-model="cancelReason" wire:model="cancelReason">
+                        <select class="select select-bordered select-sm sm:select-md w-full text-sm @error('cancelReason') select-error @enderror" wire:model.live="cancelReason">
                             <option value="">Pilih alasan...</option>
                             <option value="salah_pesan">Salah membuat pesanan</option>
                             <option value="ganti_barang">Ingin mengganti barang</option>
@@ -353,7 +353,8 @@
                         @enderror
                     </div>
 
-                    <div class="form-control" x-show="cancelReason === 'lainnya'">
+                    @if($cancelReason === 'lainnya')
+                    <div class="form-control">
                         <label class="label py-1">
                             <span class="label-text text-sm">Jelaskan alasan lainnya:</span>
                         </label>
@@ -361,14 +362,14 @@
                             class="textarea textarea-bordered textarea-sm sm:textarea-md text-sm @error('cancelReasonOther') textarea-error @enderror"
                             placeholder="Masukkan alasan pembatalan..."
                             rows="3"
-                            x-model="cancelReasonOther"
-                            wire:model="cancelReasonOther"></textarea>
+                            wire:model.live="cancelReasonOther"></textarea>
                         @error('cancelReasonOther')
                         <label class="label py-1">
                             <span class="label-text-alt text-error text-xs">{{ $message }}</span>
                         </label>
                         @enderror
                     </div>
+                    @endif
 
                     <div class="modal-action gap-2">
                         <button
@@ -380,8 +381,12 @@
                         <button
                             type="submit"
                             class="btn btn-error btn-sm sm:btn-md text-sm"
-                            x-bind:disabled="!cancelReason || (cancelReason === 'lainnya' && (!cancelReasonOther || cancelReasonOther.length < 3))">
-                            Ya, Batalkan Pesanan
+                            @if(!$this->canSubmitCancel) disabled @endif
+                            wire:loading.attr="disabled"
+                            wire:target="cancelOrder">
+                            <span wire:loading.remove wire:target="cancelOrder">Ya, Batalkan Pesanan</span>
+                            <span wire:loading wire:target="cancelOrder" class="loading loading-spinner loading-xs mr-2"></span>
+                            <span wire:loading wire:target="cancelOrder">Membatalkan...</span>
                         </button>
                     </div>
                 </form>

@@ -148,6 +148,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/profile', Profile::class)->name('profile');
         // Customer orders and cart routes
         Route::get('/orders', \App\Livewire\Pelanggan\Orders::class)->name('pelanggan.orders');
+        Route::get('/my-orders', \App\Livewire\Pelanggan\Orders::class)->name('user.orders'); // Alias for navbar
         Route::get('/orders/{orderId}', \App\Livewire\Pelanggan\OrderDetail::class)->name('pelanggan.orders.show');
         
         // Prescription upload routes for customers

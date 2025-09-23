@@ -840,11 +840,13 @@
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
             try {
-                if ($wire.order &&
-                    $wire.order.payment &&
-                    $wire.order.payment.status === 'pending' &&
-                    $wire.order.status !== 'cancelled') {
-                    $wire.checkPaymentStatus();
+                const component = window.Livewire?.find('{{ $this->getId() }}');
+                if (component && 
+                    component.get('order') &&
+                    component.get('order').payment &&
+                    component.get('order').payment.status === 'pending' &&
+                    component.get('order').status !== 'cancelled') {
+                    component.call('checkPaymentStatus');
                 }
             } catch (error) {
                 console.log('Visibility change check skipped:', error.message);
@@ -857,7 +859,10 @@
         Livewire.on('clear-payment-status-message', () => {
             setTimeout(() => {
                 try {
-                    $wire.set('paymentStatusMessage', '');
+                    const component = window.Livewire?.find('{{ $this->getId() }}');
+                    if (component) {
+                        component.set('paymentStatusMessage', '');
+                    }
                 } catch (error) {
                     console.log('Clear payment status message failed:', error.message);
                 }

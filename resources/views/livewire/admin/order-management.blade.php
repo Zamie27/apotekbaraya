@@ -294,7 +294,7 @@
         
         // Create toast element
         const toast = document.createElement('div');
-        toast.className = `alert alert-${type} fixed top-4 right-4 w-auto max-w-sm z-50 shadow-lg`;
+        toast.className = `alert alert-${type} fixed top-20 right-4 w-auto max-w-sm z-40 shadow-lg`;
         toast.innerHTML = `
             <svg class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
                 ${type === 'success' 

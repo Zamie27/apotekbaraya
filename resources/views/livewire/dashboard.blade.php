@@ -109,6 +109,73 @@
     </div>
     @endif
 
+    {{-- Layanan Khusus untuk Guest User --}}
+    @if(!$isAuthenticated)
+    <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 my-4 sm:my-6 border border-gray-200">
+        <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-4 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Layanan Khusus
+        </h3>
+        <p class="text-sm text-gray-600 mb-6">Nikmati layanan eksklusif kami dengan mendaftar sebagai member. Dapatkan akses ke fitur-fitur premium!</p>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {{-- Fitur Konsultasi --}}
+            <div class="card bg-gradient-to-br from-green-50 to-green-100 shadow-md hover:shadow-lg transition-all duration-300 border border-green-200 cursor-pointer" onclick="redirectToLogin('konsultasi')">
+                <div class="card-body p-4">
+                    <div class="flex items-center mb-3">
+                        <div class="p-2 bg-green-500 rounded-lg text-white mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">Konsultasi Gratis</h4>
+                            <p class="text-sm text-gray-600">Chat dengan Apoteker</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-700 mb-4">Konsultasi gratis dengan apoteker profesional untuk mendapatkan rekomendasi obat yang tepat.</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-green-600 font-medium">✨ Gratis untuk Member</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Fitur Unggah Resep --}}
+            <div class="card bg-gradient-to-br from-blue-50 to-blue-100 shadow-md hover:shadow-lg transition-all duration-300 border border-blue-200 cursor-pointer" onclick="redirectToLogin('resep')">
+                <div class="card-body p-4">
+                    <div class="flex items-center mb-3">
+                        <div class="p-2 bg-blue-500 rounded-lg text-white mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">Unggah Resep</h4>
+                            <p class="text-sm text-gray-600">Upload resep dokter</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-700 mb-4">Unggah foto resep dokter dan kami akan menyiapkan obat sesuai resep untuk Anda.</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-blue-600 font-medium">📋 Praktis & Mudah</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+
+    </div>
+    @endif
+
     <div class="relative flex justify-center w-full mx-1 sm:mx-2 mb-3">
         <div class="absolute left-0 z-10 top-1/2 -translate-y-1/2 backdrop-blur-sm bg-base-200/60 rounded-full">
             <button
@@ -274,6 +341,18 @@
         window.addEventListener('load', updateButtonVisibility);
         window.addEventListener('resize', updateButtonVisibility);
         scrollContainer.addEventListener('scroll', updateButtonVisibility);
+    </script>
+
+    {{-- JavaScript for Guest Services Redirect --}}
+    <script>
+        /**
+         * Redirect guest users to login page directly
+         * @param {string} service - The service type that was clicked
+         */
+        function redirectToLogin(service) {
+            // Direct redirect to login page without alert
+            window.location.href = '/login';
+        }
     </script>
 
 </div>

@@ -526,7 +526,7 @@
     function showToastNotification(message, type = 'success') {
         // Create toast element
         const toast = document.createElement('div');
-        toast.className = `alert alert-${type} fixed top-4 right-4 z-50 max-w-sm shadow-lg transform transition-all duration-300 translate-x-full opacity-0`;
+        toast.className = `alert alert-${type} fixed top-20 right-4 z-40 max-w-sm shadow-lg transform transition-all duration-300 translate-x-full opacity-0`;
         
         toast.innerHTML = `
             <div class="flex items-center">

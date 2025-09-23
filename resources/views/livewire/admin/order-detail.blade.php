@@ -720,7 +720,7 @@
                 
                 // Create notification element
                 const notification = document.createElement('div');
-                notification.className = `alert alert-${type === 'success' ? 'success' : 'error'} fixed top-4 right-4 z-50 max-w-md shadow-lg notification-toast`;
+                notification.className = `alert alert-${type === 'success' ? 'success' : 'error'} fixed top-20 right-4 z-40 max-w-md shadow-lg notification-toast`;
                 notification.innerHTML = `
                     <div class="flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">

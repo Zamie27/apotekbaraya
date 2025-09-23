@@ -80,13 +80,13 @@ class PaymentSnap extends Component
         // Check payment status from Midtrans to confirm the payment
         $this->checkPaymentStatus();
         
-        // Set redirect flag and URL for JavaScript to handle
-        session()->flash('success', 'Pembayaran berhasil! Pesanan Anda sedang diproses.');
-        $this->shouldRedirect = true;
-        $this->redirectUrl = route('pelanggan.orders.show', [$this->order->order_id, 'from_payment' => 1]);
+        // Don't set flash message here - let OrderDetail handle the notification
+        // to avoid duplicate notifications
         
-        // Dispatch browser event for redirect
-        $this->dispatch('payment-redirect', ['url' => $this->redirectUrl]);
+        // Frontend will handle the redirect directly
+        Log::info('Payment success processed, frontend will redirect', [
+            'order_id' => $this->order->order_id
+        ]);
     }
     
     /**
@@ -102,13 +102,13 @@ class PaymentSnap extends Component
         // Check payment status from Midtrans to get latest status
         $this->checkPaymentStatus();
         
-        // Set redirect flag and URL for JavaScript to handle
-        session()->flash('info', 'Pembayaran sedang diproses. Silakan tunggu konfirmasi.');
-        $this->shouldRedirect = true;
-        $this->redirectUrl = route('pelanggan.orders.show', [$this->order->order_id, 'from_payment' => 1]);
+        // Don't set flash message here - let OrderDetail handle the notification
+        // to avoid duplicate notifications
         
-        // Dispatch browser event for redirect
-        $this->dispatch('payment-redirect', ['url' => $this->redirectUrl]);
+        // Frontend will handle the redirect directly
+        Log::info('Payment pending processed, frontend will redirect', [
+            'order_id' => $this->order->order_id
+        ]);
     }
     
     /**
@@ -124,13 +124,13 @@ class PaymentSnap extends Component
         // Check payment status from Midtrans to confirm the error
         $this->checkPaymentStatus();
         
-        // Set redirect flag and URL for JavaScript to handle
+        // Set flash message for error
         session()->flash('error', 'Pembayaran gagal atau dibatalkan.');
-        $this->shouldRedirect = true;
-        $this->redirectUrl = route('pelanggan.orders.show', [$this->order->order_id, 'from_payment' => 1]);
         
-        // Dispatch browser event for redirect
-        $this->dispatch('payment-redirect', ['url' => $this->redirectUrl]);
+        // Frontend will handle the redirect directly
+        Log::info('Payment error processed, frontend will redirect', [
+            'order_id' => $this->order->order_id
+        ]);
     }
     
     /**
@@ -142,12 +142,9 @@ class PaymentSnap extends Component
             'order_id' => $this->order->order_id
         ]);
         
-        // Set redirect flag and URL for JavaScript to handle
-        $this->shouldRedirect = true;
-        $this->redirectUrl = route('pelanggan.orders.show', $this->order->order_id);
-        
-        // Dispatch browser event for redirect
-        $this->dispatch('payment-redirect', ['url' => $this->redirectUrl]);
+        // Don't redirect automatically when popup is just closed
+        // Let the frontend handle this case
+        // Only log the event for debugging purposes
     }
     
     /**

@@ -287,11 +287,13 @@ class OrderDetail extends Component
                     // Reload order data
                     $this->loadOrder();
                     
-                    $this->paymentStatusMessage = 'Status pembayaran berhasil diperbarui!';
+                    // Clear any existing payment status message
+                    $this->paymentStatusMessage = '';
+                    
+                    // Set the single notification message as requested
                     session()->flash('success', 'Status pembayaran berhasil diperbarui! Pesanan Anda sedang menunggu konfirmasi.');
                 } else {
                     $this->paymentStatusMessage = 'Status pembayaran: ' . ucfirst(str_replace('_', ' ', $transactionStatus));
-                    session()->flash('info', 'Status pembayaran: ' . ucfirst(str_replace('_', ' ', $transactionStatus)));
                 }
             } else {
                 $this->paymentStatusMessage = 'Gagal memeriksa status pembayaran.';

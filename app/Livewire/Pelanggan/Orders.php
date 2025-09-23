@@ -52,6 +52,24 @@ class Orders extends Component
     ];
 
     /**
+     * Check if cancel button should be enabled
+     * 
+     * @return bool
+     */
+    public function getCanSubmitCancelProperty()
+    {
+        if (empty($this->cancelReason)) {
+            return false;
+        }
+        
+        if ($this->cancelReason === 'lainnya') {
+            return !empty($this->cancelReasonOther) && strlen($this->cancelReasonOther) >= 3;
+        }
+        
+        return true;
+    }
+
+    /**
      * Reset pagination when filters change
      */
     public function updatingStatusFilter()
