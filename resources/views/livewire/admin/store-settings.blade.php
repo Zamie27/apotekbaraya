@@ -113,7 +113,7 @@
                                 </div>
 
                                 {{-- Store Hours --}}
-                                <div class="form-control">
+                                <div class="form-control mb-4">
                                     <label class="label">
                                         <span class="label-text font-medium text-sm sm:text-base">Jam Operasional <span class="text-red-500">*</span></span>
                                     </label>
@@ -125,6 +125,25 @@
                                         <span class="label-text-alt text-gray-500 text-xs sm:text-sm">Jam buka toko untuk layanan pickup</span>
                                     </label>
                                     @error('store_hours')
+                                    <label class="label">
+                                        <span class="label-text-alt text-error text-xs">{{ $message }}</span>
+                                    </label>
+                                    @enderror
+                                </div>
+
+                                {{-- Store SIPA --}}
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text font-medium text-sm sm:text-base">Nomor SIPA <span class="text-red-500">*</span></span>
+                                    </label>
+                                    <input type="text"
+                                        wire:model="store_sipa"
+                                        class="input input-bordered w-full text-sm sm:text-base @error('store_sipa') input-error @enderror"
+                                        placeholder="Contoh: SIPA.503/DINKES-PROV.JABAR/III/2024">
+                                    <label class="label">
+                                        <span class="label-text-alt text-gray-500 text-xs sm:text-sm">Surat Izin Praktik Apoteker (SIPA) yang berlaku</span>
+                                    </label>
+                                    @error('store_sipa')
                                     <label class="label">
                                         <span class="label-text-alt text-error text-xs">{{ $message }}</span>
                                     </label>

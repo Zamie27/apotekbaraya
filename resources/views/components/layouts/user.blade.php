@@ -147,10 +147,10 @@
                         <h2 class="mb-3 sm:mb-4 lg:mb-6 text-xs sm:text-sm font-semibold text-gray-900 uppercase">Legal</h2>
                         <ul class="font-medium text-gray-500 text-xs sm:text-sm">
                             <li class="mb-2 sm:mb-4">
-                                <a href="#" class="hover:underline">Privacy Policy</a>
+                                <a href="{{ route('privacy-policy') }}" class="hover:underline">Kebijakan Privasi</a>
                             </li>
                             <li>
-                                <a href="#" class="hover:underline">Terms &amp; Conditions</a>
+                                <a href="{{ route('terms-conditions') }}" class="hover:underline">Syarat &amp; Ketentuan</a>
                             </li>
                         </ul>
                     </div>

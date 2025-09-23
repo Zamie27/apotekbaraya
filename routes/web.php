@@ -64,6 +64,10 @@ Route::get('/search', \App\Livewire\Search::class)->name('search');
 // Public category page (accessible by guests)
 Route::get('/kategori/{slug?}', Kategori::class)->name('kategori');
 
+// Legal pages (accessible by everyone)
+Route::get('/privacy-policy', \App\Livewire\Legal\PrivacyPolicy::class)->name('privacy-policy');
+Route::get('/terms-conditions', \App\Livewire\Legal\TermsConditions::class)->name('terms-conditions');
+
 // Payment routes (accessible by Midtrans and authenticated users)
 Route::post('/payment/notification', [\App\Http\Controllers\WebhookController::class, 'midtransNotification'])->name('payment.notification');
 Route::get('/payment/finish', [PaymentController::class, 'finish'])->name('payment.finish');

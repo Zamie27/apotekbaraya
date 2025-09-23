@@ -21,6 +21,7 @@ class StoreSettings extends Component
     public $store_whatsapp = ''; // WhatsApp number for customer contact
     public $store_email = '';
     public $store_hours = ''; // Store operating hours for pickup
+    public $store_sipa = ''; // Store SIPA (Surat Izin Praktik Apoteker)
 
     // Shipping Settings Properties
     public $shipping_rate_per_km = 0;
@@ -45,6 +46,7 @@ class StoreSettings extends Component
         'store_whatsapp' => 'nullable|string|max:20|regex:/^\+62[0-9]{8,13}$/',
         'store_email' => 'required|email|max:255',
         'store_hours' => 'required|string|max:255', // Store operating hours
+        'store_sipa' => 'required|string|max:255', // SIPA number
         'shipping_rate_per_km' => 'required|numeric|min:0',
         'max_delivery_distance' => 'required|numeric|min:1',
         'free_shipping_minimum' => 'required|numeric|min:0',
@@ -65,6 +67,7 @@ class StoreSettings extends Component
         'store_email.required' => 'Email toko wajib diisi.',
         'store_email.email' => 'Format email tidak valid.',
         'store_hours.required' => 'Jam operasional toko wajib diisi.',
+        'store_sipa.required' => 'Nomor SIPA wajib diisi.',
         'shipping_rate_per_km.required' => 'Tarif pengiriman per km wajib diisi.',
         'shipping_rate_per_km.numeric' => 'Tarif pengiriman harus berupa angka.',
         'max_delivery_distance.required' => 'Jarak pengiriman maksimal wajib diisi.',
@@ -97,6 +100,7 @@ class StoreSettings extends Component
             $this->store_whatsapp = StoreSetting::get('whatsapp_number', '');
             $this->store_email = StoreSetting::get('store_email', '');
             $this->store_hours = StoreSetting::get('store_hours', 'Senin-Sabtu: 08:00-20:00');
+            $this->store_sipa = StoreSetting::get('store_sipa', '');
 
             // Load shipping settings
             $this->shipping_rate_per_km = StoreSetting::get('shipping_rate_per_km', 2000);
@@ -128,6 +132,7 @@ class StoreSettings extends Component
             StoreSetting::set('whatsapp_number', $this->store_whatsapp, 'string');
             StoreSetting::set('store_email', $this->store_email, 'string');
             StoreSetting::set('store_hours', $this->store_hours, 'string');
+            StoreSetting::set('store_sipa', $this->store_sipa, 'string');
 
             // Save shipping settings
             StoreSetting::set('shipping_rate_per_km', $this->shipping_rate_per_km, 'number');
