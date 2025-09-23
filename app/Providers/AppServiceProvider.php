@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Order;
+use App\Observers\OrderObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +13,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register OrderNotificationService as singleton
+        $this->app->singleton(\App\Services\OrderNotificationService::class, function ($app) {
+            return new \App\Services\OrderNotificationService();
+        });
     }
 
     /**
@@ -19,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register Order Observer for automatic email notifications
+        Order::observe(OrderObserver::class);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Livewire\Components;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\UserLog;
+use App\Services\OrderNotificationService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -25,6 +26,8 @@ class OrderStatusActions extends Component
     public $pickupImage;
     public $deliveryImage;
     public $selectedCourierId;
+
+    protected OrderNotificationService $notificationService;
 
     /**
      * Validation rules for the component
@@ -99,9 +102,22 @@ class OrderStatusActions extends Component
         $this->order = $order->load(['items.product', 'user', 'delivery']);
         $this->userRole = $userRole;
 
+        // Initialize notification service using dependency injection
+        $this->notificationService = app(OrderNotificationService::class);
+
         // Validate that order exists and has required data
         if (!$this->order || !$this->order->exists) {
             throw new \Exception('Order data is invalid or missing');
+        }
+    }
+
+    /**
+     * Ensure notification service is initialized.
+     */
+    private function ensureNotificationServiceInitialized(): void
+    {
+        if (!isset($this->notificationService)) {
+            $this->notificationService = app(OrderNotificationService::class);
         }
     }
 
@@ -249,6 +265,17 @@ class OrderStatusActions extends Component
             }
 
             if ($success) {
+                // Send email notification to customer
+                try {
+                    $this->ensureNotificationServiceInitialized();
+                    $this->notificationService->sendOrderConfirmation($this->order);
+                } catch (\Exception $emailError) {
+                    \Log::warning('Failed to send order confirmation email', [
+                        'order_id' => $this->order->order_id,
+                        'error' => $emailError->getMessage()
+                    ]);
+                }
+
                 $this->closeModal();
                 $this->dispatch('orderUpdated');
                 $this->dispatch('show-notification', [
@@ -338,6 +365,17 @@ class OrderStatusActions extends Component
             );
 
             if ($success) {
+                // Send email notification to customer
+                try {
+                    $this->ensureNotificationServiceInitialized();
+                    $this->notificationService->sendCancelledNotification($this->order, $this->actionReason);
+                } catch (\Exception $emailError) {
+                    \Log::warning('Failed to send order cancellation email', [
+                        'order_id' => $this->order->order_id,
+                        'error' => $emailError->getMessage()
+                    ]);
+                }
+
                 $this->dispatch('show-notification', [
                     'type' => 'success',
                     'message' => 'Pesanan berhasil dibatalkan!',
@@ -462,6 +500,17 @@ class OrderStatusActions extends Component
             $success = $this->order->markAsProcessing();
 
             if ($success) {
+                // Send email notification to customer
+                try {
+                    $this->ensureNotificationServiceInitialized();
+                    $this->notificationService->sendProcessingNotification($this->order);
+                } catch (\Exception $emailError) {
+                    \Log::warning('Failed to send order processing email', [
+                        'order_id' => $this->order->order_id,
+                        'error' => $emailError->getMessage()
+                    ]);
+                }
+
                 $this->closeModal();
                 $this->dispatch('orderUpdated');
                 $this->dispatch('show-notification', [
@@ -572,6 +621,22 @@ class OrderStatusActions extends Component
             $success = $this->order->markAsReadyToShip($receiptPath, $courierId);
 
             if ($success) {
+                // Send email notification to customer
+                try {
+                    $this->ensureNotificationServiceInitialized();
+                    if ($this->order->shipping_type === 'delivery') {
+                        $this->notificationService->sendReadyToShipNotification($this->order);
+                    } else {
+                        $this->notificationService->sendReadyForPickupNotification($this->order);
+                    }
+                } catch (\Exception $emailError) {
+                    \Log::warning('Failed to send ready to ship/pickup email', [
+                        'order_id' => $this->order->order_id,
+                        'shipping_type' => $this->order->shipping_type,
+                        'error' => $emailError->getMessage()
+                    ]);
+                }
+
                 // Log activity for courier assignment
                 if ($courierId) {
                     $courier = User::find($courierId);
@@ -671,6 +736,17 @@ class OrderStatusActions extends Component
                 ]
             );
 
+            // Send email notification to customer
+            try {
+                $this->ensureNotificationServiceInitialized();
+                $this->notificationService->sendShippedNotification($this->order);
+            } catch (\Exception $emailError) {
+                \Log::warning('Failed to send order shipped email', [
+                    'order_id' => $this->order->order_id,
+                    'error' => $emailError->getMessage()
+                ]);
+            }
+
             session()->flash('success', 'Pesanan berhasil dikirim!');
             $this->closeModal();
             $this->dispatch('orderUpdated');
@@ -733,6 +809,17 @@ class OrderStatusActions extends Component
         $success = $this->order->markAsPickedUp($pickupPath);
 
         if ($success) {
+            // Send email notification to customer
+            try {
+                $this->ensureNotificationServiceInitialized();
+                $this->notificationService->sendCompletedNotification($this->order);
+            } catch (\Exception $emailError) {
+                \Log::warning('Failed to send order completion email', [
+                    'order_id' => $this->order->order_id,
+                    'error' => $emailError->getMessage()
+                ]);
+            }
+
             session()->flash('success', 'Pesanan berhasil dikonfirmasi diambil!');
             $this->closeModal();
             $this->dispatch('orderUpdated');
@@ -808,6 +895,17 @@ class OrderStatusActions extends Component
                     'delivery_status' => 'delivered'
                 ]
             );
+
+            // Send email notification to customer
+            try {
+                $this->ensureNotificationServiceInitialized();
+                $this->notificationService->sendCompletedNotification($this->order);
+            } catch (\Exception $emailError) {
+                \Log::warning('Failed to send order completion email', [
+                    'order_id' => $this->order->order_id,
+                    'error' => $emailError->getMessage()
+                ]);
+            }
 
             session()->flash('success', 'Pesanan berhasil diselesaikan!');
             $this->closeModal();
