@@ -5,6 +5,7 @@ namespace App\Livewire\Components;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\UserLog;
+use App\Helpers\FileUploadHelper;
 use App\Services\OrderNotificationService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -245,7 +246,17 @@ class OrderStatusActions extends Component
             $receiptPath = null;
             if ($this->receiptImage && $this->receiptImage->isValid()) {
                 try {
-                    $receiptPath = $this->receiptImage->store('receipts', 'public');
+                    $receiptPath = FileUploadHelper::storeWithStructuredName(
+                        $this->receiptImage,
+                        FileUploadHelper::TYPE_STRUK,
+                        $this->order->order_number,
+                        'receipts',
+                        'public'
+                    );
+                    
+                    if (!$receiptPath) {
+                        throw new \Exception('Gagal menyimpan file struk');
+                    }
                 } catch (\Exception $uploadError) {
                     \Log::error('Error uploading receipt image in confirmOrder: ' . $uploadError->getMessage());
                     $this->dispatch('show-notification', [
@@ -603,7 +614,17 @@ class OrderStatusActions extends Component
             $receiptPath = null;
             if ($this->receiptImage && $this->receiptImage->isValid()) {
                 try {
-                    $receiptPath = $this->receiptImage->store('receipts', 'public');
+                    $receiptPath = FileUploadHelper::storeWithStructuredName(
+                        $this->receiptImage,
+                        FileUploadHelper::TYPE_STRUK,
+                        $this->order->order_number,
+                        'receipts',
+                        'public'
+                    );
+                    
+                    if (!$receiptPath) {
+                        throw new \Exception('Gagal menyimpan file struk');
+                    }
                 } catch (\Exception $uploadError) {
                     \Log::error('Error uploading receipt image: ' . $uploadError->getMessage());
                     $this->dispatch('show-notification', [
@@ -793,7 +814,17 @@ class OrderStatusActions extends Component
         $pickupPath = null;
         if ($this->pickupImage && $this->pickupImage->isValid()) {
             try {
-                $pickupPath = $this->pickupImage->store('pickups', 'public');
+                $pickupPath = FileUploadHelper::storeWithStructuredName(
+                    $this->pickupImage,
+                    FileUploadHelper::TYPE_PENGAMBILAN,
+                    $this->order->order_number,
+                    'pickups',
+                    'public'
+                );
+                
+                if (!$pickupPath) {
+                    throw new \Exception('Gagal menyimpan file foto pengambilan');
+                }
             } catch (\Exception $uploadError) {
                 \Log::error('Error uploading pickup image: ' . $uploadError->getMessage());
                 $this->dispatch('show-notification', [
@@ -865,7 +896,17 @@ class OrderStatusActions extends Component
             $imagePath = null;
             if ($this->deliveryImage && $this->deliveryImage->isValid()) {
                 try {
-                    $imagePath = $this->deliveryImage->store('delivery-images', 'public');
+                    $imagePath = FileUploadHelper::storeWithStructuredName(
+                        $this->deliveryImage,
+                        FileUploadHelper::TYPE_PENGANTARAN,
+                        $this->order->order_number,
+                        'delivery-images',
+                        'public'
+                    );
+                    
+                    if (!$imagePath) {
+                        throw new \Exception('Gagal menyimpan file foto pengantaran');
+                    }
                 } catch (\Exception $uploadError) {
                     \Log::error('Error uploading delivery image: ' . $uploadError->getMessage());
                     $this->dispatch('show-notification', [

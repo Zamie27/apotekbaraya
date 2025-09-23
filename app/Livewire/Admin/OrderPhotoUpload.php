@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Order;
+use App\Helpers\FileUploadHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -55,8 +56,19 @@ class OrderPhotoUpload extends Component
                 Storage::disk('public')->delete($this->order->receipt_photo);
             }
 
-            // Store new photo
-            $path = $this->receiptPhoto->store('order-photos/receipts', 'public');
+            // Store new photo with structured filename
+            $path = FileUploadHelper::storeWithStructuredName(
+                $this->receiptPhoto,
+                FileUploadHelper::TYPE_STRUK,
+                $this->order->order_id,
+                'order-photos/receipts',
+                'public'
+            );
+
+            // Check if upload was successful
+            if (!$path) {
+                throw new \Exception('Gagal menyimpan file foto struk');
+            }
 
             // Update order record
             $this->order->update([
@@ -108,8 +120,24 @@ class OrderPhotoUpload extends Component
                 Storage::disk('public')->delete($this->order->delivery_photo);
             }
 
-            // Store new photo
-            $path = $this->deliveryPhoto->store('order-photos/delivery', 'public');
+            // Store new photo with structured filename
+            // Determine file type based on shipping type
+            $fileType = $this->order->shipping_type === 'pickup' 
+                ? FileUploadHelper::TYPE_PENGAMBILAN 
+                : FileUploadHelper::TYPE_PENGANTARAN;
+                
+            $path = FileUploadHelper::storeWithStructuredName(
+                $this->deliveryPhoto,
+                $fileType,
+                $this->order->order_number,
+                'order-photos/delivery',
+                'public'
+            );
+
+            // Check if upload was successful
+            if (!$path) {
+                throw new \Exception('Gagal menyimpan file foto pengiriman/pengambilan');
+            }
 
             // Update order record
             $this->order->update([

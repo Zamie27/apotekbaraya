@@ -3,6 +3,7 @@
 namespace App\Livewire\Kurir;
 
 use App\Models\Delivery;
+use App\Helpers\FileUploadHelper;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Layout;
@@ -370,8 +371,20 @@ class DeliveryDetail extends Component
             Storage::delete($this->delivery->delivery_photo);
         }
 
-        // Upload photo
-        $photoPath = $this->deliveryPhoto->store('delivery-photos', 'public');
+        // Upload photo with structured filename
+        $photoPath = FileUploadHelper::storeWithStructuredName(
+            $this->deliveryPhoto,
+            FileUploadHelper::TYPE_PENGANTARAN,
+            $this->delivery->order->order_number,
+            'delivery-photos',
+            'public'
+        );
+
+        // Check if upload was successful
+        if (!$photoPath) {
+            session()->flash('error', 'Gagal mengupload foto bukti pengiriman. Silakan coba lagi.');
+            return;
+        }
 
         $this->delivery->update([
             'status' => 'delivered',
@@ -412,8 +425,21 @@ class DeliveryDetail extends Component
             if ($this->delivery->delivery_photo) {
                 Storage::delete($this->delivery->delivery_photo);
             }
-            $photoPath = $this->deliveryPhoto->store('delivery-photos', 'public');
-            $updateData['delivery_photo'] = $photoPath;
+            
+            // Upload photo with structured filename
+            $photoPath = FileUploadHelper::storeWithStructuredName(
+                $this->deliveryPhoto,
+                FileUploadHelper::TYPE_PENGANTARAN,
+                $this->delivery->order->order_number,
+                'delivery-photos',
+                'public'
+            );
+            
+            if ($photoPath) {
+                $updateData['delivery_photo'] = $photoPath;
+            } else {
+                session()->flash('error', 'Gagal mengupload foto. Status tetap diperbarui tanpa foto.');
+            }
         }
 
         $this->delivery->update($updateData);
