@@ -393,10 +393,16 @@ class DeliveryDetail extends Component
             'delivery_notes' => $this->deliveryNotes,
         ]);
 
-        // Update order status
+        // Update order status to delivered first
         $this->delivery->order->update([
             'status' => 'delivered',
             'delivered_at' => now()
+        ]);
+
+        // Automatically mark as completed for delivery orders
+        $this->delivery->order->update([
+            'status' => 'completed',
+            'completed_at' => now()
         ]);
 
         session()->flash('success', 'Pengiriman berhasil diselesaikan!');

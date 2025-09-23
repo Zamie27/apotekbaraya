@@ -246,9 +246,25 @@ class Orders extends Component
             return;
         }
 
+        // Update to delivered status first
         $order->update([
             'status' => 'delivered',
             'delivered_at' => now()
+        ]);
+
+        // Update delivery record if exists
+        if ($order->delivery) {
+            $order->delivery->update([
+                'status' => 'delivered',
+                'delivered_at' => now(),
+                'delivery_notes' => 'Dikonfirmasi diterima oleh pelanggan'
+            ]);
+        }
+
+        // Automatically mark as completed for delivery orders
+        $order->update([
+            'status' => 'completed',
+            'completed_at' => now()
         ]);
 
         session()->flash('success', 'Terima kasih! Pesanan telah dikonfirmasi selesai.');

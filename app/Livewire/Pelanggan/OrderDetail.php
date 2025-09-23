@@ -509,6 +509,7 @@ class OrderDetail extends Component
             return;
         }
 
+        // Update to delivered status first
         $this->order->update([
             'status' => 'delivered',
             'delivered_at' => now()
@@ -517,10 +518,17 @@ class OrderDetail extends Component
         // Update delivery record if exists
         if ($this->order->delivery) {
             $this->order->delivery->update([
+                'status' => 'delivered',
                 'delivered_at' => now(),
                 'delivery_notes' => 'Dikonfirmasi diterima oleh pelanggan'
             ]);
         }
+
+        // Automatically mark as completed for delivery orders
+        $this->order->update([
+            'status' => 'completed',
+            'completed_at' => now()
+        ]);
 
         $this->loadOrder(); // Refresh order data
         session()->flash('success', 'Terima kasih! Pesanan telah dikonfirmasi selesai.');

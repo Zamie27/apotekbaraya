@@ -572,17 +572,43 @@ class Order extends Model
 
     /**
      * Mark order as delivered.
+     *
+     * @param string|null $imagePath Optional delivery proof image path
+     * @return bool
      */
-    public function markAsDelivered(): bool
+    public function markAsDelivered(string $imagePath = null): bool
     {
         if ($this->status !== 'shipped') {
             return false;
         }
 
-        $this->update([
+        // Update to delivered status first
+        $updateData = [
             'status' => 'delivered',
             'delivered_at' => now()
-        ]);
+        ];
+
+        // Add delivery proof image if provided
+        if ($imagePath) {
+            $updateData['delivery_proof'] = $imagePath;
+        }
+
+        $this->update($updateData);
+
+        // Update delivery record if exists
+        if ($this->delivery) {
+            $deliveryUpdateData = [
+                'status' => 'delivered',
+                'delivered_at' => now(),
+                'delivery_notes' => 'Pesanan telah berhasil diantar'
+            ];
+
+            if ($imagePath) {
+                $deliveryUpdateData['delivery_photo'] = $imagePath;
+            }
+
+            $this->delivery->update($deliveryUpdateData);
+        }
 
         // Automatically mark as completed for delivery orders
         $this->update([
