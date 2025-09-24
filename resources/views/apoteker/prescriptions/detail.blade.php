@@ -189,7 +189,7 @@
 <div id="confirmModal" class="modal">
     <div class="modal-box">
         <h3 class="font-bold text-lg mb-4">Konfirmasi Resep</h3>
-        <form method="POST" action="{{ route('apoteker.prescriptions.confirm', $prescription->id) }}">
+        <form method="POST" action="{{ route('apoteker.prescriptions.confirm', $prescription->getKey()) }}">
             @csrf
             <div class="form-control mb-4">
                 <label class="label">

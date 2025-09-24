@@ -130,7 +130,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex gap-2">
-                                        <a href="{{ route('apoteker.prescriptions.detail', $prescription->id) }}" 
+                                        <a href="{{ route('apoteker.prescriptions.detail', $prescription->getKey()) }}" 
                                            class="btn btn-outline btn-sm">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -140,7 +140,7 @@
                                         </a>
                                         
                                         @if($prescription->status === 'pending')
-                                        <button onclick="openConfirmModal({{ $prescription->id }})" 
+                                        <button onclick="openConfirmModal({{ $prescription->getKey() }})" 
                                                 class="btn btn-success btn-sm">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />

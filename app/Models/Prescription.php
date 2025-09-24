@@ -11,7 +11,7 @@ class Prescription extends Model
     /**
      * The primary key for the model.
      */
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'prescription_id';
 
     /**
      * The attributes that are mass assignable.
@@ -23,6 +23,7 @@ class Prescription extends Model
         'patient_name',
         'notes',
         'prescription_image',
+        'file', // Added file field to fillable
         'status',
         'confirmed_by',
         'confirmation_notes',

@@ -30,23 +30,28 @@ class PrescriptionController extends Controller
             'notes' => 'nullable|string|max:1000'
         ]);
 
-        // Upload prescription image
+        // Generate unique prescription number first
+        $prescriptionNumber = 'RX-' . strtoupper(Str::random(8));
+
+        // Upload prescription image with custom naming format
         $image = $request->file('prescription_image');
-        $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+        $imageName = 'RESEP-' . $prescriptionNumber . '.jpg';
         $imagePath = $image->storeAs('prescriptions', $imageName, 'public');
 
         // Create prescription record
         $prescription = Prescription::create([
+            'prescription_number' => $prescriptionNumber,
             'user_id' => Auth::id(),
             'doctor_name' => $request->doctor_name,
             'patient_name' => $request->patient_name,
             'prescription_image' => $imagePath,
+            'file' => $imagePath, // Fill file field with same value as prescription_image
             'notes' => $request->notes,
             'status' => 'pending'
         ]);
 
-        return redirect()->route('customer.prescriptions.show', $prescription->id)
-            ->with('success', 'Resep berhasil diunggah! Silakan tunggu konfirmasi dari apoteker.');
+        return redirect()->route('customer.prescriptions.show', $prescription->getKey())
+            ->with('success', 'Prescription uploaded successfully!');
     }
 
     /**
@@ -130,7 +135,7 @@ class PrescriptionController extends Controller
             ? 'Resep berhasil dikonfirmasi!' 
             : 'Resep ditolak.';
 
-        return redirect()->route('apoteker.prescriptions.detail', $prescription->id)
+        return redirect()->route('apoteker.prescriptions.detail', $prescription->getKey())
             ->with('success', $message);
     }
 }
