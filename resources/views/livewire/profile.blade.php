@@ -334,18 +334,17 @@
                     </div>
 
                     <!-- Use Address Form Component -->
-                    <form wire:submit="saveAddress">
-                        <x-address-form
-                            :addressForm="$addressForm"
-                            :provinces="$provinces"
-                            :regencies="$regencies"
-                            :subDistricts="$subDistricts"
-                            :villages="$villages"
-                            :postalCodes="$postalCodes"
-                            :addressPreview="$addressPreview"
-                            :editingAddressId="$editingAddressId"
-                            cancelAction="hideAddressForm" />
-                    </form>
+                    <x-address-form
+                        :addressForm="$addressForm"
+                        :provinces="$provinces"
+                        :regencies="$regencies"
+                        :subDistricts="$subDistricts"
+                        :villages="$villages"
+                        :postalCodes="$postalCodes"
+                        :addressPreview="$addressPreview"
+                        :editingAddressId="$editingAddressId"
+                        cancelAction="hideAddressForm"
+                        submitAction="saveAddress" />
                 </div>
                 @endif
 
@@ -365,7 +364,7 @@
                                 <p class="text-xs sm:text-sm text-gray-600 mb-1">{{ $address['phone'] ?? '' }}</p>
                                 <p class="text-xs sm:text-sm mb-2 break-words">{{ $address['detailed_address'] ?? '' }}</p>
                                 <p class="text-xs sm:text-sm text-gray-600 break-words">
-                                    {{ $address['district'] ?? '' }}, {{ $address['city'] ?? '' }} {{ $address['postal_code'] ?? '' }}
+                                    {{ is_array($address['district'] ?? '') ? implode(', ', $address['district']) : ($address['district'] ?? '') }}, {{ is_array($address['city'] ?? '') ? implode(', ', $address['city']) : ($address['city'] ?? '') }} {{ $address['postal_code'] ?? '' }}
                                 </p>
                                 @if($address['notes'])
                                     <p class="text-xs sm:text-sm text-gray-500 mt-1 italic break-words">{{ $address['notes'] ?? '' }}</p>

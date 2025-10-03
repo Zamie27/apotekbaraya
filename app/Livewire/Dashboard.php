@@ -90,9 +90,28 @@ class Dashboard extends Component
      */
     private function getStoreWhatsAppNumber()
     {
-        // For now, return a default number. Later this will be from settings
-        // TODO: Implement settings table and get from database
-        return '6281234567890'; // Default WhatsApp number
+        // Get WhatsApp number from store settings
+        $whatsappNumber = \App\Models\StoreSetting::get('store_whatsapp');
+        
+        if (!$whatsappNumber) {
+            return null;
+        }
+        
+        // Clean the number format (remove + and spaces)
+        $cleanNumber = preg_replace('/[^0-9]/', '', $whatsappNumber);
+        
+        // Ensure it starts with 62 (Indonesia country code)
+        if (substr($cleanNumber, 0, 2) !== '62') {
+            // If starts with 0, replace with 62
+            if (substr($cleanNumber, 0, 1) === '0') {
+                $cleanNumber = '62' . substr($cleanNumber, 1);
+            } else {
+                // If doesn't start with 62 or 0, prepend 62
+                $cleanNumber = '62' . $cleanNumber;
+            }
+        }
+        
+        return $cleanNumber;
     }
     
     public function render()

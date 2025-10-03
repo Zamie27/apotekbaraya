@@ -182,7 +182,7 @@
                                 </td>
                                 <td>
                                     <div class="flex space-x-2">
-                                        <button wire:click="openEditModal({{ $user->user_id }})" 
+                                        <button wire:click="editUser({{ $user->user_id }})" 
                                                 class="btn btn-sm btn-ghost btn-square tooltip" 
                                                 data-tip="Edit">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -475,6 +475,4 @@
         </div>
     @endif
 
-    <!-- Edit User Component -->
-    @livewire('admin.edit-user')
 </div>

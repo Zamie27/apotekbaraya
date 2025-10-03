@@ -18,6 +18,7 @@ class Dashboard extends Component
         $waitingConfirmation = Order::where('status', 'waiting_confirmation')->count();
         $confirmed = Order::where('status', 'confirmed')->count();
         $processing = Order::where('status', 'processing')->count();
+        $cancelled = Order::where('status', 'cancelled')->count();
         $totalOrders = Order::count();
         
         // Get recent orders that need attention (waiting confirmation)
@@ -37,6 +38,7 @@ class Dashboard extends Component
             'waitingConfirmation' => $waitingConfirmation,
             'confirmed' => $confirmed,
             'processing' => $processing,
+            'cancelled' => $cancelled,
             'totalOrders' => $totalOrders,
             'recentOrders' => $recentOrders,
             'allRecentOrders' => $allRecentOrders,

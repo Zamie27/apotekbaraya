@@ -30,29 +30,32 @@ use App\Models\StoreSetting;
 
 <body class="min-h-screen bg-base-200">
     <nav class="sticky top-0 z-50 bg-gray-100 shadow-lg">
-        <div class="container mx-auto px-3 sm:px-6">
-            <div class="navbar min-h-16 sm:min-h-20">
+        <div class="container mx-auto px-2 sm:px-6">
+            <div class="navbar min-h-14 sm:min-h-20">
                 <!-- Logo Section -->
                 <div class="navbar-start">
                     <div class="flex items-center gap-2 sm:gap-3">
-                        <img src="/src/img/logo.png" alt="Logo" class="w-8 h-8 sm:w-10 sm:h-10">
-                        <!-- Show pharmacy name only on desktop -->
-                        <a class="hidden md:block text-lg sm:text-xl lg:text-2xl font-bold text-green-500" href="/">Apotek Baraya</a>
+                        <!-- Logo - always visible, optimized for mobile, clickable to home -->
+                        <a href="/" class="flex items-center">
+                            <img src="/src/img/logo.png" alt="Logo" class="w-8 h-8 sm:w-10 sm:h-10 md:w-10 md:h-10 hover:opacity-80 transition-opacity">
+                        </a>
+                        <!-- Show pharmacy name only on desktop (md and up) -->
+                        <a class="hidden md:block text-lg sm:text-xl lg:text-2xl font-bold text-green-500 hover:text-green-600 transition-colors" href="/">Apotek Baraya</a>
                     </div>
                 </div>
 
-                <!-- Center - Search (Hidden on mobile, shown in dropdown) -->
-                <div class="navbar-center hidden lg:flex justify-center">
-                    <div class="form-control w-full max-w-xs xl:max-w-sm">
+                <!-- Center - Search Form (always visible in navbar center) -->
+                <div class="navbar-center flex justify-center flex-1">
+                    <div class="form-control w-full max-w-xs sm:max-w-sm xl:max-w-md">
                         @livewire('navbar-search')
                     </div>
                 </div>
 
                 <!-- Right Section -->
                 <div class="navbar-end">
-                    <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="flex items-center gap-1 sm:gap-2">
                         @auth
-                        <!-- Mobile Hamburger Menu -->
+                        <!-- Mobile Hamburger Menu (visible on small screens only) -->
                         <div class="dropdown dropdown-end md:hidden">
                             <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-md sm:btn-lg">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -61,16 +64,66 @@ use App\Models\StoreSetting;
                             </div>
                             <div tabindex="0" class="dropdown-content z-[1] p-2 shadow bg-base-100 rounded-box w-52 mt-3">
                                 <ul class="menu menu-sm">
-                                    <li><a href="/profile" class="text-sm">Profil</a></li>
-                                    <li><a href="{{ route('cart') }}" class="text-sm">Keranjang</a></li>
-                                    <li><a href="{{ route('user.orders') }}" class="text-sm">Pesanan Saya</a></li>
-                                    <li><a href="{{ route('customer.prescriptions.index') }}" class="text-sm">Resep Dokter</a></li>
-                                    <li><a href="/logout" class="text-red-600 hover:bg-base-200 text-sm">Keluar</a></li>
+                                    <li>
+                                        <a href="/profile" class="text-sm flex items-center gap-3">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            Profile
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('cart') }}" class="text-sm flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17M17 13v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+                                                </svg>
+                                                <span>Keranjang</span>
+                                            </div>
+                                            <span id="mobile-cart-counter" class="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">
+                                                0
+                                            </span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('user.orders') }}" class="text-sm flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                                </svg>
+                                                <span>Pesanan Saya</span>
+                                            </div>
+                                            <div class="mobile-order-counter">
+                                                @livewire('order-counter')
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('customer.prescriptions.index') }}" class="text-sm flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                <span>Resep Dokter</span>
+                                            </div>
+                                            <div class="mobile-prescription-counter">
+                                                @livewire('prescription-counter')
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="/logout" class="text-red-600 hover:bg-base-200 text-sm flex items-center gap-3">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                            </svg>
+                                            Keluar
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
 
-                        <!-- Desktop Icons -->
+                        <!-- Desktop Icons (visible on medium screens and up) -->
                         <div class="hidden md:flex items-center gap-2 sm:gap-3">
                             <!-- My Orders Button -->
                             <a href="{{ route('user.orders') }}" class="btn btn-ghost btn-circle btn-md sm:btn-lg relative">
@@ -80,10 +133,10 @@ use App\Models\StoreSetting;
                                 @livewire('order-counter')
                             </a>
 
-                            <!-- Prescriptions Button -->
+                            <!-- Prescriptions Button (NEW - positioned next to orders) -->
                             <a href="{{ route('customer.prescriptions.index') }}" class="btn btn-ghost btn-circle btn-md sm:btn-lg relative">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z M16 7V3a1 1 0 00-1-1H9a1 1 0 00-1 1v4" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 @livewire('prescription-counter')
                             </a>
@@ -111,9 +164,10 @@ use App\Models\StoreSetting;
                         </div>
                         @else
                         <!-- Login/Register Buttons (for guests) -->
-                        <div class="flex gap-2 sm:gap-3">
-                            <a class="btn btn-success btn-sm sm:btn-md text-sm sm:text-base px-3 sm:px-4" href="/register">Registrasi</a>
-                            <a class="btn btn-outline btn-success btn-sm sm:btn-md text-sm sm:text-base px-3 sm:px-4" href="/login">Login</a>
+                        <div class="flex items-center gap-2 sm:gap-3 ml-2 sm:ml-4">
+                            <!-- Show only Login button on mobile, both on desktop -->
+                            <a class="hidden sm:inline-flex btn btn-success btn-sm sm:btn-md text-xs sm:text-sm px-2 sm:px-4" href="/register">Registrasi</a>
+                            <a class="btn btn-outline btn-success btn-sm sm:btn-md text-xs sm:text-sm px-2 sm:px-4" href="/login">Login</a>
                         </div>
                         @endauth
                     </div>
@@ -122,12 +176,7 @@ use App\Models\StoreSetting;
         </div>
     </nav>
 
-    <!-- Mobile Search Form (Always visible on mobile) -->
-    <div class="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
-        <div class="form-control w-full">
-            @livewire('navbar-search')
-        </div>
-    </div>
+
 
     <!-- Main Content -->
     <div class="container mx-auto px-2 sm:px-4 lg:px-6">
@@ -226,15 +275,30 @@ use App\Models\StoreSetting;
         function updateCartCounter() {
             @auth
             const counter = document.getElementById('cart-counter');
-            if (counter) {
+            const mobileCounter = document.getElementById('mobile-cart-counter');
+            
+            if (counter || mobileCounter) {
                 fetch('/api/cart/count')
                     .then(response => response.json())
                     .then(data => {
-                        if (data.count > 0) {
-                            counter.textContent = data.count;
-                            counter.classList.remove('hidden');
-                        } else {
-                            counter.classList.add('hidden');
+                        // Update desktop counter
+                        if (counter) {
+                            if (data.count > 0) {
+                                counter.textContent = data.count;
+                                counter.classList.remove('hidden');
+                            } else {
+                                counter.classList.add('hidden');
+                            }
+                        }
+                        
+                        // Update mobile counter
+                        if (mobileCounter) {
+                            if (data.count > 0) {
+                                mobileCounter.textContent = data.count;
+                                mobileCounter.classList.remove('hidden');
+                            } else {
+                                mobileCounter.classList.add('hidden');
+                            }
                         }
                     })
                     .catch(error => console.error('Error updating cart counter:', error));

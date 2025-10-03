@@ -820,6 +820,14 @@ class OrderDetail extends Component
         return $this->order->shipping_address ?? 'Alamat tidak tersedia';
     }
 
+    /**
+     * Redirect to dashboard for buy again functionality
+     */
+    public function buyAgain()
+    {
+        return redirect()->route('dashboard');
+    }
+
     public function render()
     {
         return view('livewire.pelanggan.order-detail', [

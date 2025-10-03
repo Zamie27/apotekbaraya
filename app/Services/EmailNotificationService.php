@@ -23,11 +23,11 @@ class EmailNotificationService
     ): EmailNotification {
         return EmailNotification::create([
             'user_id' => $user->id,
-            'event_type' => $eventType,
+            'type' => $eventType,
             'recipient_email' => $recipientEmail ?? $user->email,
             'subject' => $subject,
-            'message' => $message,
-            'data' => $data,
+            'body' => $message,
+            'metadata' => $data,
             'status' => 'pending',
         ]);
     }
@@ -174,7 +174,7 @@ class EmailNotificationService
                 
                 Log::info('Email notification sent successfully', [
                     'notification_id' => $notification->id,
-                    'event_type' => $notification->event_type,
+                    'type' => $notification->type,
                     'recipient' => $notification->recipient_email,
                 ]);
             } catch (\Exception $e) {
@@ -182,7 +182,7 @@ class EmailNotificationService
                 
                 Log::error('Failed to send email notification', [
                     'notification_id' => $notification->id,
-                    'event_type' => $notification->event_type,
+                    'type' => $notification->type,
                     'recipient' => $notification->recipient_email,
                     'error' => $e->getMessage(),
                 ]);
@@ -195,7 +195,7 @@ class EmailNotificationService
      */
     private function sendEmail(EmailNotification $notification): void
     {
-        Mail::raw($notification->message, function ($message) use ($notification) {
+        Mail::raw($notification->body, function ($message) use ($notification) {
             $message->to($notification->recipient_email)
                     ->subject($notification->subject)
                     ->from(config('mail.from.address'), config('mail.from.name'));

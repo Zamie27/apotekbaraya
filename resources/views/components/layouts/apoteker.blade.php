@@ -10,6 +10,7 @@ use App\Models\StoreSetting;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="/src/img/logo.png">
     <title>{{ $title ?? 'Apotek Baraya' }}</title>
     @vite('resources/css/app.css')
@@ -28,18 +29,6 @@ use App\Models\StoreSetting;
 
             <!-- Right Section -->
             <div class="flex items-center gap-4">
-                @auth
-                <!-- Notification Bell (only for logged in users) -->
-                <button class="p-2 btn btn-circle hover:bg-gray-200">
-                    <x-icons.bell class="text-gray-700" />
-                </button>
-
-                <!-- Mail Icon (only for logged in users) -->
-                <button class="p-2 btn btn-circle hover:bg-gray-200">
-                    <x-icons.mail class="text-gray-700" />
-                </button>
-                @endauth
-
                 <!-- Profile Dropdown (for logged in users) -->
                 <div class="dropdown dropdown-end">
                     <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
@@ -54,7 +43,7 @@ use App\Models\StoreSetting;
                         class="p-2 mt-3 shadow menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] w-52">
                         <li><a href="/apoteker/profile">Profil</a></li>
                         <li><a href="/apoteker/orders">Manajemen Pesanan</a></li>
-                        <li><a href="{{ route('apoteker.prescriptions.index') }}">Manajemen Resep</a></li>
+                        <li><a href="{{ route('apoteker.prescriptions.manage') }}">Manajemen Resep</a></li>
                         <li><a href="/logout" class="text-left text-red-600 hover:bg-base-200">Keluar</a></li>
                     </ul>
                 </div>

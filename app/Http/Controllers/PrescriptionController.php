@@ -3,8 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Prescription;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Product;
+use App\Mail\OrderCreatedFromPrescription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -23,12 +29,29 @@ class PrescriptionController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        // Base validation rules
+        $rules = [
             'doctor_name' => 'required|string|max:255',
             'patient_name' => 'required|string|max:255',
             'prescription_image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-            'notes' => 'nullable|string|max:1000'
-        ]);
+            'notes' => 'nullable|string|max:1000',
+            'delivery_method' => 'required|in:pickup,delivery'
+        ];
+
+        // Add delivery address validation if delivery method is selected
+        if ($request->delivery_method === 'delivery') {
+            $rules['delivery_address'] = 'required|array';
+            $rules['delivery_address.recipient_name'] = 'required|string|max:255';
+            $rules['delivery_address.phone'] = 'required|string|max:20';
+            $rules['delivery_address.address'] = 'required|string|max:500';
+            $rules['delivery_address.village'] = 'required|string|max:100';
+            $rules['delivery_address.district'] = 'required|string|max:100';
+            $rules['delivery_address.city'] = 'required|string|max:100';
+            $rules['delivery_address.province'] = 'required|string|max:100';
+            $rules['delivery_address.postal_code'] = 'required|string|max:10';
+        }
+
+        $request->validate($rules);
 
         // Generate unique prescription number first
         $prescriptionNumber = 'RX-' . strtoupper(Str::random(8));
@@ -38,8 +61,8 @@ class PrescriptionController extends Controller
         $imageName = 'RESEP-' . $prescriptionNumber . '.jpg';
         $imagePath = $image->storeAs('prescriptions', $imageName, 'public');
 
-        // Create prescription record
-        $prescription = Prescription::create([
+        // Prepare prescription data
+        $prescriptionData = [
             'prescription_number' => $prescriptionNumber,
             'user_id' => Auth::id(),
             'doctor_name' => $request->doctor_name,
@@ -47,8 +70,17 @@ class PrescriptionController extends Controller
             'prescription_image' => $imagePath,
             'file' => $imagePath, // Fill file field with same value as prescription_image
             'notes' => $request->notes,
+            'delivery_method' => $request->delivery_method,
             'status' => 'pending'
-        ]);
+        ];
+
+        // Add delivery address if delivery method is selected
+        if ($request->delivery_method === 'delivery' && $request->has('delivery_address')) {
+            $prescriptionData['delivery_address'] = $request->delivery_address;
+        }
+
+        // Create prescription record
+        $prescription = Prescription::create($prescriptionData);
 
         return redirect()->route('customer.prescriptions.show', $prescription->getKey())
             ->with('success', 'Prescription uploaded successfully!');
@@ -137,5 +169,200 @@ class PrescriptionController extends Controller
 
         return redirect()->route('apoteker.prescriptions.detail', $prescription->getKey())
             ->with('success', $message);
+    }
+
+    /**
+     * Show create order form for confirmed prescription
+     */
+    public function createOrder(Prescription $prescription)
+    {
+        // Check if prescription is confirmed and doesn't have an order yet
+        if ($prescription->status !== 'confirmed') {
+            return redirect()->route('apoteker.prescriptions.detail', $prescription->getKey())
+                ->with('error', 'Resep harus dikonfirmasi terlebih dahulu sebelum membuat pesanan.');
+        }
+
+        if ($prescription->order_id) {
+            return redirect()->route('apoteker.prescriptions.detail', $prescription->getKey())
+                ->with('error', 'Pesanan untuk resep ini sudah dibuat.');
+        }
+
+        $prescription->load(['user']);
+        
+        // Get available products for order creation
+        $products = \App\Models\Product::where('is_active', true)
+            ->where('stock', 'available')
+            ->where('quantity', '>', 0)
+            ->orderBy('name')
+            ->get();
+
+        return view('apoteker.prescriptions.create-order', compact('prescription', 'products'));
+    }
+
+    /**
+     * Store order from prescription
+     */
+    public function storeOrder(Request $request, Prescription $prescription)
+    {
+        // Validate request
+        $request->validate([
+            'products' => 'required|array|min:1',
+            'products.*.quantity' => 'required|integer|min:1',
+            'order_notes' => 'nullable|string|max:1000'
+        ], [
+            'products.required' => 'Pilih minimal satu produk.',
+            'products.min' => 'Pilih minimal satu produk.',
+            'products.*.quantity.required' => 'Jumlah produk harus diisi.',
+            'products.*.quantity.min' => 'Jumlah produk minimal 1.'
+        ]);
+
+        // Check if prescription is confirmed and no order exists
+        if ($prescription->status !== 'confirmed' || $prescription->order_id) {
+            return redirect()->back()->with('error', 'Resep tidak dapat diproses.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Calculate total amount
+            $totalAmount = 0;
+            $orderItems = [];
+            
+            foreach ($request->products as $productId => $productData) {
+                if (isset($productData['selected']) && $productData['selected']) {
+                    $product = Product::findOrFail($productId);
+                    $quantity = (int) $productData['quantity'];
+                    
+                    // Check stock availability
+                    if ($product->quantity < $quantity) {
+                        throw new \Exception("Stok {$product->name} tidak mencukupi. Stok tersedia: {$product->quantity}");
+                    }
+                    
+                    $subtotal = $product->price * $quantity;
+                    $totalAmount += $subtotal;
+                    
+                    $orderItems[] = [
+                        'product_id' => $productId,
+                        'quantity' => $quantity,
+                        'price' => $product->price,
+                        'subtotal' => $subtotal
+                    ];
+                }
+            }
+
+            if (empty($orderItems)) {
+                throw new \Exception('Tidak ada produk yang dipilih.');
+            }
+
+            // Calculate delivery fee based on prescription delivery method
+            $deliveryFee = 0;
+            if ($prescription->delivery_method === 'delivery') {
+                $deliveryFee = 10000; // Set delivery fee for home delivery
+            }
+            
+            $finalTotalPrice = $totalAmount + $deliveryFee;
+
+            // Create order
+            $order = Order::create([
+                'user_id' => $prescription->user_id,
+                'order_number' => 'ORD-' . date('Ymd') . '-' . str_pad(Order::count() + 1, 4, '0', STR_PAD_LEFT),
+                'subtotal' => $totalAmount,
+                'delivery_fee' => $deliveryFee,
+                'discount_amount' => 0,
+                'total_price' => $finalTotalPrice,
+                'status' => 'pending',
+                'shipping_address' => $prescription->delivery_method === 'delivery' 
+                    ? ($prescription->user->address ?? 'Alamat tidak tersedia') 
+                    : 'Ambil di toko',
+                'notes' => $request->order_notes
+            ]);
+
+            // Create order items
+            foreach ($orderItems as $item) {
+                OrderItem::create([
+                    'order_id' => $order->order_id,
+                    'product_id' => $item['product_id'],
+                    'qty' => $item['quantity'],
+                    'price' => $item['price']
+                ]);
+
+                // Update product stock
+                Product::where('product_id', $item['product_id'])
+                       ->decrement('quantity', $item['quantity']);
+            }
+
+            // Update prescription with order_id and status
+            $prescription->update([
+                'order_id' => $order->order_id,
+                'status' => 'processed'
+            ]);
+
+            DB::commit();
+
+            // Send notification to customer
+            try {
+                Mail::to($prescription->user->email)->send(new OrderCreatedFromPrescription($order, $prescription));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send order notification email: ' . $e->getMessage());
+            }
+
+            // Check if request is AJAX
+            if ($request->ajax() || $request->wantsJson()) {
+                // Log successful order creation for debugging
+                \Log::info('Order created successfully', [
+                    'order_id' => $order->order_id,
+                    'order_number' => $order->order_number,
+                    'prescription_id' => $prescription->prescription_id
+                ]);
+                
+                // Ensure all data is properly formatted
+                $responseData = [
+                    'success' => true,
+                    'message' => 'Pesanan berhasil dibuat dari resep.',
+                    'order_id' => (string) $order->order_id,
+                    'order_number' => (string) $order->order_number,
+                    'total_price' => (float) $order->total_price,
+                    'redirect_url' => route('apoteker.orders.detail', $order->order_id)
+                ];
+                
+                // Log the response data for debugging
+                \Log::info('Sending JSON response', $responseData);
+                
+                return response()->json($responseData, 200, [
+                    'Content-Type' => 'application/json'
+                ]);
+            }
+
+            return redirect()->route('apoteker.prescriptions.detail', $prescription)
+                           ->with('success', 'Pesanan berhasil dibuat dari resep. Nomor pesanan: ' . $order->order_number);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            // Log error for debugging
+            \Log::error('Order creation failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'prescription_id' => $prescription->prescription_id ?? null,
+                'user_id' => auth()->id()
+            ]);
+            
+            // Check if request is AJAX
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal membuat pesanan: ' . $e->getMessage(),
+                    'error_details' => config('app.debug') ? [
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                        'trace' => $e->getTraceAsString()
+                    ] : null
+                ], 422);
+            }
+            
+            return redirect()->back()
+                           ->with('error', 'Gagal membuat pesanan: ' . $e->getMessage())
+                           ->withInput();
+        }
     }
 }

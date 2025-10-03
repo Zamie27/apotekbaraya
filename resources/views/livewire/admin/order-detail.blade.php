@@ -292,7 +292,7 @@
                                         <p>{{ $shippingAddress['name'] ?? '' }}</p>
                                         <p>{{ $shippingAddress['phone'] ?? '' }}</p>
                                         <p>{{ $shippingAddress['address'] ?? '' }}</p>
-                                        <p>{{ $shippingAddress['city'] ?? '' }} {{ $shippingAddress['postal_code'] ?? '' }}</p>
+                                        <p>{{ is_array($shippingAddress['city'] ?? '') ? implode(', ', $shippingAddress['city']) : ($shippingAddress['city'] ?? '') }} {{ $shippingAddress['postal_code'] ?? '' }}</p>
                                         @if($shippingAddress['notes'] ?? '')
                                             <p class="text-sm text-gray-500">Catatan: {{ $shippingAddress['notes'] ?? '' }}</p>
                                         @endif

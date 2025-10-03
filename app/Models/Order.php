@@ -329,7 +329,17 @@ class Order extends Model
      */
     public function canBeCancelled(): bool
     {
-        return in_array($this->status, ['pending', 'waiting_payment', 'waiting_confirmation']);
+        // Cannot cancel if order is not in cancellable status
+        if (!in_array($this->status, ['pending', 'waiting_payment', 'waiting_confirmation'])) {
+            return false;
+        }
+        
+        // Cannot cancel if payment is expired (order should be auto-cancelled by system)
+        if ($this->status === 'waiting_payment' && $this->isPaymentExpired()) {
+            return false;
+        }
+        
+        return true;
     }
 
     /**
@@ -370,7 +380,7 @@ class Order extends Model
         if ($this->status === 'confirmed') {
             return 'Dibayar';
         } elseif ($this->isPaymentExpired()) {
-            return 'Kadaluarsa';
+            return 'Dibatalkan';
         } else {
             return 'Menunggu Pembayaran';
         }

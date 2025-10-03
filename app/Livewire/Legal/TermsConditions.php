@@ -38,7 +38,7 @@ class TermsConditions extends Component
         $this->storeName = StoreSetting::get('store_name', 'Apotek Baraya');
         $this->storeEmail = StoreSetting::get('store_email', 'info@apotekbaraya.com');
         $this->storePhone = StoreSetting::get('store_phone', '+62812345678');
-        $this->storeWhatsapp = StoreSetting::get('whatsapp_number', '+62812345678');
+        $this->storeWhatsapp = StoreSetting::get('store_whatsapp', '+62812345678');
         $this->storeAddress = StoreSetting::get('store_address', '');
         $this->storeVillage = StoreSetting::get('store_village', '');
         $this->storeDistrict = StoreSetting::get('store_district', '');

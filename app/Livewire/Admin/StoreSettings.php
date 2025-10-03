@@ -97,7 +97,7 @@ class StoreSettings extends Component
             $this->store_province = StoreSetting::get('store_province', '');
             $this->store_postal_code = StoreSetting::get('store_postal_code', '');
             $this->store_phone = StoreSetting::get('store_phone', '');
-            $this->store_whatsapp = StoreSetting::get('whatsapp_number', '');
+            $this->store_whatsapp = StoreSetting::get('store_whatsapp', '');
             $this->store_email = StoreSetting::get('store_email', '');
             $this->store_hours = StoreSetting::get('store_hours', 'Senin-Sabtu: 08:00-20:00');
             $this->store_sipa = StoreSetting::get('store_sipa', '');
@@ -129,7 +129,7 @@ class StoreSettings extends Component
             StoreSetting::set('store_province', $this->store_province, 'string');
             StoreSetting::set('store_postal_code', $this->store_postal_code, 'string');
             StoreSetting::set('store_phone', $this->store_phone, 'string');
-            StoreSetting::set('whatsapp_number', $this->store_whatsapp, 'string');
+            StoreSetting::set('store_whatsapp', $this->store_whatsapp, 'string');
             StoreSetting::set('store_email', $this->store_email, 'string');
             StoreSetting::set('store_hours', $this->store_hours, 'string');
             StoreSetting::set('store_sipa', $this->store_sipa, 'string');

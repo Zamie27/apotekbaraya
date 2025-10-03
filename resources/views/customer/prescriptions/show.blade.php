@@ -57,6 +57,14 @@
                         <span class="text-gray-900">{{ $prescription->created_at->format('d M Y, H:i') }}</span>
                     </div>
 
+                    <!-- Delivery Method -->
+                    <div class="flex justify-between">
+                        <span class="font-medium text-gray-700">Metode Pengambilan:</span>
+                        <span class="badge {{ $prescription->delivery_method === 'delivery' ? 'badge-info' : 'badge-success' }}">
+                            {{ $prescription->delivery_method === 'delivery' ? 'Kirim ke Alamat' : 'Ambil di Toko' }}
+                        </span>
+                    </div>
+
                     @if($prescription->confirmed_at)
                     <!-- Confirmation Date -->
                     <div class="flex justify-between">
@@ -80,6 +88,30 @@
                     <h3 class="font-medium text-gray-700 mb-2">Catatan Anda:</h3>
                     <div class="bg-gray-50 rounded-lg p-3">
                         <p class="text-gray-800">{{ $prescription->notes }}</p>
+                    </div>
+                </div>
+                @endif
+
+                <!-- Delivery Address -->
+                @if($prescription->delivery_method === 'delivery' && $prescription->delivery_address)
+                <div class="mt-6">
+                    <h3 class="font-medium text-gray-700 mb-2">Alamat Pengiriman:</h3>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <div class="space-y-1 text-sm">
+                            <p class="font-medium text-gray-900">{{ $prescription->delivery_address['recipient_name'] }}</p>
+                            <p class="text-gray-700">{{ $prescription->delivery_address['phone'] }}</p>
+                            <p class="text-gray-700">{{ $prescription->delivery_address['detailed_address'] }}</p>
+                            <p class="text-gray-600">
+                                {{ $prescription->delivery_address['village'] }}, 
+                                {{ is_array($prescription->delivery_address['sub_district']) ? implode(', ', $prescription->delivery_address['sub_district']) : $prescription->delivery_address['sub_district'] }}, 
+                                {{ is_array($prescription->delivery_address['regency']) ? implode(', ', $prescription->delivery_address['regency']) : $prescription->delivery_address['regency'] }}, 
+                                {{ $prescription->delivery_address['province'] }} 
+                                {{ $prescription->delivery_address['postal_code'] }}
+                            </p>
+                            @if(isset($prescription->delivery_address['notes']) && $prescription->delivery_address['notes'])
+                                <p class="text-gray-600 italic">{{ $prescription->delivery_address['notes'] }}</p>
+                            @endif
+                        </div>
                     </div>
                 </div>
                 @endif

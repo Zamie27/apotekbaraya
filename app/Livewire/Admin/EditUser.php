@@ -30,7 +30,6 @@ class EditUser extends Component
     public $status = 'active';
     public $gender = '';
     public $date_of_birth = '';
-    public $address = '';
 
     // Original user data for comparison
     public $originalData = [];
@@ -47,26 +46,25 @@ class EditUser extends Component
                 'string',
                 'max:255',
                 'alpha_dash',
-                Rule::unique('users')->ignore($this->userId),
+                Rule::unique('users')->ignore($this->userId, 'user_id'),
             ],
             'email' => [
                 'required',
                 'email',
                 'max:255',
-                Rule::unique('users')->ignore($this->userId),
+                Rule::unique('users')->ignore($this->userId, 'user_id'),
             ],
             'phone' => [
                 'required',
                 'string',
                 'max:20',
-                Rule::unique('users')->ignore($this->userId),
+                Rule::unique('users')->ignore($this->userId, 'user_id'),
             ],
             'password' => 'nullable|string|min:8|confirmed',
             'role_id' => 'required|exists:roles,role_id',
             'status' => 'required|in:active,inactive',
             'gender' => 'nullable|in:male,female',
             'date_of_birth' => 'nullable|date|before:today',
-            'address' => 'nullable|string|max:500',
         ];
     }
 
@@ -93,7 +91,6 @@ class EditUser extends Component
             'gender.in' => 'Jenis kelamin tidak valid.',
             'date_of_birth.date' => 'Format tanggal lahir tidak valid.',
             'date_of_birth.before' => 'Tanggal lahir harus sebelum hari ini.',
-            'address.max' => 'Alamat maksimal 500 karakter.',
         ];
     }
 
@@ -131,7 +128,6 @@ class EditUser extends Component
         $this->status = $user->status;
         $this->gender = $user->gender;
         $this->date_of_birth = $user->date_of_birth;
-        $this->address = $user->address;
 
         // Store original data for comparison
         $this->originalData = [
@@ -143,7 +139,6 @@ class EditUser extends Component
             'status' => $user->status,
             'gender' => $user->gender,
             'date_of_birth' => $user->date_of_birth,
-            'address' => $user->address,
         ];
     }
 
@@ -163,7 +158,6 @@ class EditUser extends Component
         $this->status = 'active';
         $this->gender = '';
         $this->date_of_birth = '';
-        $this->address = '';
         $this->originalData = [];
         $this->resetErrorBag();
     }
@@ -186,9 +180,8 @@ class EditUser extends Component
                 'phone' => $this->phone,
                 'role_id' => $this->role_id,
                 'status' => $this->status,
-                'gender' => $this->gender,
-                'date_of_birth' => $this->date_of_birth,
-                'address' => $this->address,
+                'gender' => !empty($this->gender) ? $this->gender : null,
+                'date_of_birth' => !empty($this->date_of_birth) ? $this->date_of_birth : null,
             ];
 
             // Add password if provided

@@ -99,8 +99,8 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center gap-3">
                                     <h3 class="font-bold text-xl text-gray-900">{{ $order->order_number }}</h3>
                                     <div class="flex flex-wrap gap-2">
-                                        <span class="badge badge-lg {{ $this->getStatusBadgeColor($order->status) }}">
-                                            {{ $this->getStatusLabel($order->status) }}
+                                        <span class="badge badge-lg {{ $this->getStatusBadgeColor($order->status, $order) }}">
+                                            {{ $this->getStatusLabel($order->status, $order) }}
                                         </span>
                                         @if ($order->payment)
                                             <span class="badge badge-lg {{ $order->payment->status_badge_color }}">

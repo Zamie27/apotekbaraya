@@ -31,6 +31,15 @@ class Login extends Component
         if (Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
             $user = Auth::user();
             
+            // Check if user status is active
+            if ($user->status !== 'active') {
+                Auth::logout();
+                
+                session()->flash('error', 'Akun Anda telah dinonaktifkan. Silakan hubungi administrator untuk informasi lebih lanjut.');
+                
+                return redirect()->route('login');
+            }
+            
             // Check if email is verified
             if (is_null($user->email_verified_at)) {
                 Auth::logout();

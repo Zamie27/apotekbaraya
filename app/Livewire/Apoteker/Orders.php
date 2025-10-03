@@ -73,7 +73,14 @@ class Orders extends Component
             });
         })
         ->when($this->statusFilter !== 'all', function ($query) {
-            $query->where('status', $this->statusFilter);
+            if ($this->statusFilter === 'expired') {
+                // Filter for expired payments
+                $query->where('status', 'waiting_payment')
+                      ->whereNotNull('payment_expired_at')
+                      ->where('payment_expired_at', '<', now());
+            } else {
+                $query->where('status', $this->statusFilter);
+            }
         })
         ->orderBy('created_at', 'desc');
 
@@ -89,6 +96,7 @@ class Orders extends Component
             'all' => 'Semua Status',
             'pending' => 'Pesanan Dibuat',
             'waiting_payment' => 'Menunggu Pembayaran',
+            'expired' => 'Pembayaran Expired',
             'waiting_confirmation' => 'Menunggu Konfirmasi',
             'confirmed' => 'Dikonfirmasi',
             'processing' => 'Diproses',
@@ -113,8 +121,13 @@ class Orders extends Component
     /**
      * Get order status badge color
      */
-    public function getStatusBadgeColor($status)
+    public function getStatusBadgeColor($status, $order = null)
     {
+        // Check if payment is expired for waiting_payment status
+        if ($status === 'waiting_payment' && $order && $order->isPaymentExpired()) {
+            return 'badge-error';
+        }
+
         return match($status) {
             'pending' => 'badge-warning',
             'waiting_payment' => 'badge-warning',

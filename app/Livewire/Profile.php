@@ -98,34 +98,16 @@ class Profile extends Component
     #[Validate('required|string|max:500')]
     public $address;
     
-    #[Validate('required|string|max:100')]
-    public $village; // Desa
-    
-    #[Validate('required|string|max:100')]
-    public $sub_district; // Kecamatan
-    
-    #[Validate('required|string|max:100')]
-    public $district; // Keep for backward compatibility
-    
-    #[Validate('required|string|max:100')]
-    public $regency; // Kabupaten
-    
-    #[Validate('required|string|max:100')]
-    public $city; // Keep for backward compatibility
-    
-    #[Validate('required|string|max:100')]
-    public $province; // Provinsi
-    
-    #[Validate('required|string|max:10|regex:/^[0-9]+$/')]
-    public $postal_code;
-    
-    #[Validate('nullable|string|max:1000')]
-    public $detailed_address; // Alamat lengkap spesifik untuk kurir
-    
-    #[Validate('nullable|string|max:255')]
-    public $notes;
-    
-    #[Validate('boolean')]
+    // Legacy fields for backward compatibility - initialized with default values
+    public $village = ''; // Desa
+    public $sub_district = ''; // Kecamatan
+    public $district = ''; // Keep for backward compatibility
+    public $regency = ''; // Kabupaten
+    public $city = ''; // Keep for backward compatibility
+    public $province = ''; // Provinsi
+    public $postal_code = '';
+    public $detailed_address = ''; // Alamat lengkap spesifik untuk kurir
+    public $notes = '';
     public $is_default = false;
 
     // Laravel validation will handle input security
@@ -159,7 +141,7 @@ class Profile extends Component
         
         // Auto-select Jawa Barat as default
         if (!empty($this->provinces)) {
-            $this->addressForm['province_key'] = array_key_first($this->provinces);
+            $this->addressForm['province_key'] = $this->provinces[0]['key'];
             $this->updateRegencies();
         }
     }
@@ -216,7 +198,7 @@ class Profile extends Component
         
         // Auto-select Subang if available
         if (!empty($this->regencies)) {
-            $this->addressForm['regency_key'] = array_key_first($this->regencies);
+            $this->addressForm['regency_key'] = $this->regencies[0]['key'];
             $this->updateSubDistricts();
         }
         
@@ -276,7 +258,8 @@ class Profile extends Component
         
         // Auto-select postal code if only one is available
         if (count($this->postalCodes) === 1) {
-            $this->addressForm['postal_code'] = (string) array_values($this->postalCodes)[0];
+            $firstPostalCode = array_values($this->postalCodes)[0];
+            $this->addressForm['postal_code'] = is_array($firstPostalCode) ? $firstPostalCode['key'] : (string) $firstPostalCode;
         } else {
             // Clear postal code if multiple options or no options available
             $this->addressForm['postal_code'] = '';
@@ -461,7 +444,7 @@ class Profile extends Component
         
         // Re-initialize with default province
         if (!empty($this->provinces)) {
-            $this->addressForm['province_key'] = array_key_first($this->provinces);
+            $this->addressForm['province_key'] = $this->provinces[0]['key'];
             $this->updateRegencies();
         }
     }

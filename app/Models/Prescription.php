@@ -28,7 +28,9 @@ class Prescription extends Model
         'confirmed_by',
         'confirmation_notes',
         'confirmed_at',
-        'order_id'
+        'order_id',
+        'delivery_method', // Added delivery_method field
+        'delivery_address' // Added delivery_address field for JSON data
     ];
 
     /**
@@ -36,6 +38,7 @@ class Prescription extends Model
      */
     protected $casts = [
         'confirmed_at' => 'datetime',
+        'delivery_address' => 'array', // Cast delivery_address as array for JSON handling
     ];
 
     /**

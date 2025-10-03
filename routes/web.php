@@ -71,14 +71,14 @@ Route::get('/terms-conditions', \App\Livewire\Legal\TermsConditions::class)->nam
 // Payment routes (accessible by Midtrans and authenticated users)
 Route::post('/payment/notification', [\App\Http\Controllers\WebhookController::class, 'midtransNotification'])->name('payment.notification');
 Route::get('/payment/finish', [PaymentController::class, 'finish'])->name('payment.finish');
-Route::middleware(['auth', 'verified'])->get('/payment/status', [PaymentController::class, 'checkStatus'])->name('payment.status');
-Route::middleware(['auth', 'verified'])->get('/payment', \App\Livewire\Payment::class)->name('payment.page');
-Route::middleware(['auth', 'verified'])->get('/payment/snap', \App\Livewire\PaymentSnap::class)->name('payment.snap');
+Route::middleware(['auth', 'verified', 'user.status'])->get('/payment/status', [PaymentController::class, 'checkStatus'])->name('payment.status');
+Route::middleware(['auth', 'verified', 'user.status'])->get('/payment', \App\Livewire\Payment::class)->name('payment.page');
+Route::middleware(['auth', 'verified', 'user.status'])->get('/payment/snap', \App\Livewire\PaymentSnap::class)->name('payment.snap');
 
 
 
 // Cart and Checkout pages (requires authentication and email verification)
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'user.status'])->group(function () {
     Route::get('/cart', \App\Livewire\Cart::class)->name('cart');
     Route::get('/checkout', Checkout::class)->name('checkout')->middleware('store.config');
 });
@@ -100,7 +100,7 @@ Route::post('/email/verification/resend', [\App\Http\Controllers\EmailVerificati
 Route::get('/email/verification', EmailVerification::class)->name('email.verification')->middleware('auth');
 
 // Authenticated routes
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'user.status'])->group(function () {
     // Logout - ubah dari POST ke GET untuk kemudahan
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -128,9 +128,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/apoteker/profile', ApotekerProfile::class)->name('apoteker.profile');
         
         // Prescription management routes for apoteker
-        Route::get('/apoteker/prescriptions', [PrescriptionController::class, 'manage'])->name('apoteker.prescriptions.index');
+        Route::get('/apoteker/prescriptions', [PrescriptionController::class, 'manage'])->name('apoteker.prescriptions.manage');
         Route::get('/apoteker/prescriptions/{prescription}', [PrescriptionController::class, 'detail'])->name('apoteker.prescriptions.detail');
         Route::post('/apoteker/prescriptions/{prescription}/confirm', [PrescriptionController::class, 'confirm'])->name('apoteker.prescriptions.confirm');
+        Route::get('/apoteker/prescriptions/{prescription}/create-order', [PrescriptionController::class, 'createOrder'])->name('apoteker.prescriptions.create-order');
+    Route::post('/apoteker/prescriptions/{prescription}/store-order', [PrescriptionController::class, 'storeOrder'])->name('apoteker.prescriptions.store-order');
+        
+        // Prescription reception routes for apoteker
+        Route::get('/apoteker/prescription-reception', \App\Livewire\Apoteker\PrescriptionReception::class)->name('apoteker.prescription-reception');
         
         // Add more apoteker routes here
         // Route::get('/apoteker/inventory', ApotekerInventory::class);

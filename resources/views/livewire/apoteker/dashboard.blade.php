@@ -7,7 +7,7 @@
         </div>
 
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             <div class="stat bg-base-100 shadow-xl rounded-lg">
                 <div class="stat-title">Total Pesanan</div>
                 <div class="stat-value text-primary">{{ $totalOrders }}</div>
@@ -28,12 +28,17 @@
                 <div class="stat-value text-info">{{ $processing }}</div>
                 <div class="stat-desc">Sedang disiapkan</div>
             </div>
+            <div class="stat bg-base-100 shadow-xl rounded-lg">
+                <div class="stat-title">Dibatalkan</div>
+                <div class="stat-value text-error">{{ $cancelled }}</div>
+                <div class="stat-desc">Pesanan dibatalkan</div>
+            </div>
         </div>
 
         <!-- Quick Actions -->
         <div class="mb-8">
             <h2 class="text-2xl font-bold text-gray-900 mb-4">Menu Utama</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Manajemen Pesanan -->
                 <a href="{{ route('apoteker.orders') }}" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300">
                     <div class="card-body">
@@ -52,7 +57,7 @@
                 </a>
 
                 <!-- Manajemen Resep -->
-                <a href="{{ route('apoteker.prescriptions.index') }}" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300">
+                <a href="{{ route('apoteker.prescriptions.manage') }}" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300">
                     <div class="card-body">
                         <div class="flex items-center space-x-4">
                             <div class="p-3 bg-info/10 rounded-lg">
@@ -68,41 +73,7 @@
                     </div>
                 </a>
 
-                <!-- Manajemen Produk -->
-                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 opacity-50">
-                    <div class="card-body">
-                        <div class="flex items-center space-x-4">
-                            <div class="p-3 bg-secondary/10 rounded-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="card-title text-lg">Manajemen Produk</h3>
-                                <p class="text-gray-600">Kelola produk dan stok obat</p>
-                                <span class="badge badge-warning badge-sm">Coming Soon</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Laporan -->
-                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 opacity-50">
-                    <div class="card-body">
-                        <div class="flex items-center space-x-4">
-                            <div class="p-3 bg-accent/10 rounded-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="card-title text-lg">Laporan</h3>
-                                <p class="text-gray-600">Lihat laporan penjualan dan stok</p>
-                                <span class="badge badge-warning badge-sm">Coming Soon</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 

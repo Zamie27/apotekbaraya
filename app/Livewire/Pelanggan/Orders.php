@@ -93,7 +93,16 @@ class Orders extends Component
 
         // Apply status filter
         if ($this->statusFilter !== 'all') {
-            $query->where('status', $this->statusFilter);
+            if ($this->statusFilter === 'expired') {
+                // Filter for expired orders (waiting_payment with expired payment)
+                $query->where('status', 'waiting_payment')
+                      ->whereHas('payment', function ($paymentQuery) {
+                          $paymentQuery->where('status', 'pending')
+                                       ->where('created_at', '<', now()->subHours(24));
+                      });
+            } else {
+                $query->where('status', $this->statusFilter);
+            }
         }
 
         // Apply search filter
@@ -124,7 +133,8 @@ class Orders extends Component
             'shipped' => 'Dikirim',
             'delivered' => 'Selesai',
             'cancelled' => 'Dibatalkan',
-            'failed' => 'Gagal Diantar'
+            'failed' => 'Gagal Diantar',
+            'expired' => 'Pesanan Expired'
         ];
     }
 
@@ -386,6 +396,14 @@ class Orders extends Component
         $this->refundReasonOther = '';
         $this->refundAmount = 0;
         $this->resetErrorBag();
+    }
+
+    /**
+     * Redirect to dashboard for buy again functionality
+     */
+    public function buyAgain()
+    {
+        return redirect()->route('dashboard');
     }
 
     public function render()

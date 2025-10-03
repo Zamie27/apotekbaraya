@@ -31,6 +31,7 @@ class Product extends Model
         'price',
         'discount_price',
         'stock',
+        'quantity',
         'sku',
         'category_id',
         'requires_prescription',

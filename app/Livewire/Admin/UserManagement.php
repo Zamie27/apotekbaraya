@@ -156,11 +156,39 @@ class UserManagement extends Component
     }
 
     /**
-     * Open edit user modal
+     * Edit user - load user data and open modal
      */
-    public function openEditModal($userId)
+    public function editUser($userId)
     {
-        $this->dispatch('openEditModal', userId: $userId);
+        try {
+            $user = User::findOrFail($userId);
+            
+            // Set the selected user ID for validation
+            $this->selectedUserId = $userId;
+            
+            // Load user data into form fields
+            $this->name = $user->name;
+            $this->username = $user->username;
+            $this->email = $user->email;
+            $this->phone = $user->phone;
+            $this->role_id = $user->role_id;
+            $this->status = $user->status;
+            $this->date_of_birth = $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : '';
+            $this->gender = $user->gender ?? '';
+            
+            // Clear password fields
+            $this->password = '';
+            $this->password_confirmation = '';
+            
+            // Clear any previous errors
+            $this->resetErrorBag();
+            
+            // Open the edit modal
+            $this->showEditModal = true;
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'Pengguna tidak ditemukan.');
+        }
     }
 
     /**
@@ -218,27 +246,38 @@ class UserManagement extends Component
                 'password' => Hash::make($this->password),
                 'role_id' => $this->role_id,
                 'status' => $this->status,
-                'date_of_birth' => $this->date_of_birth ?: null,
-                'gender' => $this->gender ?: null,
+                'date_of_birth' => !empty($this->date_of_birth) ? $this->date_of_birth : null,
+                'gender' => !empty($this->gender) ? $this->gender : null,
                 'email_verified_at' => now(), // Auto verify for admin created accounts
             ];
 
             $user = User::create($userData);
+            
+            // Load the role relationship for proper access
+            $user->load('role');
 
             // Log the activity
             UserActivityLog::logActivity(
-                'create',
+                'create_user',
                 "Admin membuat akun baru untuk {$user->name} dengan role {$user->role->name}",
                 $user->user_id,
                 null,
                 $userData
             );
 
+            // Try to send email notification, but don't fail if it errors
+            try {
+                app(\App\Services\EmailNotificationService::class)->sendUserCreatedNotification($user, Auth::user());
+            } catch (\Exception $emailError) {
+                \Log::warning('Failed to send user creation notification email: ' . $emailError->getMessage());
+            }
+
             session()->flash('success', 'Pengguna berhasil dibuat!');
             $this->closeModals();
             
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal membuat pengguna: ' . $e->getMessage());
+            \Log::error('Error creating user: ' . $e->getMessage());
+            session()->flash('error', 'Terjadi kesalahan saat membuat pengguna. Silakan coba lagi.');
         }
     }
 
@@ -287,19 +326,27 @@ class UserManagement extends Component
 
             // Log the activity
             UserActivityLog::logActivity(
-                Auth::id(),
-                $user->user_id,
                 'update_user',
                 "Updated user: {$user->name}",
+                $user->user_id,
                 $oldValues,
                 $user->only(['name', 'username', 'email', 'phone', 'role_id', 'status', 'date_of_birth', 'gender'])
             );
+
+            // Try to send email notification, but don't fail if it errors
+            try {
+                $changes = array_diff_assoc($user->only(['name', 'username', 'email', 'phone', 'role_id', 'status', 'date_of_birth', 'gender']), $oldValues);
+                app(\App\Services\EmailNotificationService::class)->sendUserUpdatedNotification($user, Auth::user(), $changes);
+            } catch (\Exception $emailError) {
+                \Log::warning('Failed to send user update notification email: ' . $emailError->getMessage());
+            }
 
             session()->flash('success', 'Data pengguna berhasil diperbarui!');
             $this->closeModals();
             
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal memperbarui pengguna: ' . $e->getMessage());
+            \Log::error('Error updating user: ' . $e->getMessage());
+            session()->flash('error', 'Terjadi kesalahan saat memperbarui data pengguna. Silakan coba lagi.');
         }
     }
 

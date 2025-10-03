@@ -22,7 +22,6 @@ class CreateUser extends Component
     public $password_confirmation = '';
     public $role_id = '';
     public $status = 'active';
-    public $address = '';
     public $date_of_birth = '';
     public $gender = '';
 
@@ -42,7 +41,6 @@ class CreateUser extends Component
             'password' => 'required|string|min:8|confirmed',
             'role_id' => 'required|exists:roles,role_id',
             'status' => 'required|in:active,inactive',
-            'address' => 'nullable|string|max:500',
             'date_of_birth' => 'nullable|date|before:today',
             'gender' => 'nullable|in:male,female',
         ];
@@ -102,7 +100,6 @@ class CreateUser extends Component
         $this->password_confirmation = '';
         $this->role_id = '';
         $this->status = 'active';
-        $this->address = '';
         $this->date_of_birth = '';
         $this->gender = '';
     }
@@ -125,9 +122,8 @@ class CreateUser extends Component
                 'password' => Hash::make($validatedData['password']),
                 'role_id' => $validatedData['role_id'],
                 'status' => $validatedData['status'],
-                'address' => $validatedData['address'],
-                'date_of_birth' => $validatedData['date_of_birth'],
-                'gender' => $validatedData['gender'],
+                'date_of_birth' => !empty($validatedData['date_of_birth']) ? $validatedData['date_of_birth'] : null,
+                'gender' => !empty($validatedData['gender']) ? $validatedData['gender'] : null,
                 'email_verified_at' => now(), // Auto verify for admin created accounts
             ]);
 

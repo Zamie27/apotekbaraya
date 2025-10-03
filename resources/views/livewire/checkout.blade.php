@@ -182,18 +182,17 @@
                             </div>
 
                             <!-- Use Address Form Component -->
-                            <form wire:submit="saveNewAddress">
-                                <x-address-form
-                                    :addressForm="$addressForm"
-                                    :provinces="$provinces"
-                                    :regencies="$regencies"
-                                    :subDistricts="$subDistricts"
-                                    :villages="$villages"
-                                    :postalCodes="$postalCodes"
-                                    :addressPreview="$addressPreview"
-                                    :editingAddressId="null"
-                                    cancelAction="toggleAddressForm" />
-                            </form>
+                            <x-address-form
+                                :addressForm="$addressForm"
+                                :provinces="$provinces"
+                                :regencies="$regencies"
+                                :subDistricts="$subDistricts"
+                                :villages="$villages"
+                                :postalCodes="$postalCodes"
+                                :addressPreview="$addressPreview"
+                                :editingAddressId="null"
+                                cancelAction="toggleAddressForm"
+                                submitAction="saveNewAddress" />
                         </div>
                         @endif
 
@@ -232,7 +231,7 @@
                                                         @if ($address->postal_code) {{ $address->postal_code }} @endif
                                                     </p>
                                                     @else
-                                                    <p>{{ $address->district }}, {{ $address->city }} {{ $address->postal_code }}</p>
+                                                    <p>{{ is_array($address->district) ? implode(', ', $address->district) : $address->district }}, {{ is_array($address->city) ? implode(', ', $address->city) : $address->city }} {{ $address->postal_code }}</p>
                                                     @endif
                                                 </div>
 
@@ -382,12 +381,7 @@
                                 @endif
                             </button>
 
-                            <!-- Debug Info -->
-                            @if (config('app.debug'))
-                            <div class="mt-2 text-xs text-gray-500">
-                                Debug: Shipping={{ $shippingType }}, Address={{ $selectedAddressId }}
-                            </div>
-                            @endif
+
                         </div>
                         @else
                         <div class="text-center py-6 sm:py-8">

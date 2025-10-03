@@ -117,7 +117,7 @@ class Checkout extends Component
         
         // Auto-select "Jawa Barat" as default
         if (!empty($this->provinces)) {
-            $this->addressForm['province_key'] = array_key_first($this->provinces);
+            $this->addressForm['province_key'] = $this->provinces[0]['key'];
             $this->updateRegencies();
         }
     }
@@ -173,7 +173,7 @@ class Checkout extends Component
             
             // Auto-select "Subang" as default
             if (!empty($this->regencies)) {
-                $this->addressForm['regency_key'] = array_key_first($this->regencies);
+                $this->addressForm['regency_key'] = $this->regencies[0]['key'];
                 $this->updateSubDistricts();
             }
         } else {
@@ -256,7 +256,8 @@ class Checkout extends Component
             
             // Auto-select postal code if only one is available
             if (count($this->postalCodes) === 1) {
-                $this->addressForm['postal_code'] = (string) array_values($this->postalCodes)[0];
+                $firstPostalCode = array_values($this->postalCodes)[0];
+                $this->addressForm['postal_code'] = is_array($firstPostalCode) ? $firstPostalCode['key'] : (string) $firstPostalCode;
             } else {
                 // Clear postal code if multiple options or no options available
                 $this->addressForm['postal_code'] = '';
@@ -413,11 +414,9 @@ class Checkout extends Component
                 $address->setAsDefault();
             }
             
-            // Show success message with coordinate source info
-            $source = $coordinates['source'] ?? 'unknown';
-            $sourceText = $source === 'manual_json' ? 'koordinat manual' : 'geocoding otomatis';
-            $this->dispatch('show-toast', 'success', "Alamat berhasil ditambahkan dengan {$sourceText}!");
-            session()->flash('success', "Alamat berhasil ditambahkan dengan {$sourceText}!");
+            // Show success message
+            $this->dispatch('show-toast', 'success', "Alamat berhasil ditambahkan!");
+            session()->flash('success', "Alamat berhasil ditambahkan!");
             
             $this->loadAddresses();
             $this->selectedAddressId = $address->address_id;

@@ -264,7 +264,7 @@
                         <span class="detail-label">Alamat Pengiriman:</span>
                         <span class="detail-value">
                             {{ $order->shipping_address['address'] ?? '' }}, 
-                            {{ $order->shipping_address['city'] ?? '' }}, 
+                            {{ is_array($order->shipping_address['city'] ?? '') ? implode(', ', $order->shipping_address['city']) : ($order->shipping_address['city'] ?? '') }}, 
                             {{ $order->shipping_address['postal_code'] ?? '' }}
                         </span>
                     </div>

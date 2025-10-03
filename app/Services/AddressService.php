@@ -36,7 +36,7 @@ class AddressService
     public function getProvinces()
     {
         return [
-            'jawa_barat' => 'Jawa Barat'
+            ['key' => 'jawa_barat', 'name' => 'Jawa Barat']
         ];
     }
     
@@ -46,7 +46,7 @@ class AddressService
     public function getRegencies($province = null)
     {
         return [
-            'subang' => 'Subang'
+            ['key' => 'subang', 'name' => 'Subang']
         ];
     }
     
@@ -62,7 +62,8 @@ class AddressService
         
         $subDistricts = [];
         foreach ($this->addressData as $kecamatan => $data) {
-            $subDistricts[strtolower(str_replace(' ', '_', $kecamatan))] = $kecamatan;
+            $key = strtolower(str_replace(' ', '_', $kecamatan));
+            $subDistricts[] = ['key' => $key, 'name' => $kecamatan];
         }
         
         return $subDistricts;
@@ -99,7 +100,8 @@ class AddressService
             foreach ($data as $postalCode => $postalData) {
                 if (isset($postalData['desa']) && is_array($postalData['desa'])) {
                     foreach ($postalData['desa'] as $desa) {
-                        $villages[strtolower(str_replace(' ', '_', $desa))] = $desa;
+                        $key = strtolower(str_replace(' ', '_', $desa));
+                        $villages[] = ['key' => $key, 'name' => $desa];
                     }
                 }
             }
@@ -107,7 +109,8 @@ class AddressService
             // Handle standard format
             if (isset($data['desa'])) {
                 foreach ($data['desa'] as $desa) {
-                    $villages[strtolower(str_replace(' ', '_', $desa))] = $desa;
+                    $key = strtolower(str_replace(' ', '_', $desa));
+                    $villages[] = ['key' => $key, 'name' => $desa];
                 }
             }
         }
@@ -153,11 +156,11 @@ class AddressService
                     if ($village) {
                         $originalVillageKey = $this->findOriginalVillageKey($village, $postalData['desa']);
                         if ($originalVillageKey) {
-                            $postalCodes[$postalCode] = $postalCode;
+                            $postalCodes[] = ['key' => $postalCode, 'name' => $postalCode];
                         }
                     } else {
                         // If no village specified, return all postal codes
-                        $postalCodes[$postalCode] = $postalCode;
+                        $postalCodes[] = ['key' => $postalCode, 'name' => $postalCode];
                     }
                 }
             }
@@ -167,11 +170,11 @@ class AddressService
                 if (is_array($data['kodepos'])) {
                     // Multiple postal codes
                     foreach ($data['kodepos'] as $code) {
-                        $postalCodes[$code] = $code;
+                        $postalCodes[] = ['key' => $code, 'name' => $code];
                     }
                 } else {
                     // Single postal code
-                    $postalCodes[$data['kodepos']] = $data['kodepos'];
+                    $postalCodes[] = ['key' => $data['kodepos'], 'name' => $data['kodepos']];
                 }
             }
         }
@@ -574,5 +577,49 @@ class AddressService
         ]);
         
         return implode(', ', $parts);
+    }
+
+    /**
+     * Build address preview string from form data
+     * 
+     * @param array $addressForm Form data containing address fields
+     * @return string Formatted address preview
+     */
+    public function buildAddressPreview(array $addressForm): string
+    {
+        try {
+            // Extract form data with defaults
+            $detailedAddress = $addressForm['detailed_address'] ?? '';
+            $villageKey = $addressForm['village_key'] ?? '';
+            $subDistrictKey = $addressForm['sub_district_key'] ?? '';
+            $regencyKey = $addressForm['regency_key'] ?? '';
+            $provinceKey = $addressForm['province_key'] ?? '';
+            $postalCode = $addressForm['postal_code'] ?? '';
+            
+            // If no location data is selected, return empty or partial preview
+            if (empty($villageKey) && empty($subDistrictKey) && empty($detailedAddress)) {
+                return '';
+            }
+            
+            // Get address names from keys
+            $addressNames = $this->getAddressNames($provinceKey, $regencyKey, $subDistrictKey, $villageKey);
+            
+            // Build preview parts
+            $parts = array_filter([
+                $detailedAddress,
+                $addressNames['village'] ?? '',
+                $addressNames['sub_district'] ?? '',
+                $addressNames['regency'] ?? 'Subang',
+                $addressNames['province'] ?? 'Jawa Barat',
+                $postalCode
+            ]);
+            
+            return implode(', ', $parts);
+            
+        } catch (\Exception $e) {
+            // Log error and return empty string on failure
+            \Log::error('Failed to build address preview: ' . $e->getMessage());
+            return '';
+        }
     }
 }
