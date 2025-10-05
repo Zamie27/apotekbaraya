@@ -1316,13 +1316,13 @@ class Order extends Model
     {
         foreach ($this->items as $item) {
             if ($item->product) {
-                $item->product->increment('stock_quantity', $item->qty);
+                $item->product->increment('stock', $item->qty);
 
                 \Log::info('Stock restored for product', [
                     'product_id' => $item->product->product_id,
                     'product_name' => $item->product->name,
                     'quantity_restored' => $item->qty,
-                    'new_stock' => $item->product->fresh()->stock_quantity,
+                    'new_stock' => $item->product->fresh()->stock,
                     'order_number' => $this->order_number
                 ]);
             }

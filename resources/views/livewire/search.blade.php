@@ -70,9 +70,11 @@
                 @foreach($results as $product)
                 <div class="card w-full bg-base-100 shadow-xl group hover:shadow-2xl transition overflow-hidden">
                     <figure class="relative pt-2">
-                        <a href="/produk/{{ $product->product_id }}">
-                            <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-40 sm:h-48 lg:h-64" />
-                        </a>
+                        <div class="relative w-full aspect-square overflow-hidden">
+                            <a href="/produk/{{ $product->product_id }}">
+                                <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-full" />
+                            </a>
+                        </div>
 
                         <div class="absolute left-0 right-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
                             @if(auth()->check())
@@ -183,9 +185,11 @@
                 @foreach($popularProducts as $product)
                 <div class="card w-full bg-base-100 shadow-xl group hover:shadow-2xl transition overflow-hidden">
                     <figure class="relative pt-2">
-                        <a href="/produk/{{ $product->product_id }}">
-                            <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-40 sm:h-48 lg:h-64" />
-                        </a>
+                        <div class="relative w-full aspect-square overflow-hidden">
+                            <a href="/produk/{{ $product->product_id }}">
+                                <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-full" />
+                            </a>
+                        </div>
 
                         <div class="absolute left-0 right-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
                             @if(auth()->check())

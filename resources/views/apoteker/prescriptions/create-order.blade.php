@@ -240,11 +240,12 @@
                                         
                                         <!-- Product Image -->
                                         <div class="flex-shrink-0">
-                                            @if($product->image)
-                                                <img src="{{ asset('storage/' . $product->image) }}" 
+                                            @php($imgUrl = $product->primary_image_url)
+                                            @if($imgUrl)
+                                                <img src="{{ $imgUrl }}" 
                                                      alt="{{ $product->name }}" 
                                                      class="w-16 h-16 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                                                     onclick="openImageModal('{{ asset('storage/' . $product->image) }}')">
+                                                     onclick="openImageModal('{{ $imgUrl }}')">
                                             @else
                                                 <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

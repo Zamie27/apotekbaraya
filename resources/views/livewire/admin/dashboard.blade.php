@@ -117,7 +117,7 @@
                 </a>
 
                 <!-- Manajemen Produk -->
-                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 opacity-50">
+                <a href="{{ route('admin.products') }}" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300">
                     <div class="card-body">
                         <div class="flex items-center space-x-4">
                             <div class="p-3 bg-secondary/10 rounded-lg">
@@ -128,11 +128,10 @@
                             <div>
                                 <h3 class="card-title text-lg">Manajemen Produk</h3>
                                 <p class="text-gray-600">Kelola produk dan stok obat</p>
-                                <span class="badge badge-warning badge-sm">Coming Soon</span>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
 
                 <!-- Manajemen Pesanan -->
                 <a href="{{ route('admin.orders') }}" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300">
@@ -168,23 +167,22 @@
                     </div>
                 </a>
 
-                <!-- Laporan -->
-                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 opacity-50">
+                <!-- Manajemen Kategori -->
+                <a href="{{ route('admin.categories') }}" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300">
                     <div class="card-body">
                         <div class="flex items-center space-x-4">
                             <div class="p-3 bg-success/10 rounded-lg">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 00-2-2z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h14M3 12h14M3 17h14M17 7h4M17 12h4M17 17h4" />
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="card-title text-lg">Laporan</h3>
-                                <p class="text-gray-600">Lihat laporan penjualan dan analitik</p>
-                                <span class="badge badge-warning badge-sm">Coming Soon</span>
+                                <h3 class="card-title text-lg">Manajemen Kategori</h3>
+                                <p class="text-gray-600">Kelola kategori produk</p>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
 
                 <!-- Profil Admin -->
                 <a href="/admin/profile" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300">

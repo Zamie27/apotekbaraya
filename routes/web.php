@@ -118,6 +118,18 @@ Route::middleware(['auth', 'verified', 'user.status'])->group(function () {
 
         // Add more admin routes here
         // Route::get('/admin/products', AdminProducts::class);
+
+        // Admin Product & Category Management
+        Route::get('/admin/products', \App\Livewire\Admin\ProductManagement::class)->name('admin.products');
+        Route::get('/admin/products/create', \App\Livewire\Admin\ProductCreate::class)->name('admin.products.create');
+        Route::get('/admin/products/{productId}/edit', \App\Livewire\Admin\ProductEdit::class)->name('admin.products.edit');
+        Route::get('/admin/products/export/csv', [\App\Http\Controllers\Admin\ProductExportController::class, 'exportCsv'])
+            ->name('admin.products.export.csv');
+
+        Route::get('/admin/categories', \App\Livewire\Admin\CategoryManagement::class)->name('admin.categories');
+        Route::get('/admin/categories/{categoryId}', \App\Livewire\Admin\CategoryDetail::class)->name('admin.categories.detail');
+        Route::get('/admin/categories/create', \App\Livewire\Admin\CategoryCreate::class)->name('admin.categories.create');
+        Route::get('/admin/categories/{categoryId}/edit', \App\Livewire\Admin\CategoryEdit::class)->name('admin.categories.edit');
     });
 
     // Apoteker routes - only apoteker can access

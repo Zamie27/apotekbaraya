@@ -52,6 +52,7 @@ class Product extends Model
         'weight' => 'decimal:2',
         'requires_prescription' => 'boolean',
         'is_active' => 'boolean',
+        'stock' => 'integer',
         'specifications' => 'array',
     ];
 
@@ -107,7 +108,7 @@ class Product extends Model
      */
     public function scopeAvailable($query)
     {
-        return $query->where('stock', 'available');
+        return $query->where('stock', '>', 0);
     }
 
     /**
@@ -202,7 +203,7 @@ class Product extends Model
      */
     public function getIsAvailableAttribute(): bool
     {
-        return $this->is_active && $this->stock === 'available';
+        return (bool) $this->is_active && ((int) $this->stock > 0);
     }
 
     /**
@@ -284,7 +285,7 @@ class Product extends Model
      */
     public function getStockStatusLabelAttribute(): string
     {
-        return $this->stock === 'available' ? 'Tersedia' : 'Habis';
+        return ((int) $this->stock > 0) ? 'Tersedia' : 'Habis';
     }
 
     /**

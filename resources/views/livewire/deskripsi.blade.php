@@ -13,13 +13,13 @@
     @endif
 
     <div class="container mx-auto my-6 sm:my-10 px-3 sm:px-4 md:flex md:gap-10 items-start">
-        <!-- Gambar Produk dengan ukuran fix -->
+        <!-- Gambar Produk 1:1 -->
         <div class="md:w-auto w-full flex justify-center mb-4 sm:mb-6 md:mb-0">
-            <div class="relative">
+            <div class="relative w-full max-w-[300px] sm:max-w-[350px] md:max-w-[400px] aspect-square rounded-box shadow-md bg-gray-100 overflow-hidden">
                 <img
                     src="{{ $product->primary_image_url }}"
                     alt="{{ $product->name }}"
-                    class="rounded-box object-cover w-full max-w-[300px] h-[300px] sm:w-[350px] sm:h-[350px] md:w-[400px] md:h-[400px] shadow-md bg-gray-100" />
+                    class="object-cover w-full h-full" />
 
                 {{-- Product Badges --}}
                 <div class="absolute top-2 sm:top-4 left-2 sm:left-4">
