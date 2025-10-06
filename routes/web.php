@@ -116,6 +116,10 @@ Route::middleware(['auth', 'verified', 'user.status'])->group(function () {
         Route::get('/admin/email-notifications', \App\Livewire\Admin\EmailNotificationSettings::class)->name('admin.email-notifications');
         Route::get('/admin/user-activity-reports', \App\Livewire\Admin\UserActivityReports::class)->name('admin.user-activity-reports');
 
+        // Reports routes
+        Route::get('/admin/reports/sales', \App\Livewire\Admin\SalesReports::class)->name('admin.reports.sales');
+        Route::get('/admin/reports/products', \App\Livewire\Admin\ProductPerformanceReports::class)->name('admin.reports.products');
+
         // Add more admin routes here
         // Route::get('/admin/products', AdminProducts::class);
 

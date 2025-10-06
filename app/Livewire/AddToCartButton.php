@@ -72,6 +72,13 @@ class AddToCartButton extends Component
                 return;
             }
 
+            // Gate: product must be active and available (stock > 0)
+            if (!(bool)$product->is_active || !$product->isAvailable()) {
+                $this->dispatch('show-toast', 'error', 'Produk tidak tersedia atau nonaktif.', 5000);
+                $this->isLoading = false;
+                return;
+            }
+
             // Add to cart using CartService
             $result = $this->cartService->addToCart($product->product_id, $this->quantity);
 

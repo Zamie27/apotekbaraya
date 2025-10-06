@@ -53,12 +53,12 @@
             </thead>
             <tbody>
                 @forelse($products as $product)
-                    <tr>
+                    <tr wire:key="product-{{ $product->product_id }}">
                         <td>
                             <div class="flex items-center space-x-3">
                                 <div class="avatar">
-                                    <div class="mask mask-squircle w-12 h-12">
-                                        <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" />
+                                    <div class="mask mask-squircle w-16 h-16">
+                                        <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-full" />
                                     </div>
                                 </div>
                                 <div>
@@ -86,6 +86,7 @@
                         </td>
                         <td class="text-right">
                             <a href="{{ route('admin.products.edit', $product->product_id) }}" class="btn btn-sm">Edit</a>
+                            <button type="button" class="btn btn-error btn-sm" wire:click="$set('confirmDeleteId', {{ $product->product_id }})">Hapus</button>
                         </td>
                     </tr>
                 @empty
@@ -110,10 +111,11 @@
             <div class="font-semibold">Ringkasan Impor:</div>
             <ul class="list-disc ml-5">
                 <li>Dibuat: {{ $importSummary['created'] ?? 0 }}</li>
+                <li>Diupdate: {{ $importSummary['updated'] ?? 0 }}</li>
                 <li>Duplikat dilewati: {{ $importSummary['skipped'] ?? 0 }}</li>
                 <li>Isu: {{ is_array($importSummary['errors'] ?? []) ? count($importSummary['errors']) : 0 }}</li>
             </ul>
-            @if(!empty($importSummary['errors']))
+            @if(!empty($importSummary['errors']) || !empty($importSummary['updates']))
                 <div class="mt-2">
                     <button type="button" class="btn btn-sm" wire:click="openImportIssuesModal">Lihat detail isu</button>
                 </div>
@@ -138,10 +140,11 @@
                             <input type="file" wire:model="importFile" accept=".csv" class="file-input file-input-bordered w-full" />
                             @error('importFile')<span class="text-error text-sm">{{ $message }}</span>@enderror
                             <div class="text-sm opacity-70 mt-2">
-                                Header minimal yang dibutuhkan: <code>name, category_slug, price</code>.
+                                Header minimal yang dibutuhkan: <code>name, category_slug, price, unit</code>.
                             </div>
                             <div class="text-sm opacity-70">
-                                Header tambahan (opsional): <code>slug, discount_percentage, stock, requires_prescription, is_active, weight, kandungan, kemasan, produsen, deskripsi, komposisi, manfaat, dosis, efek_samping, lainnya</code>.
+                                Header tambahan (opsional): <code>slug, discount_percentage, stock, requires_prescription, is_active, kemasan, produsen, deskripsi, komposisi, manfaat, dosis, efek_samping, lainnya</code>.
+                                <span class="block mt-1">Catatan: kolom <code>weight</code> dan <code>kandungan</code> tidak digunakan lagi. Jika <code>komposisi</code> kosong dan <code>kandungan</code> tersedia, sistem akan menggunakan nilai <code>kandungan</code> sebagai <code>komposisi</code>.</span>
                             </div>
                         </div>
                     </div>
@@ -167,17 +170,53 @@
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                @if(!empty($importSummary['errors']))
-                    <ul class="list-disc ml-5 max-h-96 overflow-auto pr-2">
-                        @foreach(($importSummary['errors'] ?? []) as $err)
-                            <li class="text-error">{{ $err }}</li>
-                        @endforeach
-                    </ul>
-                @else
-                    <div class="text-sm">Tidak ada isu untuk ditampilkan.</div>
-                @endif
+                <div class="space-y-4">
+                    @if(!empty($importSummary['updates']))
+                        <div>
+                            <div class="font-semibold mb-1">Perubahan yang diterapkan ({{ count($importSummary['updates'] ?? []) }}):</div>
+                            <ul class="list-disc ml-5 max-h-48 overflow-auto pr-2">
+                                @foreach(($importSummary['updates'] ?? []) as $upd)
+                                    <li class="text-success">{{ $upd }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    @if(!empty($importSummary['errors']))
+                        <div>
+                            <div class="font-semibold mb-1">Isu ({{ count($importSummary['errors'] ?? []) }}):</div>
+                            <ul class="list-disc ml-5 max-h-48 overflow-auto pr-2">
+                                @foreach(($importSummary['errors'] ?? []) as $err)
+                                    <li class="text-error">{{ $err }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    @if(empty($importSummary['updates']) && empty($importSummary['errors']))
+                        <div class="text-sm">Tidak ada isu atau perubahan untuk ditampilkan.</div>
+                    @endif
+                </div>
                 <div class="modal-action">
                     <button type="button" class="btn" wire:click="closeImportIssuesModal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if(!is_null($confirmDeleteId))
+        <div class="modal modal-open">
+            <div class="modal-box">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-lg font-bold">Konfirmasi Hapus Produk</h3>
+                    <button type="button" class="btn btn-sm btn-circle btn-ghost" wire:click="$set('confirmDeleteId', null)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <p class="mb-4">Anda yakin ingin menghapus produk ini? Tindakan ini akan menghapus file gambar terkait dan tidak dapat dibatalkan.</p>
+                <div class="modal-action">
+                    <button type="button" class="btn" wire:click="$set('confirmDeleteId', null)">Batal</button>
+                    <button type="button" class="btn btn-error" wire:click="deleteProduct({{ $confirmDeleteId }})">Hapus</button>
                 </div>
             </div>
         </div>

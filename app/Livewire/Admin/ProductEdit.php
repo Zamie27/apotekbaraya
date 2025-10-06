@@ -44,7 +44,7 @@ class ProductEdit extends Component
             'requires_prescription' => (bool) $this->product->requires_prescription,
             'is_active' => (bool) $this->product->is_active,
             'discount_percentage' => $this->product->discount_percentage,
-            'weight' => $this->product->weight,
+            'unit' => $this->product->unit ?? 'pcs',
             // Use lowercase keys for form binding; will normalize on save
             'specifications' => $specForm,
         ];
@@ -62,7 +62,7 @@ class ProductEdit extends Component
             'form.requires_prescription' => 'boolean',
             'form.is_active' => 'boolean',
             'form.discount_percentage' => 'nullable|numeric|min:0|max:100',
-            'form.weight' => 'nullable|numeric|min:0',
+            'form.unit' => 'required|string|in:pcs,box,botol,strip,tube,sachet',
             'form.specifications' => 'nullable|array',
             'specifications_json' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
@@ -104,6 +104,30 @@ class ProductEdit extends Component
             $data['slug'] = str(\Str::slug($data['name']))->limit(60);
         }
 
+        // Auto set requires_prescription for kategori "Obat Keras" dkk berdasarkan slug
+        if (!empty($data['category_id'])) {
+            $cat = Category::find($data['category_id']);
+            if ($cat) {
+                $slug = \Illuminate\Support\Str::of($cat->slug)->lower()->toString();
+                $hardMedSlugs = ['obat-keras', 'obat-resep'];
+                if (in_array($slug, $hardMedSlugs, true)) {
+                    $data['requires_prescription'] = true;
+                }
+            }
+        }
+
+        // Compute discount_price from discount_percentage if provided
+        if (isset($data['discount_percentage']) && is_numeric($data['discount_percentage'])) {
+            $pct = (float) $data['discount_percentage'];
+            if ($pct > 0 && $pct < 100 && isset($data['price'])) {
+                $data['discount_price'] = round(((float)$data['price']) - (((float)$data['price']) * ($pct / 100)), 2);
+            } else {
+                $data['discount_price'] = null;
+            }
+            // Do not persist discount_percentage
+            unset($data['discount_percentage']);
+        }
+
         $this->product->update($data);
 
         // Handle image upload: store to product_images and set as primary
@@ -128,6 +152,21 @@ class ProductEdit extends Component
 
         session()->flash('success', 'Produk berhasil diperbarui.');
         $this->redirectRoute('admin.products.edit', ['productId' => $this->product->product_id]);
+    }
+
+    // Auto-enable requires_prescription when selecting categories like "Obat Keras" or "Obat Resep"
+    public function updatedFormCategoryId($value): void
+    {
+        if (!empty($value)) {
+            $cat = Category::find($value);
+            if ($cat) {
+                $slug = \Illuminate\Support\Str::of($cat->slug)->lower()->toString();
+                $hardMedSlugs = ['obat-keras', 'obat-resep'];
+                if (in_array($slug, $hardMedSlugs, true)) {
+                    $this->form['requires_prescription'] = true;
+                }
+            }
+        }
     }
 
     public function render()

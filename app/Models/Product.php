@@ -38,7 +38,6 @@ class Product extends Model
         'is_active',
         'unit',
         'specifications',
-        'weight',
     ];
 
     /**
@@ -49,7 +48,6 @@ class Product extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'discount_price' => 'decimal:2',
-        'weight' => 'decimal:2',
         'requires_prescription' => 'boolean',
         'is_active' => 'boolean',
         'stock' => 'integer',

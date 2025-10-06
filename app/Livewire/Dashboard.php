@@ -11,6 +11,10 @@ use Livewire\Attributes\Layout;
 class Dashboard extends Component
 {
     public $selectedCategory = null;
+    public int $perPage = 30; // initial batch size
+    protected int $increment = 20; // load more size
+    public int $seed = 1; // stable random seed per session (public for Livewire hydration)
+    public int $promoSeed = 1; // stable random seed for promo row per session (public for Livewire hydration)
     
     /**
      * Filter products by category
@@ -18,6 +22,8 @@ class Dashboard extends Component
     public function filterByCategory($categoryId = null)
     {
         $this->selectedCategory = $categoryId;
+        // Reset batch size when category changes
+        $this->perPage = 30;
     }
     
 
@@ -33,15 +39,56 @@ class Dashboard extends Component
     /**
      * Get products based on selected category
      */
-    public function getProducts()
+    /**
+     * Base query for products with optional category filter and stable random order.
+     */
+    protected function getProductQuery()
     {
         $query = Product::with(['category', 'images'])->active()->available();
-        
+
         if ($this->selectedCategory) {
             $query->where('category_id', $this->selectedCategory);
         }
-        
-        return $query->latest()->take(20)->get();
+
+        // Stable random order per session using seeded RAND()
+        return $query->orderByRaw('RAND(' . (int) $this->seed . ')');
+    }
+
+    /**
+     * Get batched products according to current perPage.
+     */
+    public function getProducts()
+    {
+        return $this->getProductQuery()->take($this->perPage)->get();
+    }
+
+    /**
+     * Get total products count for current filter, to determine hasMore.
+     */
+    public function getTotalProductsCount(): int
+    {
+        return (int) $this->getProductQuery()->count();
+    }
+
+    /**
+     * Load more products in batches.
+     */
+    public function loadMore(): void
+    {
+        $total = $this->getTotalProductsCount();
+        $this->perPage = min($this->perPage + $this->increment, $total);
+    }
+
+    /**
+     * Promo products row (random, stable per session)
+     */
+    public function getPromoProducts()
+    {
+        return Product::with(['category', 'images'])
+            ->active()->available()->onSale()
+            ->orderByRaw('RAND(' . (int) $this->promoSeed . ')')
+            ->take(10)
+            ->get();
     }
     
     /**
@@ -114,13 +161,33 @@ class Dashboard extends Component
         return $cleanNumber;
     }
     
+    /**
+     * Initialize seeds for stable random ordering per session.
+     */
+    public function mount(): void
+    {
+        $this->seed = (int) (session('dashboard_random_seed') ?? random_int(1, 1000000));
+        session(['dashboard_random_seed' => $this->seed]);
+
+        $this->promoSeed = (int) (session('dashboard_promo_seed') ?? random_int(1, 1000000));
+        session(['dashboard_promo_seed' => $this->promoSeed]);
+    }
+
     public function render()
     {
+        $products = $this->getProducts();
+        $totalCount = $this->getTotalProductsCount();
+        $hasMore = $this->perPage < $totalCount;
+
         return view('livewire.dashboard', [
             'categories' => $this->getCategories(),
-            'products' => $this->getProducts(),
+            'products' => $products,
             'isAuthenticated' => $this->isAuthenticated(),
-            'currentUser' => $this->getCurrentUser()
+            'currentUser' => $this->getCurrentUser(),
+            'promoProducts' => $this->getPromoProducts(),
+            'hasMore' => $hasMore,
+            'totalCount' => $totalCount,
+            'displayedCount' => count($products),
         ]);
     }
 }

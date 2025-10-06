@@ -15,7 +15,7 @@
     <div class="container mx-auto my-6 sm:my-10 px-3 sm:px-4 md:flex md:gap-10 items-start">
         <!-- Gambar Produk 1:1 -->
         <div class="md:w-auto w-full flex justify-center mb-4 sm:mb-6 md:mb-0">
-            <div class="relative w-full max-w-[300px] sm:max-w-[350px] md:max-w-[400px] aspect-square rounded-box shadow-md bg-gray-100 overflow-hidden">
+            <div class="relative w-full max-w-[380px] sm:max-w-[500px] md:max-w-[640px] aspect-square rounded-box shadow-md bg-gray-100 overflow-hidden">
                 <img
                     src="{{ $product->primary_image_url }}"
                     alt="{{ $product->name }}"
@@ -78,11 +78,11 @@
             <div class="mb-4 sm:mb-6">
                 <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-2">Spesifikasi:</h3>
                 <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
-                    @foreach($product->specifications as $key => $value)
-                    <div class="flex justify-between py-1 border-b border-gray-200 last:border-b-0">
-                        <span class="text-xs sm:text-sm text-gray-600 capitalize">{{ str_replace('_', ' ', $key) }}:</span>
-                        <span class="text-xs sm:text-sm text-gray-800 font-medium">{{ $value }}</span>
-                    </div>
+                    @foreach(collect($product->specifications)->reject(function($v, $k){ return str($k)->lower()->value() === 'lainnya'; }) as $key => $value)
+                        <div class="flex justify-between py-1 border-b border-gray-200 last:border-b-0">
+                            <span class="text-xs sm:text-sm text-gray-600 capitalize">{{ str_replace('_', ' ', $key) }}:</span>
+                            <span class="text-xs sm:text-sm text-gray-800 font-medium">{{ $value }}</span>
+                        </div>
                     @endforeach
                 </div>
             </div>

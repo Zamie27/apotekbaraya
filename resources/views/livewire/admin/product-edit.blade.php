@@ -47,9 +47,17 @@
                     @error('form.discount_percentage')<span class="text-error text-sm">{{ $message }}</span>@enderror
                 </div>
                 <div>
-                    <label class="label">Berat (gram)</label>
-                    <input type="number" step="0.01" class="input input-bordered w-full" wire:model.defer="form.weight" />
-                    @error('form.weight')<span class="text-error text-sm">{{ $message }}</span>@enderror
+                    <label class="label">Unit</label>
+                    <select class="select select-bordered w-full" wire:model.defer="form.unit">
+                        <option value="">Pilih unit</option>
+                        <option value="pcs" @selected(($form['unit'] ?? '')==='pcs')>Pcs</option>
+                        <option value="box" @selected(($form['unit'] ?? '')==='box')>Box</option>
+                        <option value="botol" @selected(($form['unit'] ?? '')==='botol')>Botol</option>
+                        <option value="strip" @selected(($form['unit'] ?? '')==='strip')>Strip</option>
+                        <option value="tube" @selected(($form['unit'] ?? '')==='tube')>Tube</option>
+                        <option value="sachet" @selected(($form['unit'] ?? '')==='sachet')>Sachet</option>
+                    </select>
+                    @error('form.unit')<span class="text-error text-sm">{{ $message }}</span>@enderror
                 </div>
                 <div class="flex items-center space-x-6">
                     <label class="label cursor-pointer">
@@ -73,12 +81,15 @@
                 <label class="label">Spesifikasi Produk</label>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="label-text">Kandungan</label>
-                        <input type="text" class="input input-bordered w-full" wire:model.defer="form.specifications.kandungan" placeholder="cth: Paracetamol 500mg" />
-                    </div>
-                    <div>
                         <label class="label-text">Kemasan</label>
-                        <input type="text" class="input input-bordered w-full" wire:model.defer="form.specifications.kemasan" placeholder="cth: Strip, Botol, Box" />
+                        <select class="select select-bordered w-full" wire:model.defer="form.specifications.kemasan">
+                            <option value="">Pilih kemasan</option>
+                            <option value="Strip">Strip</option>
+                            <option value="Botol">Botol</option>
+                            <option value="Box">Box</option>
+                            <option value="Sachet">Sachet</option>
+                            <option value="Tube">Tube</option>
+                        </select>
                     </div>
                     <div>
                         <label class="label-text">Produsen</label>
@@ -100,10 +111,6 @@
                         <label class="label-text">Efek Samping</label>
                         <input type="text" class="input input-bordered w-full" wire:model.defer="form.specifications.efek_samping" placeholder="cth: Mual, pusing" />
                     </div>
-                    <div>
-                        <label class="label-text">Lainnya</label>
-                        <input type="text" class="input input-bordered w-full" wire:model.defer="form.specifications.lainnya" placeholder="cth: Informasi tambahan" />
-                    </div>
                 </div>
                 <div class="mt-3 text-sm opacity-70">Opsional: gunakan input JSON di bawah untuk spesifikasi lengkap.</div>
                 @error('form.specifications')<span class="text-error text-sm">{{ $message }}</span>@enderror
@@ -111,8 +118,8 @@
 
             <div>
                 <label class="label">Spesifikasi (JSON Opsional)</label>
-                <textarea class="textarea textarea-bordered w-full" rows="4" wire:model.defer="specifications_json" placeholder='{"Kandungan":"Paracetamol 500mg","Kemasan":"Strip","Produsen":"PT Kimia Farma","Komposisi":"","Manfaat":"","Dosis":"","Efek Samping":"","Lainnya":""}'></textarea>
-                <div class="text-sm opacity-70 mt-1">Gunakan JSON valid. Import CSV: kandungan, kemasan, produsen, komposisi, manfaat, dosis, efek_samping, lainnya.</div>
+                <textarea class="textarea textarea-bordered w-full" rows="4" wire:model.defer="specifications_json" placeholder='{"Kemasan":"Strip","Produsen":"PT Kimia Farma","Komposisi":"","Manfaat":"","Dosis":"","Efek Samping":""}'></textarea>
+                <div class="text-sm opacity-70 mt-1">Gunakan JSON valid. Import CSV: unit, kemasan, produsen, komposisi, manfaat, dosis, efek_samping. Catatan: "kandungan" tidak digunakan.</div>
                 @error('specifications_json')<span class="text-error text-sm">{{ $message }}</span>@enderror
             </div>
 
@@ -120,20 +127,21 @@
                 <label class="label">Gambar Produk</label>
                 <input type="file" class="file-input file-input-bordered w-full" wire:model="image" accept=".jpg,.jpeg,.png,.webp" />
                 @error('image')<span class="text-error text-sm">{{ $message }}</span>@enderror
-                <div class="mt-2 flex items-center space-x-3">
+                <div class="mt-3">
                     @if($image)
-                        <div class="avatar">
-                            <div class="w-16 rounded">
-                                <img src="{{ $image->temporaryUrl() }}" alt="Preview" />
+                        <div class="inline-block border border-base-300 rounded-lg p-2 bg-base-200">
+                            <div class="w-64 h-64 rounded-lg overflow-hidden">
+                                <img src="{{ $image->temporaryUrl() }}" alt="Preview" class="object-cover w-full h-full" />
                             </div>
                         </div>
                     @elseif(!empty($product->primary_image_url))
-                        <div class="avatar">
-                            <div class="w-16 rounded">
-                                <img src="{{ $product->primary_image_url }}" alt="Gambar produk" />
+                        <div class="inline-block border border-base-300 rounded-lg p-2 bg-base-200">
+                            <div class="w-64 h-64 rounded-lg overflow-hidden">
+                                <img src="{{ $product->primary_image_url }}" alt="Gambar produk" class="object-cover w-full h-full" />
                             </div>
                         </div>
                     @endif
+                    <div class="text-xs opacity-70 mt-2">Preview diperbesar untuk memudahkan pengecekan detail gambar.</div>
                 </div>
             </div>
 

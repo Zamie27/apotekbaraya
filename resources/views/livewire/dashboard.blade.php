@@ -225,6 +225,57 @@
         </div>
     </div>
 
+    {{-- Promo Row --}}
+    @if(!empty($promoProducts) && count($promoProducts) > 0)
+    <div class="container mx-auto my-2 sm:my-3 px-1 sm:px-2 md:px-4">
+        <div class="flex items-center justify-between mb-2 sm:mb-3">
+            <h3 class="text-sm sm:text-base md:text-lg font-bold text-success">Produk Promo</h3>
+            <a href="/kategori/promo" class="btn btn-ghost btn-xs sm:btn-sm text-success">Lihat lainnya</a>
+        </div>
+        <div class="flex gap-2 sm:gap-3 md:gap-4 lg:gap-6 overflow-x-auto no-scrollbar px-1">
+            @foreach($promoProducts as $product)
+            <div class="card bg-base-100 shadow-md group hover:shadow-lg transition overflow-hidden min-w-[150px] sm:min-w-[180px] md:min-w-[200px] lg:min-w-[220px]">
+                <figure class="relative pt-2">
+                    <div class="relative w-full aspect-square overflow-hidden">
+                        <a href="/produk/{{ $product->product_id }}">
+                            <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-full" />
+                        </a>
+                        @if($product->is_on_discount)
+                        <div class="absolute top-1 sm:top-2 right-1 sm:right-2">
+                            <span class="badge badge-error badge-xs sm:badge-sm text-xs">-{{ $product->discount_percentage }}%</span>
+                        </div>
+                        @endif
+                    </div>
+                </figure>
+                <div class="card-body p-1.5 sm:p-2 md:p-3">
+                    <a href="/produk/{{ $product->product_id }}" class="card-title text-xs sm:text-sm md:text-base font-bold line-clamp-2 hover:text-success" title="{{ $product->name }}">
+                        {{ $product->name }}
+                    </a>
+                    <div class="space-y-0.5 sm:space-y-1">
+                        @if($product->is_on_discount)
+                            <div class="flex items-center gap-1 sm:gap-2">
+                                <p class="text-xs text-gray-400 line-through">{{ $product->formatted_price }}</p>
+                                <p class="text-xs sm:text-sm font-semibold text-success">{{ $product->formatted_final_price }}</p>
+                            </div>
+                        @else
+                            <p class="text-xs sm:text-sm font-semibold text-gray-600">{{ $product->formatted_price }}</p>
+                        @endif
+                        <span class="text-xs text-gray-500">/ {{ $product->unit }}</span>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
+    {{-- Semua Produk Title --}}
+    <div class="container mx-auto px-1 sm:px-2 md:px-4 my-2 sm:my-3">
+        <div class="flex items-center justify-between mb-2 sm:mb-3">
+            <h3 class="text-sm sm:text-base md:text-lg font-bold text-success">Semua Produk</h3>
+        </div>
+    </div>
+
     <!-- card -->
     <div class="container grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 lg:gap-6 mx-auto my-3 sm:my-5 px-1 sm:px-2 md:px-4">
         @forelse($products as $product)
@@ -319,6 +370,13 @@
         </div>
         @endforelse
     </div>
+
+    {{-- Load More Button --}}
+    @if($hasMore)
+    <div class="flex justify-center my-4">
+        <button wire:click="loadMore" class="btn btn-outline btn-success">Lihat lainnya</button>
+    </div>
+    @endif
 
     <script>
         const scrollContainer = document.getElementById('scrollKategori');

@@ -361,12 +361,25 @@ class ProductSeeder extends Seeder
                 'updated_at' => now(),
             ],
         ];
+        // Normalize legacy fields to match current schema
+        foreach ($products as &$product) {
+            // Remove legacy 'weight' field (column no longer exists)
+            if (array_key_exists('weight', $product)) {
+                unset($product['weight']);
+            }
+
+            // Convert legacy stock string to integer quantity
+            if (!is_int($product['stock'])) {
+                $product['stock'] = 100; // default stock quantity
+            }
+        }
+        unset($product);
 
         // Insert products with duplicate check
-        foreach ($products as $product) {
+        foreach ($products as $productData) {
             DB::table('products')->updateOrInsert(
-                ['sku' => $product['sku']], // Check by SKU
-                $product // Insert/update with this data
+                ['sku' => $productData['sku']], // Check by SKU
+                $productData // Insert/update with this data
             );
         }
     }

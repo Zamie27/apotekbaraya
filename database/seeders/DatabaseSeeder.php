@@ -70,7 +70,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CategorySeeder::class,
             ProductSeeder::class,
+            AdditionalProductSeeder::class,
             StoreSettingsSeeder::class,
+            CsvProductSeeder::class,
         ]);
     }
 }
