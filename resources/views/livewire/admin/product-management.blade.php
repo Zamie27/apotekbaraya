@@ -1,6 +1,10 @@
-<div>
-    <div class="flex items-center justify-between mb-4">
-        <h1 class="text-2xl font-semibold">Manajemen Produk</h1>
+<div class="container mx-auto px-4 py-6">
+    <!-- Page Header -->
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-1">Manajemen Produk</h1>
+            <p class="text-gray-600">Kelola produk, impor CSV, dan ekspor data</p>
+        </div>
         <div class="flex items-center gap-2">
             <a href="{{ route('admin.products.create') }}" class="btn btn-primary">Tambah Produk</a>
             <button type="button" class="btn btn-sm" wire:click="openImportModal">Impor CSV</button>
@@ -12,90 +16,131 @@
         <div class="alert alert-success mb-4">{{ session('success') }}</div>
     @endif
 
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <input type="text" wire:model.debounce.500ms="search" placeholder="Cari produk..." class="input input-bordered w-full" />
-        <select wire:model="categoryId" class="select select-bordered w-full">
-            <option value="">Semua Kategori</option>
-            @foreach($categories as $cat)
-                <option value="{{ $cat->category_id }}">{{ $cat->name }}</option>
-            @endforeach
-        </select>
-        <select wire:model="active" class="select select-bordered w-full">
-            <option value="">Semua Status</option>
-            <option value="1">Aktif</option>
-            <option value="0">Nonaktif</option>
-        </select>
-        <div>
-            <label class="label">Tampilkan per halaman</label>
-            <select wire:model="perPage" class="select select-bordered w-full">
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-            </select>
-        </div>
-        <div class="text-right">
-            <a href="{{ route('admin.categories') }}" class="btn">Kelola Kategori</a>
+    <!-- Filters and Search -->
+    <div class="card bg-base-100 shadow-lg mb-6">
+        <div class="card-body">
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+                <!-- Search -->
+                <div class="lg:col-span-2">
+                    <label class="label">
+                        <span class="label-text font-medium">Cari Produk</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        wire:model.live.debounce.300ms="search" 
+                        placeholder="Cari berdasarkan nama atau slug produk..." 
+                        class="input input-bordered w-full"
+                    >
+                </div>
+
+                <!-- Category Filter -->
+                <div>
+                    <label class="label">
+                        <span class="label-text font-medium">Filter Kategori</span>
+                    </label>
+                    <select wire:model.live="categoryId" class="select select-bordered w-full">
+                        <option value="">Semua Kategori</option>
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat->category_id }}">{{ $cat->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div>
+                    <label class="label">
+                        <span class="label-text font-medium">Filter Status</span>
+                    </label>
+                    <select wire:model.live="active" class="select select-bordered w-full">
+                        <option value="">Semua Status</option>
+                        <option value="1">Aktif</option>
+                        <option value="0">Nonaktif</option>
+                    </select>
+                </div>
+
+                <!-- Per Page -->
+                <div>
+                    <label class="label">
+                        <span class="label-text font-medium">Tampilkan per halaman</span>
+                    </label>
+                    <select wire:model.live="perPage" class="select select-bordered w-full">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end mt-4">
+                <a href="{{ route('admin.categories') }}" class="btn">Kelola Kategori</a>
+            </div>
         </div>
     </div>
 
-    <div class="overflow-x-auto bg-base-100 rounded-lg shadow">
-        <table class="table w-full">
-            <thead>
-                <tr>
-                    <th>Produk</th>
-                    <th>Kategori</th>
-                    <th>Harga</th>
-                    <th>Stok</th>
-                    <th>Status</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($products as $product)
-                    <tr wire:key="product-{{ $product->product_id }}">
-                        <td>
-                            <div class="flex items-center space-x-3">
-                                <div class="avatar">
-                                    <div class="mask mask-squircle w-16 h-16">
-                                        <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-full" />
+    <!-- Products Table -->
+    <div class="card bg-base-100 shadow-lg">
+        <div class="card-body p-0">
+            <div class="overflow-x-auto">
+                <table class="table table-zebra w-full">
+                    <thead>
+                        <tr class="bg-base-200">
+                            <th>Produk</th>
+                            <th>Kategori</th>
+                            <th>Harga</th>
+                            <th>Stok</th>
+                            <th>Status</th>
+                            <th class="text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($products as $product)
+                            <tr wire:key="product-{{ $product->product_id }}">
+                                <td>
+                                    <div class="flex items-center gap-3">
+                                        <div class="avatar">
+                                            <div class="mask mask-squircle w-16 h-16">
+                                                <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-full" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold">{{ $product->name }}</div>
+                                            <div class="text-sm opacity-70">SKU: {{ $product->slug }}</div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="font-bold">{{ $product->name }}</div>
-                                    <div class="text-sm opacity-70">SKU: {{ $product->slug }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <a href="{{ route('admin.categories.detail', $product->category_id) }}" class="link">{{ optional($product->category)->name ?? '-' }}</a>
-                        </td>
-                        <td>
-                            Rp {{ number_format($product->final_price, 0, ',', '.') }}
-                            @if($product->is_on_sale)
-                                <div class="text-xs text-success">Diskon {{ $product->discount_percentage }}%</div>
-                            @endif
-                        </td>
-                        <td>{{ $product->stock }}</td>
-                        <td>
-                            @if($product->is_active)
-                                <span class="badge badge-success">Aktif</span>
-                            @else
-                                <span class="badge badge-ghost">Nonaktif</span>
-                            @endif
-                        </td>
-                        <td class="text-right">
-                            <a href="{{ route('admin.products.edit', $product->product_id) }}" class="btn btn-sm">Edit</a>
-                            <button type="button" class="btn btn-error btn-sm" wire:click="$set('confirmDeleteId', {{ $product->product_id }})">Hapus</button>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="6" class="text-center py-6">Belum ada produk.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                                </td>
+                                <td>
+                                    <a href="{{ route('admin.categories.detail', $product->category_id) }}" class="link">{{ optional($product->category)->name ?? '-' }}</a>
+                                </td>
+                                <td>
+                                    Rp {{ number_format($product->final_price, 0, ',', '.') }}
+                                    @if($product->is_on_sale)
+                                        <div class="text-xs text-success">Diskon {{ $product->discount_percentage }}%</div>
+                                    @endif
+                                </td>
+                                <td>{{ $product->stock }}</td>
+                                <td>
+                                    @if($product->is_active)
+                                        <span class="badge badge-success badge-sm">Aktif</span>
+                                    @else
+                                        <span class="badge badge-ghost badge-sm">Nonaktif</span>
+                                    @endif
+                                </td>
+                                <td class="text-right">
+                                    <a href="{{ route('admin.products.edit', $product->product_id) }}" class="btn btn-sm">Edit</a>
+                                    <button type="button" class="btn btn-error btn-sm" wire:click="$set('confirmDeleteId', {{ $product->product_id }})">Hapus</button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center py-8">
+                                    <div class="text-gray-500">Belum ada produk yang ditambahkan.</div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <div class="mt-4">
@@ -106,23 +151,7 @@
         <div class="alert alert-error mt-2">{{ $message }}</div>
     @enderror
 
-    @if(!empty($importSummary))
-        <div class="mt-6 alert alert-info">
-            <div class="font-semibold">Ringkasan Impor:</div>
-            <ul class="list-disc ml-5">
-                <li>Dibuat: {{ $importSummary['created'] ?? 0 }}</li>
-                <li>Diupdate: {{ $importSummary['updated'] ?? 0 }}</li>
-                <li>Duplikat dilewati: {{ $importSummary['skipped'] ?? 0 }}</li>
-                <li>Isu: {{ is_array($importSummary['errors'] ?? []) ? count($importSummary['errors']) : 0 }}</li>
-            </ul>
-            @if(!empty($importSummary['errors']) || !empty($importSummary['updates']))
-                <div class="mt-2">
-                    <button type="button" class="btn btn-sm" wire:click="openImportIssuesModal">Lihat detail isu</button>
-                </div>
-            @endif
-        </div>
-    @endif
-
+    <!-- Import Modal -->
     @if($showImportModal)
         <div class="modal modal-open">
             <div class="modal-box w-11/12 max-w-xl">
@@ -161,6 +190,7 @@
         </div>
     @endif
 
+    <!-- Import Issues Modal -->
     @if($showImportIssuesModal)
         <div class="modal modal-open">
             <div class="modal-box w-11/12 max-w-2xl">
@@ -204,6 +234,7 @@
         </div>
     @endif
 
+    <!-- Delete Confirmation Modal -->
     @if(!is_null($confirmDeleteId))
         <div class="modal modal-open">
             <div class="modal-box">

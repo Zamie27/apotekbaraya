@@ -131,9 +131,10 @@ Route::middleware(['auth', 'verified', 'user.status'])->group(function () {
             ->name('admin.products.export.csv');
 
         Route::get('/admin/categories', \App\Livewire\Admin\CategoryManagement::class)->name('admin.categories');
-        Route::get('/admin/categories/{categoryId}', \App\Livewire\Admin\CategoryDetail::class)->name('admin.categories.detail');
+        // Pastikan rute statis didefinisikan sebelum rute dinamis agar tidak bentrok
         Route::get('/admin/categories/create', \App\Livewire\Admin\CategoryCreate::class)->name('admin.categories.create');
         Route::get('/admin/categories/{categoryId}/edit', \App\Livewire\Admin\CategoryEdit::class)->name('admin.categories.edit');
+        Route::get('/admin/categories/{categoryId}', \App\Livewire\Admin\CategoryDetail::class)->name('admin.categories.detail');
     });
 
     // Apoteker routes - only apoteker can access
