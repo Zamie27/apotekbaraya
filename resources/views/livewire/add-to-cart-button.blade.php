@@ -37,22 +37,43 @@
         @enderror
     @endif
 
-    <!-- Add to Cart Button -->
-    <button 
-        type="button" 
-        wire:click="addToCart" 
-        class="{{ $buttonClass }} {{ $isLoading ? 'loading' : '' }}"
-        {{ $isLoading ? 'disabled' : '' }}
-    >
-        @if($isLoading)
-            <span class="loading loading-spinner loading-sm"></span>
-            Menambahkan...
-        @else
-            <x-icons.shopping-cart class="w-4 h-4 mr-2" />
-            {{ $buttonText }}
-            @if(!$showQuantityInput && $quantity > 1)
-                ({{ $quantity }})
+    <!-- Add to Cart / Prescription CTA Button -->
+    @php
+        // Ambil produk dari komponen (livewire akan menyediakan lewat parent)
+        // Pada kasus ini, AddToCartButton hanya tahu productId, jadi kondisi UI
+        // akan ditentukan di komponen parent. Untuk fallback, tetap panggil addToCart
+        $requiresPrescription = false;
+        try {
+            $p = \App\Models\Product::find($productId);
+            $requiresPrescription = $p ? (bool)$p->requires_prescription : false;
+        } catch (\Throwable $e) {
+            $requiresPrescription = false;
+        }
+        $isPelanggan = auth()->check() && auth()->user()->hasRole('pelanggan');
+    @endphp
+
+    @if($requiresPrescription && $isPelanggan)
+        <a href="{{ route('customer.prescriptions.create') }}" class="btn btn-warning w-full">
+            <x-icons.clipboard-check class="w-4 h-4 mr-2" />
+            Pesan via Resep Dokter
+        </a>
+    @else
+        <button 
+            type="button" 
+            wire:click="addToCart" 
+            class="{{ $buttonClass }} {{ $isLoading ? 'loading' : '' }}"
+            {{ $isLoading ? 'disabled' : '' }}
+        >
+            @if($isLoading)
+                <span class="loading loading-spinner loading-sm"></span>
+                Menambahkan...
+            @else
+                <x-icons.shopping-cart class="w-4 h-4 mr-2" />
+                {{ $buttonText }}
+                @if(!$showQuantityInput && $quantity > 1)
+                    ({{ $quantity }})
+                @endif
             @endif
-        @endif
-</button>
+        </button>
+    @endif
 </div>

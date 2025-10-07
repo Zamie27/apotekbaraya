@@ -34,6 +34,15 @@ class CartService
                 ];
             }
 
+            // Gate resep dokter: pelanggan tidak boleh menambahkan produk yang memerlukan resep
+            $user = User::find($userId);
+            if ($product->requires_prescription && $user && $user->hasRole('pelanggan')) {
+                return [
+                    'success' => false,
+                    'message' => 'Produk ini memerlukan resep dokter. Silakan unggah resep atau hubungi apoteker untuk pemesanan.'
+                ];
+            }
+
             if ($product->stock < $quantity) {
                 return [
                     'success' => false,
@@ -290,6 +299,11 @@ class CartService
         foreach ($cart->cartItems as $item) {
             if ($item->quantity > $item->product->stock) {
                 $errors[] = "Stok {$item->product->name} tidak mencukupi. Tersedia: {$item->product->stock}";
+            }
+            // Gate resep dokter saat checkout: pelanggan tidak boleh checkout item resep
+            $currentUser = Auth::user();
+            if ($item->product->requires_prescription && $currentUser && $currentUser->hasRole('pelanggan')) {
+                $errors[] = "{$item->product->name} memerlukan resep dokter dan tidak dapat dipesan langsung oleh pelanggan. Silakan gunakan fitur resep untuk pemesanan.";
             }
         }
 

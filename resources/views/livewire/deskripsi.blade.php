@@ -106,14 +106,24 @@
                         +
                     </button>
                 </div>
-                <button
-                    wire:click="addToCart"
-                    class="btn btn-success btn-md sm:btn-lg py-3 sm:py-2 uppercase flex-1 sm:flex-none"
-                    wire:loading.attr="disabled"
-                    wire:loading.class="loading">
-                    <span wire:loading.remove class="text-xs sm:text-sm">Tambah ke Keranjang</span>
-                    <span wire:loading class="text-xs sm:text-sm">Menambahkan...</span>
-                </button>
+                @php
+                    $user = auth()->user();
+                    $isCustomer = $user && method_exists($user, 'hasRole') ? $user->hasRole('pelanggan') : false;
+                @endphp
+                @if($product->requires_prescription && $isCustomer)
+                    <a href="{{ route('customer.prescriptions.create') }}" class="btn btn-warning btn-md sm:btn-lg py-3 sm:py-2 uppercase flex-1 sm:flex-none">
+                        Unggah Resep Dokter
+                    </a>
+                @else
+                    <button
+                        wire:click="addToCart"
+                        class="btn btn-success btn-md sm:btn-lg py-3 sm:py-2 uppercase flex-1 sm:flex-none"
+                        wire:loading.attr="disabled"
+                        wire:loading.class="loading">
+                        <span wire:loading.remove class="text-xs sm:text-sm">Tambah ke Keranjang</span>
+                        <span wire:loading class="text-xs sm:text-sm">Menambahkan...</span>
+                    </button>
+                @endif
             </div>
             @else
             <div class="mb-4 sm:mb-6">

@@ -94,8 +94,26 @@ class Deskripsi extends Component
         $this->validate();
 
         try {
+            // Ensure product is available and active
+            $product = $this->product;
+            if (!$product) {
+                $this->dispatch('show-toast', 'error', 'Produk tidak ditemukan.', 5000);
+                return;
+            }
+
+            if (!(bool)$product->is_active || !(bool)$product->is_available) {
+                $this->dispatch('show-toast', 'error', 'Produk tidak tersedia atau nonaktif.', 5000);
+                return;
+            }
+
+            // Gate resep dokter: pelanggan tidak boleh langsung menambahkan ke keranjang
+            if ((bool)$product->requires_prescription && auth()->user() && auth()->user()->hasRole('pelanggan')) {
+                $this->dispatch('show-toast', 'warning', 'Produk ini memerlukan resep dokter. Silakan unggah resep atau hubungi apoteker.', 6000);
+                return redirect()->route('customer.prescriptions.create');
+            }
+
             // Add to cart using CartService
-            $result = $this->cartService->addToCart($this->product->product_id, $this->quantity);
+            $result = $this->cartService->addToCart($product->product_id, $this->quantity);
 
             if ($result['success']) {
                 // Dispatch event to update cart counter

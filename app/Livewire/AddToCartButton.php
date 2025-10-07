@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Services\CartService;
 use App\Models\Product;
+use Illuminate\Support\Facades\Auth;
 
 class AddToCartButton extends Component
 {
@@ -73,10 +74,19 @@ class AddToCartButton extends Component
             }
 
             // Gate: product must be active and available (stock > 0)
-            if (!(bool)$product->is_active || !$product->isAvailable()) {
+            if (!(bool)$product->is_active || !(bool)$product->is_available) {
                 $this->dispatch('show-toast', 'error', 'Produk tidak tersedia atau nonaktif.', 5000);
                 $this->isLoading = false;
                 return;
+            }
+
+            // Gate resep dokter: jika produk memerlukan resep dan user adalah pelanggan, blokir tambah ke keranjang
+            $currentUser = Auth::user();
+            if ((bool)$product->requires_prescription && $currentUser && $currentUser->hasRole('pelanggan')) {
+                $this->dispatch('show-toast', 'warning', 'Produk ini memerlukan resep dokter. Silakan unggah resep atau hubungi apoteker.', 6000);
+                $this->isLoading = false;
+                // Redirect ke halaman upload resep pelanggan
+                return redirect()->route('customer.prescriptions.create');
             }
 
             // Add to cart using CartService
