@@ -155,7 +155,7 @@ class Order extends Model
     public function latestRefund(): HasOne
     {
         return $this->hasOne(Refund::class, 'order_id', 'order_id')
-                    ->latest('created_at');
+            ->latest('created_at');
     }
 
     /**
@@ -274,7 +274,7 @@ class Order extends Model
             return 'badge-error';
         }
 
-        return match($this->status) {
+        return match ($this->status) {
             'pending' => 'badge-warning',
             'waiting_payment' => 'badge-warning',
             'waiting_confirmation' => 'badge-neutral',
@@ -307,7 +307,7 @@ class Order extends Model
             return 'Pesanan Expired';
         }
 
-        return match($this->status) {
+        return match ($this->status) {
             'pending' => 'Pesanan Dibuat',
             'waiting_payment' => 'Menunggu Pembayaran',
             'waiting_confirmation' => 'Menunggu Konfirmasi',
@@ -325,7 +325,7 @@ class Order extends Model
     }
 
     /**
-     * Check if order can be cancelled.
+     * Check if order can be cancelled
      */
     public function canBeCancelled(): bool
     {
@@ -333,12 +333,12 @@ class Order extends Model
         if (!in_array($this->status, ['pending', 'waiting_payment', 'waiting_confirmation'])) {
             return false;
         }
-        
+
         // Cannot cancel if payment is expired (order should be auto-cancelled by system)
         if ($this->status === 'waiting_payment' && $this->isPaymentExpired()) {
             return false;
         }
-        
+
         return true;
     }
 
@@ -355,7 +355,7 @@ class Order extends Model
      */
     public function getShippingTypeLabelAttribute(): string
     {
-        return match($this->shipping_type) {
+        return match ($this->shipping_type) {
             'pickup' => 'Ambil di Toko',
             'delivery' => 'Kirim ke Alamat',
             default => ucfirst($this->shipping_type)
@@ -384,8 +384,8 @@ class Order extends Model
         } else {
             return 'Menunggu Pembayaran';
         }
-        
-        return match($this->status) {
+
+        return match ($this->status) {
             'pending' => 'Pesanan Dibuat',
             'waiting_payment' => 'Menunggu Pembayaran',
             'waiting_confirmation' => 'Menunggu Konfirmasi',
@@ -418,7 +418,7 @@ class Order extends Model
                 'confirmed_at' => now(),
                 'confirmed_by' => $confirmedBy
             ];
-            
+
             // Only add confirmation_note if it's provided
             if ($note !== null && $note !== '') {
                 $updateData['confirmation_note'] = $note;
@@ -701,14 +701,14 @@ class Order extends Model
         // Define all possible statuses for both delivery and pickup
         $allDeliveryStatuses = ['waiting_payment', 'waiting_confirmation', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered', 'completed'];
         $allPickupStatuses = ['waiting_payment', 'waiting_confirmation', 'confirmed', 'processing', 'ready_for_pickup', 'picked_up', 'completed'];
-        
+
         $steps = [
             [
                 'status' => 'pending',
                 'label' => 'Pesanan Dibuat',
                 'description' => 'Pesanan telah dibuat dan menunggu pembayaran',
-                'completed' => $this->status === 'pending' || ($this->shipping_type === 'delivery' ? 
-                    in_array($this->status, $allDeliveryStatuses) : 
+                'completed' => $this->status === 'pending' || ($this->shipping_type === 'delivery' ?
+                    in_array($this->status, $allDeliveryStatuses) :
                     in_array($this->status, $allPickupStatuses)),
                 'current' => $this->status === 'pending',
                 'date' => $this->created_at
@@ -717,8 +717,8 @@ class Order extends Model
                 'status' => 'waiting_payment',
                 'label' => 'Menunggu Pembayaran',
                 'description' => 'Pesanan menunggu pembayaran dari pelanggan',
-                'completed' => $this->status === 'waiting_payment' || ($this->shipping_type === 'delivery' ? 
-                    in_array($this->status, ['waiting_confirmation', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered', 'completed']) : 
+                'completed' => $this->status === 'waiting_payment' || ($this->shipping_type === 'delivery' ?
+                    in_array($this->status, ['waiting_confirmation', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered', 'completed']) :
                     in_array($this->status, ['waiting_confirmation', 'confirmed', 'processing', 'ready_for_pickup', 'picked_up', 'completed'])),
                 'current' => $this->status === 'waiting_payment',
                 'date' => $this->waiting_payment_at
@@ -727,8 +727,8 @@ class Order extends Model
                 'status' => 'waiting_confirmation',
                 'label' => 'Menunggu Konfirmasi',
                 'description' => 'Pesanan telah dibayar dan menunggu konfirmasi dari apoteker',
-                'completed' => $this->status === 'waiting_confirmation' || ($this->shipping_type === 'delivery' ? 
-                    in_array($this->status, ['confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered', 'completed']) : 
+                'completed' => $this->status === 'waiting_confirmation' || ($this->shipping_type === 'delivery' ?
+                    in_array($this->status, ['confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered', 'completed']) :
                     in_array($this->status, ['confirmed', 'processing', 'ready_for_pickup', 'picked_up', 'completed'])),
                 'current' => $this->status === 'waiting_confirmation',
                 'date' => $this->waiting_confirmation_at
@@ -737,8 +737,8 @@ class Order extends Model
                 'status' => 'confirmed',
                 'label' => 'Dikonfirmasi',
                 'description' => 'Pesanan telah dikonfirmasi dan akan diproses',
-                'completed' => $this->status === 'confirmed' || ($this->shipping_type === 'delivery' ? 
-                    in_array($this->status, ['processing', 'ready_to_ship', 'shipped', 'delivered', 'completed']) : 
+                'completed' => $this->status === 'confirmed' || ($this->shipping_type === 'delivery' ?
+                    in_array($this->status, ['processing', 'ready_to_ship', 'shipped', 'delivered', 'completed']) :
                     in_array($this->status, ['processing', 'ready_for_pickup', 'picked_up', 'completed'])),
                 'current' => $this->status === 'confirmed',
                 'date' => $this->confirmed_at
@@ -747,8 +747,8 @@ class Order extends Model
                 'status' => 'processing',
                 'label' => 'Diproses',
                 'description' => 'Pesanan sedang disiapkan',
-                'completed' => $this->status === 'processing' || ($this->shipping_type === 'delivery' ? 
-                    in_array($this->status, ['ready_to_ship', 'shipped', 'delivered', 'completed']) : 
+                'completed' => $this->status === 'processing' || ($this->shipping_type === 'delivery' ?
+                    in_array($this->status, ['ready_to_ship', 'shipped', 'delivered', 'completed']) :
                     in_array($this->status, ['ready_for_pickup', 'picked_up', 'completed'])),
                 'current' => $this->status === 'processing',
                 'date' => $this->processing_at
@@ -765,7 +765,7 @@ class Order extends Model
                 'current' => $this->status === 'ready_to_ship',
                 'date' => $this->ready_to_ship_at
             ];
-            
+
             $steps[] = [
                 'status' => 'shipped',
                 'label' => 'Sedang Diantar',
@@ -774,7 +774,7 @@ class Order extends Model
                 'current' => $this->status === 'shipped',
                 'date' => $this->shipped_at
             ];
-            
+
             $steps[] = [
                 'status' => 'delivered',
                 'label' => 'Sampai Tujuan',
@@ -793,7 +793,7 @@ class Order extends Model
                 'current' => $this->status === 'ready_for_pickup',
                 'date' => $this->ready_for_pickup_at ?? $this->ready_to_ship_at
             ];
-            
+
             $steps[] = [
                 'status' => 'picked_up',
                 'label' => 'Diambil',
@@ -851,7 +851,7 @@ class Order extends Model
      */
     public function getNextStatusOptionsAttribute(): array
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending' => ['waiting_payment', 'cancelled'],
             'waiting_payment' => ['waiting_confirmation', 'cancelled'],
             'waiting_confirmation' => ['confirmed', 'cancelled'],
@@ -889,7 +889,7 @@ class Order extends Model
 
     /**
      * Cancel order with optional refund processing.
-     * 
+     *
      * @param string $reason Cancellation reason
      * @param int $cancelledBy User ID who cancelled the order
      * @param bool $processRefund Whether to process refund automatically
@@ -905,12 +905,12 @@ class Order extends Model
         try {
             $midtransCancelled = false;
             $midtransMessage = '';
-            
+
             // Cancel transaction in Midtrans first if order has payment
             if ($this->payment && $this->payment->snap_token) {
                 $midtransService = new \App\Services\MidtransService();
                 $cancelResult = $midtransService->cancelTransaction($this->order_number);
-                
+
                 if ($cancelResult['success']) {
                     $midtransCancelled = true;
                     \Log::info('Midtrans transaction cancelled successfully', [
@@ -920,14 +920,14 @@ class Order extends Model
                 } else {
                     $midtransMessage = $cancelResult['message'] ?? 'Unknown error';
                     $currentStatus = $cancelResult['current_status'] ?? 'unknown';
-                    
+
                     \Log::warning('Failed to cancel Midtrans transaction, proceeding with local cancellation', [
                         'order_id' => $this->order_id,
                         'order_number' => $this->order_number,
                         'midtrans_error' => $midtransMessage,
                         'current_status' => $currentStatus
                     ]);
-                    
+
                     // Always proceed with local cancellation regardless of Midtrans status
                     // This handles cases where transaction doesn't exist in Midtrans (404)
                     // or is in any other state that prevents cancellation
@@ -941,19 +941,19 @@ class Order extends Model
 
             // Check if payment was paid before cancellation (for refund processing)
             $wasPaymentPaid = $this->payment && $this->payment->status === 'paid';
-            
+
             // Update order status to cancelled
             $updateData = [
                 'status' => 'cancelled',
                 'cancelled_at' => now(),
                 'cancellation_reason' => $reason
             ];
-            
+
             // Set refund status to pending if payment was paid
             if ($wasPaymentPaid) {
                 $updateData['refund_status'] = 'pending';
             }
-            
+
             $this->update($updateData);
 
             // Update payment status if exists
@@ -981,7 +981,7 @@ class Order extends Model
 
     /**
      * Process refund for cancelled order.
-     * 
+     *
      * @param int $requestedBy User ID who requested the refund
      * @param string|null $reason Refund reason
      * @return Refund|null
@@ -1025,7 +1025,7 @@ class Order extends Model
                     $refund->status = 'completed';
                     $refund->processed_at = now();
                     $refund->midtrans_response = json_encode($result['data']);
-                    
+
                     // Update payment status
                     $this->payment->status = 'refunded';
                     $this->payment->save();
@@ -1033,7 +1033,7 @@ class Order extends Model
                     $refund->status = 'failed';
                     $refund->failure_reason = $result['message'];
                 }
-                
+
                 $refund->save();
             } catch (\Exception $e) {
                 $refund->status = 'failed';
@@ -1051,20 +1051,20 @@ class Order extends Model
 
     /**
      * Check if order can be refunded.
-     * 
+     *
      * @return bool
      */
     public function canBeRefunded(): bool
     {
-        return $this->payment && 
-               $this->payment->status === 'paid' && 
-               in_array($this->status, ['cancelled', 'failed']) &&
-               !$this->refunds()->where('status', 'completed')->exists();
+        return $this->payment &&
+            $this->payment->status === 'paid' &&
+            in_array($this->status, ['cancelled', 'failed']) &&
+            !$this->refunds()->where('status', 'completed')->exists();
     }
 
     /**
      * Get refund status from latest refund relation.
-     * 
+     *
      * @return string|null
      */
     public function getLatestRefundStatus(): ?string
@@ -1075,7 +1075,7 @@ class Order extends Model
 
     /**
      * Check if order has pending refund.
-     * 
+     *
      * @return bool
      */
     public function hasPendingRefund(): bool
@@ -1085,7 +1085,7 @@ class Order extends Model
 
     /**
      * Check if order has completed refund.
-     * 
+     *
      * @return bool
      */
     public function hasCompletedRefund(): bool
@@ -1095,20 +1095,20 @@ class Order extends Model
 
     /**
      * Check if order needs refund (cancelled with paid payment).
-     * 
+     *
      * @return bool
      */
     public function needsRefund(): bool
     {
-        return $this->status === 'cancelled' && 
-               $this->payment && 
-               $this->payment->status === 'paid' && 
-               $this->refund_status === 'pending';
+        return $this->status === 'cancelled' &&
+            $this->payment &&
+            $this->payment->status === 'paid' &&
+            $this->refund_status === 'pending';
     }
 
     /**
      * Mark refund as completed.
-     * 
+     *
      * @return bool
      */
     public function markRefundCompleted(): bool
@@ -1118,7 +1118,7 @@ class Order extends Model
 
     /**
      * Get refund status label.
-     * 
+     *
      * @return string|null
      */
     public function getRefundStatusLabel(): ?string
@@ -1127,7 +1127,7 @@ class Order extends Model
             return null;
         }
 
-        return match($this->refund_status) {
+        return match ($this->refund_status) {
             'pending' => 'Menunggu Refund',
             'completed' => 'Sukses Refund',
             default => null
@@ -1137,7 +1137,7 @@ class Order extends Model
     /**
      * Delete order permanently from database.
      * This will also delete related records (items, payment, delivery, refunds).
-     * 
+     *
      * @param string $reason Deletion reason
      * @param int $deletedBy User ID who deleted the order
      * @return bool
@@ -1160,7 +1160,7 @@ class Order extends Model
                 try {
                     $midtransService = new \App\Services\MidtransService();
                     $cancelResult = $midtransService->cancelTransaction($this->order_number);
-                    
+
                     \Log::info('Midtrans transaction cancellation attempt', [
                         'order_id' => $this->order_id,
                         'success' => $cancelResult['success'],
@@ -1177,48 +1177,47 @@ class Order extends Model
             // Delete related records in proper order
             // Delete order items first
             $this->items()->delete();
-            
+
             // Delete delivery record if exists
             if ($this->delivery) {
                 $this->delivery->delete();
             }
-            
+
             // Delete refunds if exists
             $this->refunds()->delete();
-            
+
             // Delete payment record if exists
             if ($this->payment) {
                 $this->payment->delete();
             }
-            
+
             // Finally delete the order itself
             $deleted = $this->delete();
-            
+
             if ($deleted) {
                 \DB::commit();
-                
+
                 \Log::info('Order deleted successfully', [
                     'order_id' => $this->order_id,
                     'order_number' => $this->order_number,
                     'deleted_by' => $deletedBy
                 ]);
-                
+
                 return true;
             }
-            
+
             \DB::rollBack();
             return false;
-            
         } catch (\Exception $e) {
             \DB::rollBack();
-            
+
             \Log::error('Error deleting order', [
                 'order_id' => $this->order_id,
                 'order_number' => $this->order_number,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return false;
         }
     }
@@ -1226,7 +1225,7 @@ class Order extends Model
     /**
      * Check if order can be deleted.
      * Orders can only be deleted if they are in early stages.
-     * 
+     *
      * @return bool
      */
     public function canBeDeleted(): bool
@@ -1236,19 +1235,19 @@ class Order extends Model
 
     /**
      * Check if order is eligible for automatic cancellation
-     * 
+     *
      * @return bool
      */
     public function isEligibleForAutoCancellation(): bool
     {
-        return $this->status === 'waiting_payment' 
+        return $this->status === 'waiting_payment'
             && $this->isPaymentExpired()
             && !$this->hasSuccessfulPayment();
     }
 
     /**
      * Check if order has successful payment
-     * 
+     *
      * @return bool
      */
     public function hasSuccessfulPayment(): bool
@@ -1258,7 +1257,7 @@ class Order extends Model
 
     /**
      * Cancel order automatically due to expiration
-     * 
+     *
      * @return bool
      */
     public function cancelDueToExpiration(): bool
@@ -1292,7 +1291,6 @@ class Order extends Model
             ]);
 
             return true;
-
         } catch (\Exception $e) {
             \DB::rollBack();
 
@@ -1309,7 +1307,7 @@ class Order extends Model
 
     /**
      * Restore product stock for cancelled order
-     * 
+     *
      * @return void
      */
     private function restoreProductStock(): void
@@ -1331,7 +1329,7 @@ class Order extends Model
 
     /**
      * Scope to find orders eligible for automatic cancellation
-     * 
+     *
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @param int $expireDays
      * @return \Illuminate\Database\Eloquent\Builder
@@ -1339,7 +1337,7 @@ class Order extends Model
     public function scopeEligibleForAutoCancellation($query, int $expireDays = 1)
     {
         $expireDate = now()->subDays($expireDays);
-        
+
         return $query->where('status', 'waiting_payment')
             ->where('created_at', '<=', $expireDate)
             ->whereDoesntHave('payment', function ($paymentQuery) {
