@@ -98,6 +98,14 @@
 <script src="{{ $snapJsUrl }}" data-client-key="{{ $clientKey }}"></script>
 
 <script>
+    // Disable console.log in production to reduce noise
+    (function(){
+        var isProd = {{ config('app.env') === 'production' ? 'true' : 'false' }};
+        if (isProd && typeof console !== 'undefined') {
+            try { console.log = function(){}; } catch (e) {}
+        }
+    })();
+
     // Global error handler for debugging
     window.addEventListener('error', function(event) {
         console.error('Global JavaScript error detected:', {

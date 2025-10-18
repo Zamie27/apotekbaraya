@@ -803,6 +803,14 @@
 
 @script
 <script>
+    // Disable console.log in production to reduce noise
+    (function(){
+        var isProd = {{ config('app.env') === 'production' ? 'true' : 'false' }};
+        if (isProd && typeof console !== 'undefined') {
+            try { console.log = function(){}; } catch (e) {}
+        }
+    })();
+
     // Auto-refresh payment status every 30 seconds for pending payments
     function initPaymentStatusCheck() {
         try {

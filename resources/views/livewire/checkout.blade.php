@@ -405,6 +405,14 @@
 <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
 @endif
 <script>
+    // Disable console.log in production to reduce noise
+    (function(){
+        var isProd = {{ config('app.env') === 'production' ? 'true' : 'false' }};
+        if (isProd && typeof console !== 'undefined') {
+            try { console.log = function(){}; } catch (e) {}
+        }
+    })();
+
     document.addEventListener('DOMContentLoaded', function() {
         const checkoutButton = document.getElementById('checkout-button');
         const recaptchaToken = document.getElementById('recaptcha-token');

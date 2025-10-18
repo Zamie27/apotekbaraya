@@ -6,6 +6,8 @@ use App\Models\Prescription;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Mail\OrderCreatedFromPrescription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -190,9 +192,11 @@ class PrescriptionController extends Controller
         $prescription->load(['user']);
         
         // Get available products for order creation
-        $products = \App\Models\Product::where('is_active', true)
-            ->where('stock', 'available')
-            ->where('quantity', '>', 0)
+        // Fix: gunakan scope active() dan available() (stock > 0) agar produk tidak kosong.
+        // Kolom stock bertipe integer; sebelumnya salah memakai nilai string 'available' dan memfilter quantity.
+        $products = Product::with(['category', 'images'])
+            ->active()
+            ->available()
             ->orderBy('name')
             ->get();
 
@@ -223,8 +227,9 @@ class PrescriptionController extends Controller
 
         DB::beginTransaction();
         try {
-            // Calculate total amount
-            $totalAmount = 0;
+            // Calculate total amount and discount
+            $totalAmount = 0; // subtotal menggunakan harga final (mempertimbangkan diskon)
+            $totalDiscount = 0; // akumulasi diskon
             $orderItems = [];
             
             foreach ($request->products as $productId => $productData) {
@@ -232,18 +237,23 @@ class PrescriptionController extends Controller
                     $product = Product::findOrFail($productId);
                     $quantity = (int) $productData['quantity'];
                     
-                    // Check stock availability
-                    if ($product->quantity < $quantity) {
-                        throw new \Exception("Stok {$product->name} tidak mencukupi. Stok tersedia: {$product->quantity}");
+                    // Check stock availability menggunakan kolom stock (integer)
+                    if ((int) $product->stock < $quantity) {
+                        throw new \Exception("Stok {$product->name} tidak mencukupi. Stok tersedia: {$product->stock}");
                     }
                     
-                    $subtotal = $product->price * $quantity;
+                    // Gunakan harga final (discount_price jika ada) untuk perhitungan
+                    $finalPrice = $product->discount_price ?? $product->price;
+                    $subtotal = $finalPrice * $quantity;
                     $totalAmount += $subtotal;
+                    // Hitung diskon item: selisih harga normal dengan harga final
+                    $itemDiscount = max(0, ($product->price - $finalPrice)) * $quantity;
+                    $totalDiscount += $itemDiscount;
                     
                     $orderItems[] = [
                         'product_id' => $productId,
                         'quantity' => $quantity,
-                        'price' => $product->price,
+                        'price' => $finalPrice,
                         'subtotal' => $subtotal
                     ];
                 }
@@ -267,13 +277,14 @@ class PrescriptionController extends Controller
                 'order_number' => 'ORD-' . date('Ymd') . '-' . str_pad(Order::count() + 1, 4, '0', STR_PAD_LEFT),
                 'subtotal' => $totalAmount,
                 'delivery_fee' => $deliveryFee,
-                'discount_amount' => 0,
+                'discount_amount' => $totalDiscount,
                 'total_price' => $finalTotalPrice,
-                'status' => 'pending',
+                'status' => 'waiting_payment',
                 'shipping_address' => $prescription->delivery_method === 'delivery' 
                     ? ($prescription->user->address ?? 'Alamat tidak tersedia') 
                     : 'Ambil di toko',
-                'notes' => $request->order_notes
+                'notes' => $request->order_notes,
+                'waiting_payment_at' => now()
             ]);
 
             // Create order items
@@ -286,9 +297,27 @@ class PrescriptionController extends Controller
                 ]);
 
                 // Update product stock
+                // Kurangi stok berdasarkan kolom stock
                 Product::where('product_id', $item['product_id'])
-                       ->decrement('quantity', $item['quantity']);
+                       ->decrement('stock', $item['quantity']);
             }
+
+            // Get default payment method (prioritize bank_transfer, then cod, then any active method)
+            $defaultPaymentMethod = PaymentMethod::where('code', 'bank_transfer')->where('is_active', true)->first()
+                ?? PaymentMethod::where('code', 'cod')->where('is_active', true)->first() 
+                ?? PaymentMethod::where('is_active', true)->first();
+            
+            if (!$defaultPaymentMethod) {
+                throw new \Exception('No payment method available. Please contact administrator.');
+            }
+
+            // Create payment record
+            $payment = Payment::create([
+                'order_id' => $order->order_id,
+                'payment_method_id' => $defaultPaymentMethod->payment_method_id,
+                'amount' => $finalTotalPrice,
+                'status' => 'pending', // Will be updated by Midtrans callback
+            ]);
 
             // Update prescription with order_id and status
             $prescription->update([

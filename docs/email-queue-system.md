@@ -248,6 +248,14 @@ Semua aktivitas queue dicatat di:
 
 **1. Queue Worker Not Processing Jobs**
 - Check database connection
+
+## Referensi
+- Queue config: `config/queue.php`
+- Mail config: `config/mail.php`
+- Job: `app/Jobs/SendEmailNotification.php`
+- Service: `app/Services/EmailNotificationService.php`
+- Deployment: `docs/DEPLOYMENT_GUIDE.md` (konfigurasi worker & mailer)
+- Payment Gateway: `docs/PAYMENT_GATEWAY_MIDTRANS.md` (kaitkan notifikasi pesanan)
 - Verify jobs table exists
 - Ensure queue worker is running
 
