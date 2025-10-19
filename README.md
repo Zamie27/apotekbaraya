@@ -1,16 +1,24 @@
-# Apotek Baraya
+# Apotek Baraya 💊
 
-Platform e‑commerce apotek berbasis Laravel 12 & Livewire 3 dengan alur resep (upload, konfirmasi apoteker, pembuatan pesanan) dan integrasi pembayaran Midtrans (Snap).
+E‑commerce apotek modern dengan alur resep end‑to‑end, dibangun pakai Laravel 12 + Livewire 3, UI cepat, dan pembayaran Midtrans (Snap).
+
+[![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel)](https://laravel.com)
+[![Livewire](https://img.shields.io/badge/Livewire-3-4E56A6?logo=livewire)](https://livewire.laravel.com)
+[![Tailwind](https://img.shields.io/badge/Tailwind-4-38B2AC?logo=tailwind-css)](https://tailwindcss.com)
+[![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite)](https://vitejs.dev)
+[![MIT License](https://img.shields.io/badge/License-MIT-000000.svg)](https://opensource.org/licenses/MIT)
+
+Quick Links: [Instalasi Cepat](#instalasi-cepat) • [Fitur](#fitur-utama) • [Pembayaran](#pembayaran-midtrans) • [Akun Demo](#akun-demo-hasil-seeding) • [Dokumentasi](#dokumentasi)
 
 ## Fitur Utama
-- Katalog produk, kategori, pencarian, deskripsi produk
-- Keranjang & Checkout
-- Resep: upload pelanggan, konfirmasi apoteker, buat pesanan dari resep
-- Pembayaran Midtrans Snap: tombol "Bayar" di detail pesanan, status & timeline pembayaran
-- Manajemen pesanan: waiting_payment → paid → waiting_confirmation → processing → shipped → delivered; pembatalan; bukti pengiriman
-- Admin: manajemen produk/kategori, pesanan, refund, pengguna, pengaturan toko
-- Kurir: daftar & detail pengiriman
-- Notifikasi email & antrean (queue)
+- 🏪 Katalog & pencarian produk (kategori, deskripsi, detail lengkap)
+- 🛒 Keranjang & Checkout yang halus
+- 📄 Resep: upload pelanggan → konfirmasi apoteker → buat pesanan dari resep
+- 💳 Midtrans Snap: tombol "Bayar" di detail pesanan + status & timeline pembayaran
+- ⏱️ Timeline pesanan: waiting_payment → paid → waiting_confirmation → processing → shipped → delivered
+- 🧑‍💼 Admin: produk/kategori, pesanan, refund, pengguna, pengaturan toko
+- 🚚 Kurir: daftar & detail pengiriman
+- ✉️ Notifikasi email & antrean (queue)
 
 ## Teknologi
 Laravel 12, Livewire 3, Tailwind CSS 4 + DaisyUI, Vite 6, Pest.
